@@ -127,7 +127,7 @@ class GetDataAsLayer(QgsProcessingAlgorithm):
         # Check that the connection name has been configured
         connection_name = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name')
         if not connection_name:
-            return False, self.tr('You must use the "Configure G-obs plugin" alg to set the database connection name')
+            return False, self.tr('You must use the "Configure plugin" alg to set the database connection name')
 
         # Check that it corresponds to an existing connection
         dbpluginclass = createDbPlugin( 'postgis' )
