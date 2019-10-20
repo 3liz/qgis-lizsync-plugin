@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 /***************************************************************************
  *                                                                         *
@@ -19,24 +17,19 @@ __copyright__ = '(C) 2018 by 3liz'
 
 __revision__ = '$Format:%H$'
 
-from PyQt5.QtCore import QCoreApplication
-from PyQt5.QtSql import QSqlDatabase, QSqlQuery
+import configparser
+import os
+
+from db_manager.db_plugins import createDbPlugin
 from qgis.core import (
-    QgsProcessing,
     QgsProcessingAlgorithm,
-    QgsProcessingUtils,
-    QgsProcessingException,
     QgsProcessingParameterString,
     QgsProcessingParameterBoolean,
     QgsProcessingOutputNumber,
     QgsProcessingOutputString,
     QgsExpressionContextUtils
 )
-import processing
-import os
 from .tools import *
-import configparser
-from db_manager.db_plugins import createDbPlugin
 
 class CreateDatabaseStructure(QgsProcessingAlgorithm):
     """
@@ -80,29 +73,9 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         # INPUTS
         self.addParameter(
             QgsProcessingParameterBoolean(
-                self.OVERRIDE, 'Ecraser le schéma lizsync et toutes les données ? ** ATTENTION **',
+                self.OVERRIDE, 
+                self.tr('DROP lizsync schema and all data ? ** CAUTION **'),
                 defaultValue=False,
-                optional=False
-            )
-        )
-        self.addParameter(
-            QgsProcessingParameterString(
-                self.NOM, 'Nom du gestionnaire',
-                defaultValue='Communauté d\'Agglomération de Test',
-                optional=False
-            )
-        )
-        self.addParameter(
-            QgsProcessingParameterString(
-                self.SIREN, 'SIREN',
-                defaultValue='123456789',
-                optional=False
-            )
-        )
-        self.addParameter(
-            QgsProcessingParameterString(
-                self.CODE, 'Nom abbrégé en 3 caractères',
-                defaultValue='cat',
                 optional=False
             )
         )
@@ -139,12 +112,6 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         if not ok:
             return False, msg
 
-        # Check inputs
-        if len(parameters[self.CODE]) != 3:
-            return False, self.tr('Le nom abbrégé doit faire 3 exactement caractères.')
-        if len(parameters[self.SIREN]) != 9:
-            return False, self.tr("Le SIREN doit faire exactement 9 caractères.")
-
         return super(CreateDatabaseStructure, self).checkParameterValues(parameters, context)
 
     def checkSchema(self, parameters, context):
@@ -178,11 +145,9 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         # Drop schema if needed
         override = self.parameterAsBool(parameters, self.OVERRIDE, context)
         if override:
-            feedback.pushInfo(self.tr("Trying to drop schema lizsync, audit, imports"))
+            feedback.pushInfo(self.tr("Trying to drop schema lizsync"))
             sql = '''
                 DROP SCHEMA IF EXISTS lizsync CASCADE;
-                DROP SCHEMA IF EXISTS audit CASCADE;
-                DROP SCHEMA IF EXISTS imports CASCADE;
             '''
 
             [header, data, rowCount, ok, error_message] = fetchDataFromSqlQuery(
@@ -244,7 +209,7 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
 
         # Add version
         config = configparser.ConfigParser()
-        config.read(os.path.join(plugin_dir, 'metadata.txt'))
+        config.read(str(os.path.join(plugin_dir, 'metadata.txt')))
         version = config['general']['version']
         sql = '''
             INSERT INTO lizsync.sys_structure_metadonnee
@@ -253,18 +218,6 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
                 '%s', now()::timestamp(0)
             )
         ''' % version
-        [header, data, rowCount, ok, error_message] = fetchDataFromSqlQuery(
-            connection_name,
-            sql
-        )
-
-        # Add metadata info
-        sql = 'INSERT INTO lizsync.sys_organisme_gestionnaire (nom, siren, code, actif)'
-        sql+= "VALUES ('%s', '%s', '%s', True);" % (
-            parameters[self.NOM].replace("'", "''"),
-            parameters[self.SIREN],
-            parameters[self.CODE]
-        )
         [header, data, rowCount, ok, error_message] = fetchDataFromSqlQuery(
             connection_name,
             sql

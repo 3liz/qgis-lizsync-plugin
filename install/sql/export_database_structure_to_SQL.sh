@@ -23,7 +23,7 @@ pg_dump service=lizsync --schema-only -n $SCHEMA --no-acl --no-owner -Fc -f "$OU
 
 # Loop through DB object types and extract SQL
 I=10
-for ITEM in FUNCTION "TABLE|COMMENT|SEQUENCE|DEFAULT" VIEW INDEX TRIGGER CONSTRAINT; do
+for ITEM in FUNCTION "TABLE|SEQUENCE|DEFAULT" VIEW INDEX TRIGGER CONSTRAINT COMMENT; do
     echo $ITEM
     # Extract list of objects for current item
     pg_restore --no-acl --no-owner -l $OUTDIR/dump | grep -E "$ITEM" > "$OUTDIR/$ITEM";

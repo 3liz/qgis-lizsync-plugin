@@ -20,10 +20,19 @@ __copyright__ = '(C) 2019 by 3liz'
 __revision__ = '$Format:%H$'
 
 from qgis.core import QgsProcessingProvider
-from .algorithms.get_data_as_layer import GetDataAsLayer
 from .algorithms.configure_plugin import ConfigurePlugin
-from .algorithms.execute_sql import ExecuteSql
 from .algorithms.create_database_structure import CreateDatabaseStructure
+from .algorithms.upgrade_database_structure import UpgradeDatabaseStructure
+from .algorithms.execute_sql import ExecuteSql
+from .algorithms.get_data_as_layer import GetDataAsLayer
+from .algorithms.initialize_central_database import InitializeCentralDatabase
+from .algorithms.package_central_database import PackageCentralDatabase
+from .algorithms.deploy_database_server_package import DeployDatabaseServerPackage
+from .algorithms.send_media_to_ftp import SendMediaToFtp
+from .algorithms.synchronize_database import SynchronizeDatabase
+from .algorithms.synchronize_project_folder_from_ftp import SynchronizeProjectFolderFromFtp
+
+
 
 class LizsyncProvider(QgsProcessingProvider):
 
@@ -36,10 +45,17 @@ class LizsyncProvider(QgsProcessingProvider):
 
     def loadAlgorithms(self):
 
-        self.addAlgorithm(GetDataAsLayer())
         self.addAlgorithm(ConfigurePlugin())
-        self.addAlgorithm(ExecuteSql())
         self.addAlgorithm(CreateDatabaseStructure())
+        self.addAlgorithm(UpgradeDatabaseStructure())
+        self.addAlgorithm(ExecuteSql())
+        self.addAlgorithm(GetDataAsLayer())
+        self.addAlgorithm(InitializeCentralDatabase())
+        self.addAlgorithm(PackageCentralDatabase())
+        self.addAlgorithm(DeployDatabaseServerPackage())
+        self.addAlgorithm(SendMediaToFtp())
+        self.addAlgorithm(SynchronizeDatabase())
+        self.addAlgorithm(SynchronizeProjectFolderFromFtp())
 
     def id(self):
         return 'lizsync'

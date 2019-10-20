@@ -21,11 +21,7 @@ __revision__ = '$Format:%H$'
 
 from PyQt5.QtCore import QCoreApplication
 from qgis.core import (
-    QgsProcessing,
     QgsProcessingAlgorithm,
-    QgsProcessingContext,
-    QgsProcessingUtils,
-    QgsProcessingException,
     QgsProcessingParameterString,
     QgsProcessingOutputString,
     QgsProcessingOutputNumber,
@@ -43,7 +39,8 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
     # used when calling the algorithm from another algorithm, or when
     # calling from the QGIS console.
 
-    CONNECTION_NAME = 'CONNECTION_NAME'
+    CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
+    CONNECTION_NAME_CLONE = 'CONNECTION_NAME_CLONE'
 
     OUTPUT_STATUS = 'OUTPUT_STATUS'
     OUTPUT_STRING = 'OUTPUT_STRING'
@@ -73,20 +70,35 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         """
         # INPUTS
 
-        # Database connection parameters
-        connection_name = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name')
-        db_param = QgsProcessingParameterString(
-            self.CONNECTION_NAME,
-            self.tr('PostgreSQL connection to the database'),
-            defaultValue=connection_name,
+        # Central database connection parameters
+        connection_name_central = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
+        db_param_a = QgsProcessingParameterString(
+            self.CONNECTION_NAME_CENTRAL,
+            self.tr('PostgreSQL connection to the CENTRAL database'),
+            defaultValue=connection_name_central,
             optional=False
         )
-        db_param.setMetadata({
+        db_param_a.setMetadata({
             'widget_wrapper': {
                 'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
             }
         })
-        self.addParameter(db_param)
+        self.addParameter(db_param_a)
+
+        # Clone database connection parameters
+        connection_name_clone = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_clone')
+        db_param_b = QgsProcessingParameterString(
+            self.CONNECTION_NAME_CLONE,
+            self.tr('PostgreSQL connection to the CLONE database'),
+            defaultValue=connection_name_clone,
+            optional=False
+        )
+        db_param_b.setMetadata({
+            'widget_wrapper': {
+                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
+            }
+        })
+        self.addParameter(db_param_b)
 
         # OUTPUTS
         # Add output for status (integer)
@@ -108,11 +120,14 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         """
         Here is where the processing itself takes place.
         """
-        connection_name = parameters[self.CONNECTION_NAME]
+        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+        connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
 
         # Set global variable
-        QgsExpressionContextUtils.setGlobalVariable('lizsync_connection_name', connection_name)
-        feedback.pushInfo(self.tr('PostgreSQL connection to Lizsync database') + ' = ' + connection_name)
+        QgsExpressionContextUtils.setGlobalVariable('lizsync_connection_name_central', connection_name_central)
+        feedback.pushInfo(self.tr('PostgreSQL connection to CENTRAL database') + ' = ' + connection_name)
+        QgsExpressionContextUtils.setGlobalVariable('lizsync_connection_name_clone', connection_name_clone)
+        feedback.pushInfo(self.tr('PostgreSQL connection to CLONE database') + ' = ' + connection_name)
 
         msg = self.tr('Configuration has been saved')
         feedback.pushInfo(msg)
