@@ -73,7 +73,7 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         # INPUTS
         self.addParameter(
             QgsProcessingParameterBoolean(
-                self.OVERRIDE, 
+                self.OVERRIDE,
                 self.tr('DROP lizsync schema and all data ? ** CAUTION **'),
                 defaultValue=False,
                 optional=False
@@ -170,11 +170,12 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
             '00_initialize_database.sql',
             'audit/audit.sql',
             'lizsync/10_FUNCTION.sql',
-            'lizsync/20_TABLE_COMMENT_SEQUENCE_DEFAULT.sql',
+            'lizsync/20_TABLE_SEQUENCE_DEFAULT.sql',
             'lizsync/30_VIEW.sql',
             'lizsync/40_INDEX.sql',
             'lizsync/50_TRIGGER.sql',
             'lizsync/60_CONSTRAINT.sql',
+            'lizsync/70_COMMENT.sql',
             'lizsync/90_GLOSSARY.sql',
             '99_finalize_database.sql',
         ]
