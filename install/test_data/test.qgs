@@ -20,32 +20,37 @@
     <customproperties></customproperties>
     <layer-tree-group checked="Qt::Checked" expanded="1" name="data">
       <customproperties></customproperties>
-      <layer-tree-layer checked="Qt::Checked" expanded="1" id="data_pluviometrie_stations_technique_20de0200_113f_4694_b830_61bd9fefc1c8" name="data pluviometrie_stations_technique" providerKey="ogr" source="../../../../../../../../.local/share/QGIS/QGIS3/profiles/default/python/plugins/lizsync/install/test_data/data.gpkg|layername=pluviometrie_stations_technique">
+      <layer-tree-layer checked="Qt::Checked" expanded="1" id="pluviometers_cba7ffdb_07e2_4aa7_9ff5_7a2b67959d36" name="pluviometers" providerKey="ogr" source="./data/pluviometers.geojson">
         <customproperties></customproperties>
       </layer-tree-layer>
-      <layer-tree-layer checked="Qt::Checked" expanded="1" id="data_rp_struct_pop_evolution_geom_rb_rp_struct_pop_evolution_geom_f218c182_2118_4321_bd8a_b46458666f29" name="data rp_struct_pop_evolution_geom rb:rp_struct_pop_evolution_geom" providerKey="ogr" source="../../../../../../../../.local/share/QGIS/QGIS3/profiles/default/python/plugins/lizsync/install/test_data/data.gpkg|layername=rp_struct_pop_evolution_geom rb:rp_struct_pop_evolution_geom">
+      <layer-tree-layer checked="Qt::Checked" expanded="1" id="montpellier_sub_districts_74992fb6_2dfb_4f01_a8c5_593e9e9b8546" name="montpellier_sub_districts" providerKey="ogr" source="./data/montpellier_sub_districts.geojson">
+        <customproperties></customproperties>
+      </layer-tree-layer>
+      <layer-tree-layer checked="Qt::Checked" expanded="1" id="montpellier_districts_ce998572_8ca4_4701_8e70_f7c97bdfef7a" name="montpellier_districts" providerKey="ogr" source="./data/montpellier_districts.geojson">
         <customproperties></customproperties>
       </layer-tree-layer>
     </layer-tree-group>
     <custom-order enabled="0">
-      <item>data_pluviometrie_stations_technique_20de0200_113f_4694_b830_61bd9fefc1c8</item>
-      <item>data_rp_struct_pop_evolution_geom_rb_rp_struct_pop_evolution_geom_f218c182_2118_4321_bd8a_b46458666f29</item>
+      <item>montpellier_districts_ce998572_8ca4_4701_8e70_f7c97bdfef7a</item>
+      <item>montpellier_sub_districts_74992fb6_2dfb_4f01_a8c5_593e9e9b8546</item>
+      <item>pluviometers_cba7ffdb_07e2_4aa7_9ff5_7a2b67959d36</item>
     </custom-order>
   </layer-tree-group>
   <snapping-settings enabled="0" intersection-snapping="0" mode="2" tolerance="0" type="1" unit="2">
     <individual-layer-settings>
-      <layer-setting enabled="0" id="data_pluviometrie_stations_technique_20de0200_113f_4694_b830_61bd9fefc1c8" tolerance="0" type="1" units="2"></layer-setting>
-      <layer-setting enabled="0" id="data_rp_struct_pop_evolution_geom_rb_rp_struct_pop_evolution_geom_f218c182_2118_4321_bd8a_b46458666f29" tolerance="0" type="1" units="2"></layer-setting>
+      <layer-setting enabled="0" id="montpellier_districts_ce998572_8ca4_4701_8e70_f7c97bdfef7a" tolerance="0" type="1" units="2"></layer-setting>
+      <layer-setting enabled="0" id="pluviometers_cba7ffdb_07e2_4aa7_9ff5_7a2b67959d36" tolerance="0" type="1" units="2"></layer-setting>
+      <layer-setting enabled="0" id="montpellier_sub_districts_74992fb6_2dfb_4f01_a8c5_593e9e9b8546" tolerance="0" type="1" units="2"></layer-setting>
     </individual-layer-settings>
   </snapping-settings>
   <relations></relations>
   <mapcanvas annotationsVisible="1" name="theMapCanvas">
     <units>meters</units>
     <extent>
-      <xmin>77570.01011595939053223</xmin>
-      <ymin>6689063.70897899195551872</ymin>
-      <xmax>413640.38631667260779068</xmax>
-      <ymax>6900744.90747718513011932</ymax>
+      <xmin>764873.73525000002700835</xmin>
+      <ymin>6274320.51249999925494194</ymin>
+      <xmax>776303.81475000001955777</xmax>
+      <ymax>6284430.22749999910593033</ymax>
     </extent>
     <rotation>0</rotation>
     <destinationsrs>
@@ -65,34 +70,586 @@
   <projectModels></projectModels>
   <legend updateDrawingOrder="true">
     <legendgroup checked="Qt::Checked" name="data" open="true">
-      <legendlayer checked="Qt::Checked" drawingOrder="-1" name="data pluviometrie_stations_technique" open="true" showFeatureCount="0">
+      <legendlayer checked="Qt::Checked" drawingOrder="-1" name="pluviometers" open="true" showFeatureCount="0">
         <filegroup hidden="false" open="true">
-          <legendlayerfile isInOverview="0" layerid="data_pluviometrie_stations_technique_20de0200_113f_4694_b830_61bd9fefc1c8" visible="1"></legendlayerfile>
+          <legendlayerfile isInOverview="0" layerid="pluviometers_cba7ffdb_07e2_4aa7_9ff5_7a2b67959d36" visible="1"></legendlayerfile>
         </filegroup>
       </legendlayer>
-      <legendlayer checked="Qt::Checked" drawingOrder="-1" name="data rp_struct_pop_evolution_geom rb:rp_struct_pop_evolution_geom" open="true" showFeatureCount="0">
+      <legendlayer checked="Qt::Checked" drawingOrder="-1" name="montpellier_sub_districts" open="true" showFeatureCount="0">
         <filegroup hidden="false" open="true">
-          <legendlayerfile isInOverview="0" layerid="data_rp_struct_pop_evolution_geom_rb_rp_struct_pop_evolution_geom_f218c182_2118_4321_bd8a_b46458666f29" visible="1"></legendlayerfile>
+          <legendlayerfile isInOverview="0" layerid="montpellier_sub_districts_74992fb6_2dfb_4f01_a8c5_593e9e9b8546" visible="1"></legendlayerfile>
+        </filegroup>
+      </legendlayer>
+      <legendlayer checked="Qt::Checked" drawingOrder="-1" name="montpellier_districts" open="true" showFeatureCount="0">
+        <filegroup hidden="false" open="true">
+          <legendlayerfile isInOverview="0" layerid="montpellier_districts_ce998572_8ca4_4701_8e70_f7c97bdfef7a" visible="1"></legendlayerfile>
         </filegroup>
       </legendlayer>
     </legendgroup>
   </legend>
   <mapViewDocks></mapViewDocks>
   <mapViewDocks3D></mapViewDocks3D>
+  <mapcanvas annotationsVisible="1" name="mAreaCanvas">
+    <units>degrees</units>
+    <extent>
+      <xmin>0</xmin>
+      <ymin>0</ymin>
+      <xmax>0</xmax>
+      <ymax>0</ymax>
+    </extent>
+    <rotation>0</rotation>
+    <destinationsrs>
+      <spatialrefsys>
+        <proj4>+proj=longlat +datum=WGS84 +no_defs</proj4>
+        <srsid>3452</srsid>
+        <srid>4326</srid>
+        <authid>EPSG:4326</authid>
+        <description>WGS 84</description>
+        <projectionacronym>longlat</projectionacronym>
+        <ellipsoidacronym>WGS84</ellipsoidacronym>
+        <geographicflag>true</geographicflag>
+      </spatialrefsys>
+    </destinationsrs>
+    <rendermaptile>0</rendermaptile>
+  </mapcanvas>
+  <mapcanvas annotationsVisible="1" name="mAreaCanvas">
+    <units>degrees</units>
+    <extent>
+      <xmin>0</xmin>
+      <ymin>0</ymin>
+      <xmax>0</xmax>
+      <ymax>0</ymax>
+    </extent>
+    <rotation>0</rotation>
+    <destinationsrs>
+      <spatialrefsys>
+        <proj4>+proj=longlat +datum=WGS84 +no_defs</proj4>
+        <srsid>3452</srsid>
+        <srid>4326</srid>
+        <authid>EPSG:4326</authid>
+        <description>WGS 84</description>
+        <projectionacronym>longlat</projectionacronym>
+        <ellipsoidacronym>WGS84</ellipsoidacronym>
+        <geographicflag>true</geographicflag>
+      </spatialrefsys>
+    </destinationsrs>
+    <rendermaptile>0</rendermaptile>
+  </mapcanvas>
+  <mapcanvas annotationsVisible="1" name="mAreaCanvas">
+    <units>degrees</units>
+    <extent>
+      <xmin>0</xmin>
+      <ymin>0</ymin>
+      <xmax>0</xmax>
+      <ymax>0</ymax>
+    </extent>
+    <rotation>0</rotation>
+    <destinationsrs>
+      <spatialrefsys>
+        <proj4>+proj=longlat +datum=WGS84 +no_defs</proj4>
+        <srsid>3452</srsid>
+        <srid>4326</srid>
+        <authid>EPSG:4326</authid>
+        <description>WGS 84</description>
+        <projectionacronym>longlat</projectionacronym>
+        <ellipsoidacronym>WGS84</ellipsoidacronym>
+        <geographicflag>true</geographicflag>
+      </spatialrefsys>
+    </destinationsrs>
+    <rendermaptile>0</rendermaptile>
+  </mapcanvas>
   <projectlayers>
-    <maplayer autoRefreshEnabled="0" autoRefreshTime="0" geometry="Point" hasScaleBasedVisibilityFlag="0" labelsEnabled="0" maxScale="0" minScale="1e+8" readOnly="0" refreshOnNotifyEnabled="0" refreshOnNotifyMessage="" simplifyAlgorithm="0" simplifyDrawingHints="0" simplifyDrawingTol="1" simplifyLocal="1" simplifyMaxScale="1" styleCategories="AllStyleCategories" type="vector">
+    <maplayer autoRefreshEnabled="0" autoRefreshTime="0" geometry="Polygon" hasScaleBasedVisibilityFlag="0" labelsEnabled="0" maxScale="0" minScale="1e+8" readOnly="0" refreshOnNotifyEnabled="0" refreshOnNotifyMessage="" simplifyAlgorithm="0" simplifyDrawingHints="1" simplifyDrawingTol="1" simplifyLocal="1" simplifyMaxScale="1" styleCategories="AllStyleCategories" type="vector">
       <extent>
-        <xmin>132977.96875</xmin>
-        <ymin>6734681</ymin>
-        <xmax>398524.0625</xmax>
-        <ymax>6844864.5</ymax>
+        <xmin>765145.88000000000465661</xmin>
+        <ymin>6274561.21999999973922968</ymin>
+        <xmax>776031.67000000004190952</xmax>
+        <ymax>6284189.51999999955296516</ymax>
       </extent>
-      <id>data_pluviometrie_stations_technique_20de0200_113f_4694_b830_61bd9fefc1c8</id>
-      <datasource>./data.gpkg|layername=pluviometrie_stations_technique</datasource>
+      <id>montpellier_districts_ce998572_8ca4_4701_8e70_f7c97bdfef7a</id>
+      <datasource>./data/montpellier_districts.geojson</datasource>
       <keywordList>
         <value></value>
       </keywordList>
-      <layername>data pluviometrie_stations_technique</layername>
+      <layername>montpellier_districts</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs</proj4>
+          <srsid>145</srsid>
+          <srid>2154</srid>
+          <authid>EPSG:2154</authid>
+          <description>RGF93 / Lambert-93</description>
+          <projectionacronym>lcc</projectionacronym>
+          <ellipsoidacronym>GRS80</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <contact>
+          <name></name>
+          <organization></organization>
+          <position></position>
+          <voice></voice>
+          <fax></fax>
+          <email></email>
+          <role></role>
+        </contact>
+        <links></links>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent>
+          <spatial crs="" dimensions="2" maxx="0" maxy="0" maxz="0" minx="0" miny="0" minz="0"></spatial>
+          <temporal>
+            <period>
+              <start></start>
+              <end></end>
+            </period>
+          </temporal>
+        </extent>
+      </resourceMetadata>
+      <provider encoding="UTF-8">ogr</provider>
+      <vectorjoins></vectorjoins>
+      <layerDependencies></layerDependencies>
+      <dataDependencies></dataDependencies>
+      <legend type="default-vector"></legend>
+      <expressionfields></expressionfields>
+      <map-layer-style-manager current="défaut">
+        <map-layer-style name="défaut"></map-layer-style>
+      </map-layer-style-manager>
+      <auxiliaryLayer></auxiliaryLayer>
+      <flags>
+        <Identifiable>1</Identifiable>
+        <Removable>1</Removable>
+        <Searchable>1</Searchable>
+      </flags>
+      <renderer-v2 enableorderby="0" forceraster="0" symbollevels="0" type="singleSymbol">
+        <symbols>
+          <symbol alpha="1" clip_to_extent="1" force_rhr="0" name="0" type="fill">
+            <layer class="SimpleFill" enabled="1" locked="0" pass="0">
+              <prop k="border_width_map_unit_scale" v="3x:0,0,0,0,0,0"></prop>
+              <prop k="color" v="229,182,54,255"></prop>
+              <prop k="joinstyle" v="bevel"></prop>
+              <prop k="offset" v="0,0"></prop>
+              <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"></prop>
+              <prop k="offset_unit" v="MM"></prop>
+              <prop k="outline_color" v="153,0,255,255"></prop>
+              <prop k="outline_style" v="solid"></prop>
+              <prop k="outline_width" v="1.26"></prop>
+              <prop k="outline_width_unit" v="MM"></prop>
+              <prop k="style" v="no"></prop>
+              <data_defined_properties>
+                <Option type="Map">
+                  <Option name="name" type="QString" value=""></Option>
+                  <Option name="properties"></Option>
+                  <Option name="type" type="QString" value="collection"></Option>
+                </Option>
+              </data_defined_properties>
+            </layer>
+          </symbol>
+        </symbols>
+        <rotation></rotation>
+        <sizescale></sizescale>
+      </renderer-v2>
+      <customproperties>
+        <property key="embeddedWidgets/count" value="0"></property>
+        <property key="variableNames"></property>
+        <property key="variableValues"></property>
+      </customproperties>
+      <blendMode>0</blendMode>
+      <featureBlendMode>0</featureBlendMode>
+      <layerOpacity>1</layerOpacity>
+      <SingleCategoryDiagramRenderer attributeLegend="1" diagramType="Histogram">
+        <DiagramCategory backgroundAlpha="255" backgroundColor="#ffffff" barWidth="5" diagramOrientation="Up" enabled="0" height="15" labelPlacementMethod="XHeight" lineSizeScale="3x:0,0,0,0,0,0" lineSizeType="MM" maxScaleDenominator="1e+8" minScaleDenominator="0" minimumSize="0" opacity="1" penAlpha="255" penColor="#000000" penWidth="0" rotationOffset="270" scaleBasedVisibility="0" scaleDependency="Area" sizeScale="3x:0,0,0,0,0,0" sizeType="MM" width="15">
+          <fontProperties description="Ubuntu,11,-1,5,50,0,0,0,0,0" style=""></fontProperties>
+        </DiagramCategory>
+      </SingleCategoryDiagramRenderer>
+      <DiagramLayerSettings dist="0" linePlacementFlags="18" obstacle="0" placement="1" priority="0" showAll="1" zIndex="0">
+        <properties>
+          <Option type="Map">
+            <Option name="name" type="QString" value=""></Option>
+            <Option name="properties"></Option>
+            <Option name="type" type="QString" value="collection"></Option>
+          </Option>
+        </properties>
+      </DiagramLayerSettings>
+      <geometryOptions geometryPrecision="0" removeDuplicateNodes="0">
+        <activeChecks></activeChecks>
+        <checkConfiguration></checkConfiguration>
+      </geometryOptions>
+      <fieldConfiguration>
+        <field name="fid">
+          <editWidget type="Range">
+            <config>
+              <Option></Option>
+            </config>
+          </editWidget>
+        </field>
+        <field name="QUARTMNO">
+          <editWidget type="TextEdit">
+            <config>
+              <Option></Option>
+            </config>
+          </editWidget>
+        </field>
+        <field name="LIBQUART">
+          <editWidget type="TextEdit">
+            <config>
+              <Option></Option>
+            </config>
+          </editWidget>
+        </field>
+        <field name="url">
+          <editWidget type="TextEdit">
+            <config>
+              <Option></Option>
+            </config>
+          </editWidget>
+        </field>
+      </fieldConfiguration>
+      <aliases>
+        <alias field="fid" index="0" name=""></alias>
+        <alias field="QUARTMNO" index="1" name=""></alias>
+        <alias field="LIBQUART" index="2" name=""></alias>
+        <alias field="url" index="3" name=""></alias>
+      </aliases>
+      <excludeAttributesWMS></excludeAttributesWMS>
+      <excludeAttributesWFS></excludeAttributesWFS>
+      <defaults>
+        <default applyOnUpdate="0" expression="" field="fid"></default>
+        <default applyOnUpdate="0" expression="" field="QUARTMNO"></default>
+        <default applyOnUpdate="0" expression="" field="LIBQUART"></default>
+        <default applyOnUpdate="0" expression="" field="url"></default>
+      </defaults>
+      <constraints>
+        <constraint constraints="0" exp_strength="0" field="fid" notnull_strength="0" unique_strength="0"></constraint>
+        <constraint constraints="0" exp_strength="0" field="QUARTMNO" notnull_strength="0" unique_strength="0"></constraint>
+        <constraint constraints="0" exp_strength="0" field="LIBQUART" notnull_strength="0" unique_strength="0"></constraint>
+        <constraint constraints="0" exp_strength="0" field="url" notnull_strength="0" unique_strength="0"></constraint>
+      </constraints>
+      <constraintExpressions>
+        <constraint desc="" exp="" field="fid"></constraint>
+        <constraint desc="" exp="" field="QUARTMNO"></constraint>
+        <constraint desc="" exp="" field="LIBQUART"></constraint>
+        <constraint desc="" exp="" field="url"></constraint>
+      </constraintExpressions>
+      <expressionfields></expressionfields>
+      <attributeactions>
+        <defaultAction key="Canvas" value="{00000000-0000-0000-0000-000000000000}"></defaultAction>
+      </attributeactions>
+      <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="0">
+        <columns>
+          <column hidden="0" name="fid" type="field" width="-1"></column>
+          <column hidden="0" name="QUARTMNO" type="field" width="-1"></column>
+          <column hidden="0" name="LIBQUART" type="field" width="-1"></column>
+          <column hidden="0" name="url" type="field" width="-1"></column>
+          <column hidden="1" type="actions" width="-1"></column>
+        </columns>
+      </attributetableconfig>
+      <conditionalstyles>
+        <rowstyles></rowstyles>
+        <fieldstyles></fieldstyles>
+      </conditionalstyles>
+      <editform tolerant="1"></editform>
+      <editforminit></editforminit>
+      <editforminitcodesource>0</editforminitcodesource>
+      <editforminitfilepath></editforminitfilepath>
+      <editforminitcode># -*- coding: utf-8 -*-
+"""
+Les formulaires QGIS peuvent avoir une fonction Python qui sera appelée à l'ouverture du formulaire.
+
+Utilisez cette fonction pour ajouter plus de fonctionnalités à vos formulaires.
+
+Entrez le nom de la fonction dans le champ "Fonction d'initialisation Python".
+Voici un exemple à suivre:
+"""
+from qgis.PyQt.QtWidgets import QWidget
+
+def my_form_open(dialog, layer, feature):
+    geom = feature.geometry()
+    control = dialog.findChild(QWidget, "MyLineEdit")
+
+</editforminitcode>
+      <featformsuppress>0</featformsuppress>
+      <editorlayout>generatedlayout</editorlayout>
+      <editable>
+        <field editable="1" name="LIBQUART"></field>
+        <field editable="1" name="QUARTMNO"></field>
+        <field editable="1" name="fid"></field>
+        <field editable="1" name="url"></field>
+      </editable>
+      <labelOnTop>
+        <field labelOnTop="0" name="LIBQUART"></field>
+        <field labelOnTop="0" name="QUARTMNO"></field>
+        <field labelOnTop="0" name="fid"></field>
+        <field labelOnTop="0" name="url"></field>
+      </labelOnTop>
+      <widgets></widgets>
+      <previewExpression>fid</previewExpression>
+      <mapTip></mapTip>
+    </maplayer>
+    <maplayer autoRefreshEnabled="0" autoRefreshTime="0" geometry="Polygon" hasScaleBasedVisibilityFlag="0" labelsEnabled="0" maxScale="0" minScale="1e+8" readOnly="0" refreshOnNotifyEnabled="0" refreshOnNotifyMessage="" simplifyAlgorithm="0" simplifyDrawingHints="1" simplifyDrawingTol="1" simplifyLocal="1" simplifyMaxScale="1" styleCategories="AllStyleCategories" type="vector">
+      <extent>
+        <xmin>765145.88230000005569309</xmin>
+        <ymin>6274561.22229999955743551</ymin>
+        <xmax>776031.66700000001583248</xmax>
+        <ymax>6284189.52060000039637089</ymax>
+      </extent>
+      <id>montpellier_sub_districts_74992fb6_2dfb_4f01_a8c5_593e9e9b8546</id>
+      <datasource>./data/montpellier_sub_districts.geojson</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>montpellier_sub_districts</layername>
+      <srs>
+        <spatialrefsys>
+          <proj4>+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs</proj4>
+          <srsid>145</srsid>
+          <srid>2154</srid>
+          <authid>EPSG:2154</authid>
+          <description>RGF93 / Lambert-93</description>
+          <projectionacronym>lcc</projectionacronym>
+          <ellipsoidacronym>GRS80</ellipsoidacronym>
+          <geographicflag>false</geographicflag>
+        </spatialrefsys>
+      </srs>
+      <resourceMetadata>
+        <identifier></identifier>
+        <parentidentifier></parentidentifier>
+        <language></language>
+        <type></type>
+        <title></title>
+        <abstract></abstract>
+        <contact>
+          <name></name>
+          <organization></organization>
+          <position></position>
+          <voice></voice>
+          <fax></fax>
+          <email></email>
+          <role></role>
+        </contact>
+        <links></links>
+        <fees></fees>
+        <encoding></encoding>
+        <crs>
+          <spatialrefsys>
+            <proj4></proj4>
+            <srsid>0</srsid>
+            <srid>0</srid>
+            <authid></authid>
+            <description></description>
+            <projectionacronym></projectionacronym>
+            <ellipsoidacronym></ellipsoidacronym>
+            <geographicflag>false</geographicflag>
+          </spatialrefsys>
+        </crs>
+        <extent>
+          <spatial crs="" dimensions="2" maxx="0" maxy="0" maxz="0" minx="0" miny="0" minz="0"></spatial>
+          <temporal>
+            <period>
+              <start></start>
+              <end></end>
+            </period>
+          </temporal>
+        </extent>
+      </resourceMetadata>
+      <provider encoding="UTF-8">ogr</provider>
+      <vectorjoins></vectorjoins>
+      <layerDependencies></layerDependencies>
+      <dataDependencies></dataDependencies>
+      <legend type="default-vector"></legend>
+      <expressionfields></expressionfields>
+      <map-layer-style-manager current="défaut">
+        <map-layer-style name="défaut"></map-layer-style>
+      </map-layer-style-manager>
+      <auxiliaryLayer></auxiliaryLayer>
+      <flags>
+        <Identifiable>1</Identifiable>
+        <Removable>1</Removable>
+        <Searchable>1</Searchable>
+      </flags>
+      <renderer-v2 enableorderby="0" forceraster="0" symbollevels="0" type="singleSymbol">
+        <symbols>
+          <symbol alpha="1" clip_to_extent="1" force_rhr="0" name="0" type="fill">
+            <layer class="SimpleFill" enabled="1" locked="0" pass="0">
+              <prop k="border_width_map_unit_scale" v="3x:0,0,0,0,0,0"></prop>
+              <prop k="color" v="196,60,57,255"></prop>
+              <prop k="joinstyle" v="bevel"></prop>
+              <prop k="offset" v="0,0"></prop>
+              <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"></prop>
+              <prop k="offset_unit" v="MM"></prop>
+              <prop k="outline_color" v="196,60,57,255"></prop>
+              <prop k="outline_style" v="solid"></prop>
+              <prop k="outline_width" v="0.26"></prop>
+              <prop k="outline_width_unit" v="MM"></prop>
+              <prop k="style" v="no"></prop>
+              <data_defined_properties>
+                <Option type="Map">
+                  <Option name="name" type="QString" value=""></Option>
+                  <Option name="properties"></Option>
+                  <Option name="type" type="QString" value="collection"></Option>
+                </Option>
+              </data_defined_properties>
+            </layer>
+          </symbol>
+        </symbols>
+        <rotation></rotation>
+        <sizescale></sizescale>
+      </renderer-v2>
+      <customproperties>
+        <property key="embeddedWidgets/count" value="0"></property>
+        <property key="variableNames"></property>
+        <property key="variableValues"></property>
+      </customproperties>
+      <blendMode>0</blendMode>
+      <featureBlendMode>0</featureBlendMode>
+      <layerOpacity>1</layerOpacity>
+      <SingleCategoryDiagramRenderer attributeLegend="1" diagramType="Histogram">
+        <DiagramCategory backgroundAlpha="255" backgroundColor="#ffffff" barWidth="5" diagramOrientation="Up" enabled="0" height="15" labelPlacementMethod="XHeight" lineSizeScale="3x:0,0,0,0,0,0" lineSizeType="MM" maxScaleDenominator="1e+8" minScaleDenominator="0" minimumSize="0" opacity="1" penAlpha="255" penColor="#000000" penWidth="0" rotationOffset="270" scaleBasedVisibility="0" scaleDependency="Area" sizeScale="3x:0,0,0,0,0,0" sizeType="MM" width="15">
+          <fontProperties description="Ubuntu,11,-1,5,50,0,0,0,0,0" style=""></fontProperties>
+        </DiagramCategory>
+      </SingleCategoryDiagramRenderer>
+      <DiagramLayerSettings dist="0" linePlacementFlags="18" obstacle="0" placement="1" priority="0" showAll="1" zIndex="0">
+        <properties>
+          <Option type="Map">
+            <Option name="name" type="QString" value=""></Option>
+            <Option name="properties"></Option>
+            <Option name="type" type="QString" value="collection"></Option>
+          </Option>
+        </properties>
+      </DiagramLayerSettings>
+      <geometryOptions geometryPrecision="0" removeDuplicateNodes="0">
+        <activeChecks></activeChecks>
+        <checkConfiguration></checkConfiguration>
+      </geometryOptions>
+      <fieldConfiguration>
+        <field name="QUARTMNO">
+          <editWidget type="TextEdit">
+            <config>
+              <Option></Option>
+            </config>
+          </editWidget>
+        </field>
+        <field name="SQUARTMNO">
+          <editWidget type="TextEdit">
+            <config>
+              <Option></Option>
+            </config>
+          </editWidget>
+        </field>
+        <field name="LIBSQUART">
+          <editWidget type="TextEdit">
+            <config>
+              <Option></Option>
+            </config>
+          </editWidget>
+        </field>
+      </fieldConfiguration>
+      <aliases>
+        <alias field="QUARTMNO" index="0" name=""></alias>
+        <alias field="SQUARTMNO" index="1" name=""></alias>
+        <alias field="LIBSQUART" index="2" name=""></alias>
+      </aliases>
+      <excludeAttributesWMS></excludeAttributesWMS>
+      <excludeAttributesWFS></excludeAttributesWFS>
+      <defaults>
+        <default applyOnUpdate="0" expression="" field="QUARTMNO"></default>
+        <default applyOnUpdate="0" expression="" field="SQUARTMNO"></default>
+        <default applyOnUpdate="0" expression="" field="LIBSQUART"></default>
+      </defaults>
+      <constraints>
+        <constraint constraints="0" exp_strength="0" field="QUARTMNO" notnull_strength="0" unique_strength="0"></constraint>
+        <constraint constraints="0" exp_strength="0" field="SQUARTMNO" notnull_strength="0" unique_strength="0"></constraint>
+        <constraint constraints="0" exp_strength="0" field="LIBSQUART" notnull_strength="0" unique_strength="0"></constraint>
+      </constraints>
+      <constraintExpressions>
+        <constraint desc="" exp="" field="QUARTMNO"></constraint>
+        <constraint desc="" exp="" field="SQUARTMNO"></constraint>
+        <constraint desc="" exp="" field="LIBSQUART"></constraint>
+      </constraintExpressions>
+      <expressionfields></expressionfields>
+      <attributeactions>
+        <defaultAction key="Canvas" value="{00000000-0000-0000-0000-000000000000}"></defaultAction>
+      </attributeactions>
+      <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="0">
+        <columns>
+          <column hidden="0" name="QUARTMNO" type="field" width="-1"></column>
+          <column hidden="0" name="SQUARTMNO" type="field" width="-1"></column>
+          <column hidden="0" name="LIBSQUART" type="field" width="-1"></column>
+          <column hidden="1" type="actions" width="-1"></column>
+        </columns>
+      </attributetableconfig>
+      <conditionalstyles>
+        <rowstyles></rowstyles>
+        <fieldstyles></fieldstyles>
+      </conditionalstyles>
+      <editform tolerant="1"></editform>
+      <editforminit></editforminit>
+      <editforminitcodesource>0</editforminitcodesource>
+      <editforminitfilepath></editforminitfilepath>
+      <editforminitcode># -*- coding: utf-8 -*-
+"""
+Les formulaires QGIS peuvent avoir une fonction Python qui sera appelée à l'ouverture du formulaire.
+
+Utilisez cette fonction pour ajouter plus de fonctionnalités à vos formulaires.
+
+Entrez le nom de la fonction dans le champ "Fonction d'initialisation Python".
+Voici un exemple à suivre:
+"""
+from qgis.PyQt.QtWidgets import QWidget
+
+def my_form_open(dialog, layer, feature):
+    geom = feature.geometry()
+    control = dialog.findChild(QWidget, "MyLineEdit")
+
+</editforminitcode>
+      <featformsuppress>0</featformsuppress>
+      <editorlayout>generatedlayout</editorlayout>
+      <editable>
+        <field editable="1" name="LIBSQUART"></field>
+        <field editable="1" name="QUARTMNO"></field>
+        <field editable="1" name="SQUARTMNO"></field>
+      </editable>
+      <labelOnTop>
+        <field labelOnTop="0" name="LIBSQUART"></field>
+        <field labelOnTop="0" name="QUARTMNO"></field>
+        <field labelOnTop="0" name="SQUARTMNO"></field>
+      </labelOnTop>
+      <widgets></widgets>
+      <previewExpression>QUARTMNO</previewExpression>
+      <mapTip></mapTip>
+    </maplayer>
+    <maplayer autoRefreshEnabled="0" autoRefreshTime="0" geometry="Point" hasScaleBasedVisibilityFlag="0" labelsEnabled="0" maxScale="0" minScale="1e+8" readOnly="0" refreshOnNotifyEnabled="0" refreshOnNotifyMessage="" simplifyAlgorithm="0" simplifyDrawingHints="0" simplifyDrawingTol="1" simplifyLocal="1" simplifyMaxScale="1" styleCategories="AllStyleCategories" type="vector">
+      <extent>
+        <xmin>765578.82999999995809048</xmin>
+        <ymin>6275998.04999999981373549</ymin>
+        <xmax>775350.7900000000372529</xmax>
+        <ymax>6283553.33000000007450581</ymax>
+      </extent>
+      <id>pluviometers_cba7ffdb_07e2_4aa7_9ff5_7a2b67959d36</id>
+      <datasource>./data/pluviometers.geojson</datasource>
+      <keywordList>
+        <value></value>
+      </keywordList>
+      <layername>pluviometers</layername>
       <srs>
         <spatialrefsys>
           <proj4>+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs</proj4>
@@ -166,20 +723,20 @@
           <symbol alpha="1" clip_to_extent="1" force_rhr="0" name="0" type="marker">
             <layer class="SimpleMarker" enabled="1" locked="0" pass="0">
               <prop k="angle" v="0"></prop>
-              <prop k="color" v="255,100,105,255"></prop>
+              <prop k="color" v="72,123,182,255"></prop>
               <prop k="horizontal_anchor_point" v="1"></prop>
               <prop k="joinstyle" v="bevel"></prop>
-              <prop k="name" v="square"></prop>
+              <prop k="name" v="circle"></prop>
               <prop k="offset" v="0,0"></prop>
               <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"></prop>
               <prop k="offset_unit" v="MM"></prop>
-              <prop k="outline_color" v="35,35,35,255"></prop>
+              <prop k="outline_color" v="50,87,128,255"></prop>
               <prop k="outline_style" v="solid"></prop>
-              <prop k="outline_width" v="0"></prop>
+              <prop k="outline_width" v="0.4"></prop>
               <prop k="outline_width_map_unit_scale" v="3x:0,0,0,0,0,0"></prop>
               <prop k="outline_width_unit" v="MM"></prop>
               <prop k="scale_method" v="diameter"></prop>
-              <prop k="size" v="3"></prop>
+              <prop k="size" v="4"></prop>
               <prop k="size_map_unit_scale" v="3x:0,0,0,0,0,0"></prop>
               <prop k="size_unit" v="MM"></prop>
               <prop k="vertical_anchor_point" v="1"></prop>
@@ -223,64 +780,15 @@
         <checkConfiguration></checkConfiguration>
       </geometryOptions>
       <fieldConfiguration>
-        <field name="fid">
-          <editWidget type="TextEdit">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
         <field name="id">
-          <editWidget type="TextEdit">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
-        <field name="code_pluvio">
-          <editWidget type="TextEdit">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
-        <field name="lieu_dit_station">
-          <editWidget type="TextEdit">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
-        <field name="pluviometrie_journaliere">
           <editWidget type="Range">
             <config>
               <Option></Option>
             </config>
           </editWidget>
         </field>
-        <field name="sup_seuil">
-          <editWidget type="Range">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
-        <field name="batterie">
+        <field name="nom">
           <editWidget type="TextEdit">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
-        <field name="date">
-          <editWidget type="DateTime">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
-        <field name="age">
-          <editWidget type="Range">
             <config>
               <Option></Option>
             </config>
@@ -288,50 +796,22 @@
         </field>
       </fieldConfiguration>
       <aliases>
-        <alias field="fid" index="0" name=""></alias>
-        <alias field="id" index="1" name=""></alias>
-        <alias field="code_pluvio" index="2" name=""></alias>
-        <alias field="lieu_dit_station" index="3" name=""></alias>
-        <alias field="pluviometrie_journaliere" index="4" name=""></alias>
-        <alias field="sup_seuil" index="5" name=""></alias>
-        <alias field="batterie" index="6" name=""></alias>
-        <alias field="date" index="7" name=""></alias>
-        <alias field="age" index="8" name=""></alias>
+        <alias field="id" index="0" name=""></alias>
+        <alias field="nom" index="1" name=""></alias>
       </aliases>
       <excludeAttributesWMS></excludeAttributesWMS>
       <excludeAttributesWFS></excludeAttributesWFS>
       <defaults>
-        <default applyOnUpdate="0" expression="" field="fid"></default>
         <default applyOnUpdate="0" expression="" field="id"></default>
-        <default applyOnUpdate="0" expression="" field="code_pluvio"></default>
-        <default applyOnUpdate="0" expression="" field="lieu_dit_station"></default>
-        <default applyOnUpdate="0" expression="" field="pluviometrie_journaliere"></default>
-        <default applyOnUpdate="0" expression="" field="sup_seuil"></default>
-        <default applyOnUpdate="0" expression="" field="batterie"></default>
-        <default applyOnUpdate="0" expression="" field="date"></default>
-        <default applyOnUpdate="0" expression="" field="age"></default>
+        <default applyOnUpdate="0" expression="" field="nom"></default>
       </defaults>
       <constraints>
-        <constraint constraints="3" exp_strength="0" field="fid" notnull_strength="1" unique_strength="1"></constraint>
         <constraint constraints="0" exp_strength="0" field="id" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="code_pluvio" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="lieu_dit_station" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="pluviometrie_journaliere" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="sup_seuil" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="batterie" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="date" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="age" notnull_strength="0" unique_strength="0"></constraint>
+        <constraint constraints="0" exp_strength="0" field="nom" notnull_strength="0" unique_strength="0"></constraint>
       </constraints>
       <constraintExpressions>
-        <constraint desc="" exp="" field="fid"></constraint>
         <constraint desc="" exp="" field="id"></constraint>
-        <constraint desc="" exp="" field="code_pluvio"></constraint>
-        <constraint desc="" exp="" field="lieu_dit_station"></constraint>
-        <constraint desc="" exp="" field="pluviometrie_journaliere"></constraint>
-        <constraint desc="" exp="" field="sup_seuil"></constraint>
-        <constraint desc="" exp="" field="batterie"></constraint>
-        <constraint desc="" exp="" field="date"></constraint>
-        <constraint desc="" exp="" field="age"></constraint>
+        <constraint desc="" exp="" field="nom"></constraint>
       </constraintExpressions>
       <expressionfields></expressionfields>
       <attributeactions>
@@ -339,15 +819,8 @@
       </attributeactions>
       <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="0">
         <columns>
-          <column hidden="0" name="fid" type="field" width="-1"></column>
           <column hidden="0" name="id" type="field" width="-1"></column>
-          <column hidden="0" name="code_pluvio" type="field" width="-1"></column>
-          <column hidden="0" name="lieu_dit_station" type="field" width="-1"></column>
-          <column hidden="0" name="pluviometrie_journaliere" type="field" width="-1"></column>
-          <column hidden="0" name="sup_seuil" type="field" width="-1"></column>
-          <column hidden="0" name="batterie" type="field" width="-1"></column>
-          <column hidden="0" name="date" type="field" width="-1"></column>
-          <column hidden="0" name="age" type="field" width="-1"></column>
+          <column hidden="0" name="nom" type="field" width="-1"></column>
           <column hidden="1" type="actions" width="-1"></column>
         </columns>
       </attributetableconfig>
@@ -378,435 +851,22 @@ def my_form_open(dialog, layer, feature):
       <featformsuppress>0</featformsuppress>
       <editorlayout>generatedlayout</editorlayout>
       <editable>
-        <field editable="1" name="age"></field>
-        <field editable="1" name="batterie"></field>
-        <field editable="1" name="code_pluvio"></field>
-        <field editable="1" name="date"></field>
-        <field editable="1" name="fid"></field>
         <field editable="1" name="id"></field>
-        <field editable="1" name="lieu_dit_station"></field>
-        <field editable="1" name="pluviometrie_journaliere"></field>
-        <field editable="1" name="sup_seuil"></field>
+        <field editable="1" name="nom"></field>
       </editable>
       <labelOnTop>
-        <field labelOnTop="0" name="age"></field>
-        <field labelOnTop="0" name="batterie"></field>
-        <field labelOnTop="0" name="code_pluvio"></field>
-        <field labelOnTop="0" name="date"></field>
-        <field labelOnTop="0" name="fid"></field>
         <field labelOnTop="0" name="id"></field>
-        <field labelOnTop="0" name="lieu_dit_station"></field>
-        <field labelOnTop="0" name="pluviometrie_journaliere"></field>
-        <field labelOnTop="0" name="sup_seuil"></field>
+        <field labelOnTop="0" name="nom"></field>
       </labelOnTop>
       <widgets></widgets>
-      <previewExpression>fid</previewExpression>
-      <mapTip></mapTip>
-    </maplayer>
-    <maplayer autoRefreshEnabled="0" autoRefreshTime="0" geometry="Polygon" hasScaleBasedVisibilityFlag="0" labelsEnabled="0" maxScale="0" minScale="1e+8" readOnly="0" refreshOnNotifyEnabled="0" refreshOnNotifyMessage="" simplifyAlgorithm="0" simplifyDrawingHints="1" simplifyDrawingTol="1" simplifyLocal="1" simplifyMaxScale="1" styleCategories="AllStyleCategories" type="vector">
-      <extent>
-        <xmin>-5.14223861694335849</xmin>
-        <ymin>47.27779006958007813</ymin>
-        <xmax>-1.01568984985351518</xmax>
-        <ymax>48.8845367431640625</ymax>
-      </extent>
-      <id>data_rp_struct_pop_evolution_geom_rb_rp_struct_pop_evolution_geom_f218c182_2118_4321_bd8a_b46458666f29</id>
-      <datasource>./data.gpkg|layername=rp_struct_pop_evolution_geom rb:rp_struct_pop_evolution_geom</datasource>
-      <keywordList>
-        <value></value>
-      </keywordList>
-      <layername>data rp_struct_pop_evolution_geom rb:rp_struct_pop_evolution_geom</layername>
-      <srs>
-        <spatialrefsys>
-          <proj4>+proj=longlat +datum=WGS84 +no_defs</proj4>
-          <srsid>3452</srsid>
-          <srid>4326</srid>
-          <authid>EPSG:4326</authid>
-          <description>WGS 84</description>
-          <projectionacronym>longlat</projectionacronym>
-          <ellipsoidacronym>WGS84</ellipsoidacronym>
-          <geographicflag>true</geographicflag>
-        </spatialrefsys>
-      </srs>
-      <resourceMetadata>
-        <identifier></identifier>
-        <parentidentifier></parentidentifier>
-        <language></language>
-        <type></type>
-        <title></title>
-        <abstract></abstract>
-        <contact>
-          <name></name>
-          <organization></organization>
-          <position></position>
-          <voice></voice>
-          <fax></fax>
-          <email></email>
-          <role></role>
-        </contact>
-        <links></links>
-        <fees></fees>
-        <encoding></encoding>
-        <crs>
-          <spatialrefsys>
-            <proj4></proj4>
-            <srsid>0</srsid>
-            <srid>0</srid>
-            <authid></authid>
-            <description></description>
-            <projectionacronym></projectionacronym>
-            <ellipsoidacronym></ellipsoidacronym>
-            <geographicflag>false</geographicflag>
-          </spatialrefsys>
-        </crs>
-        <extent>
-          <spatial crs="" dimensions="2" maxx="0" maxy="0" maxz="0" minx="0" miny="0" minz="0"></spatial>
-          <temporal>
-            <period>
-              <start></start>
-              <end></end>
-            </period>
-          </temporal>
-        </extent>
-      </resourceMetadata>
-      <provider encoding="UTF-8">ogr</provider>
-      <vectorjoins></vectorjoins>
-      <layerDependencies></layerDependencies>
-      <dataDependencies></dataDependencies>
-      <legend type="default-vector"></legend>
-      <expressionfields></expressionfields>
-      <map-layer-style-manager current="défaut">
-        <map-layer-style name="défaut"></map-layer-style>
-      </map-layer-style-manager>
-      <auxiliaryLayer></auxiliaryLayer>
-      <flags>
-        <Identifiable>1</Identifiable>
-        <Removable>1</Removable>
-        <Searchable>1</Searchable>
-      </flags>
-      <renderer-v2 enableorderby="0" forceraster="0" symbollevels="0" type="singleSymbol">
-        <symbols>
-          <symbol alpha="1" clip_to_extent="1" force_rhr="0" name="0" type="fill">
-            <layer class="SimpleFill" enabled="1" locked="0" pass="0">
-              <prop k="border_width_map_unit_scale" v="3x:0,0,0,0,0,0"></prop>
-              <prop k="color" v="87,159,231,152"></prop>
-              <prop k="joinstyle" v="bevel"></prop>
-              <prop k="offset" v="0,0"></prop>
-              <prop k="offset_map_unit_scale" v="3x:0,0,0,0,0,0"></prop>
-              <prop k="offset_unit" v="MM"></prop>
-              <prop k="outline_color" v="35,35,35,255"></prop>
-              <prop k="outline_style" v="solid"></prop>
-              <prop k="outline_width" v="0.26"></prop>
-              <prop k="outline_width_unit" v="MM"></prop>
-              <prop k="style" v="solid"></prop>
-              <data_defined_properties>
-                <Option type="Map">
-                  <Option name="name" type="QString" value=""></Option>
-                  <Option name="properties"></Option>
-                  <Option name="type" type="QString" value="collection"></Option>
-                </Option>
-              </data_defined_properties>
-            </layer>
-          </symbol>
-        </symbols>
-        <rotation></rotation>
-        <sizescale></sizescale>
-      </renderer-v2>
-      <customproperties>
-        <property key="embeddedWidgets/count" value="0"></property>
-        <property key="variableNames"></property>
-        <property key="variableValues"></property>
-      </customproperties>
-      <blendMode>0</blendMode>
-      <featureBlendMode>0</featureBlendMode>
-      <layerOpacity>1</layerOpacity>
-      <SingleCategoryDiagramRenderer attributeLegend="1" diagramType="Histogram">
-        <DiagramCategory backgroundAlpha="255" backgroundColor="#ffffff" barWidth="5" diagramOrientation="Up" enabled="0" height="15" labelPlacementMethod="XHeight" lineSizeScale="3x:0,0,0,0,0,0" lineSizeType="MM" maxScaleDenominator="1e+8" minScaleDenominator="0" minimumSize="0" opacity="1" penAlpha="255" penColor="#000000" penWidth="0" rotationOffset="270" scaleBasedVisibility="0" scaleDependency="Area" sizeScale="3x:0,0,0,0,0,0" sizeType="MM" width="15">
-          <fontProperties description="Ubuntu,11,-1,5,50,0,0,0,0,0" style=""></fontProperties>
-        </DiagramCategory>
-      </SingleCategoryDiagramRenderer>
-      <DiagramLayerSettings dist="0" linePlacementFlags="18" obstacle="0" placement="1" priority="0" showAll="1" zIndex="0">
-        <properties>
-          <Option type="Map">
-            <Option name="name" type="QString" value=""></Option>
-            <Option name="properties"></Option>
-            <Option name="type" type="QString" value="collection"></Option>
-          </Option>
-        </properties>
-      </DiagramLayerSettings>
-      <geometryOptions geometryPrecision="0" removeDuplicateNodes="0">
-        <activeChecks></activeChecks>
-        <checkConfiguration></checkConfiguration>
-      </geometryOptions>
-      <fieldConfiguration>
-        <field name="fid">
-          <editWidget type="TextEdit">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
-        <field name="gml_id">
-          <editWidget type="TextEdit">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
-        <field name="code_geo">
-          <editWidget type="TextEdit">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
-        <field name="nom_geo">
-          <editWidget type="TextEdit">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
-        <field name="level">
-          <editWidget type="TextEdit">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
-        <field name="p_pop1999">
-          <editWidget type="TextEdit">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
-        <field name="p_pop2008">
-          <editWidget type="TextEdit">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
-        <field name="p_pop2009">
-          <editWidget type="TextEdit">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
-        <field name="p_pop2010">
-          <editWidget type="TextEdit">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
-        <field name="p_pop2013">
-          <editWidget type="TextEdit">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
-        <field name="p_pop2014">
-          <editWidget type="TextEdit">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
-        <field name="p_pop2015">
-          <editWidget type="TextEdit">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
-        <field name="ev_08_13">
-          <editWidget type="TextEdit">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
-        <field name="ev_09_14">
-          <editWidget type="TextEdit">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
-        <field name="ev_10_15">
-          <editWidget type="TextEdit">
-            <config>
-              <Option></Option>
-            </config>
-          </editWidget>
-        </field>
-      </fieldConfiguration>
-      <aliases>
-        <alias field="fid" index="0" name=""></alias>
-        <alias field="gml_id" index="1" name=""></alias>
-        <alias field="code_geo" index="2" name=""></alias>
-        <alias field="nom_geo" index="3" name=""></alias>
-        <alias field="level" index="4" name=""></alias>
-        <alias field="p_pop1999" index="5" name=""></alias>
-        <alias field="p_pop2008" index="6" name=""></alias>
-        <alias field="p_pop2009" index="7" name=""></alias>
-        <alias field="p_pop2010" index="8" name=""></alias>
-        <alias field="p_pop2013" index="9" name=""></alias>
-        <alias field="p_pop2014" index="10" name=""></alias>
-        <alias field="p_pop2015" index="11" name=""></alias>
-        <alias field="ev_08_13" index="12" name=""></alias>
-        <alias field="ev_09_14" index="13" name=""></alias>
-        <alias field="ev_10_15" index="14" name=""></alias>
-      </aliases>
-      <excludeAttributesWMS></excludeAttributesWMS>
-      <excludeAttributesWFS></excludeAttributesWFS>
-      <defaults>
-        <default applyOnUpdate="0" expression="" field="fid"></default>
-        <default applyOnUpdate="0" expression="" field="gml_id"></default>
-        <default applyOnUpdate="0" expression="" field="code_geo"></default>
-        <default applyOnUpdate="0" expression="" field="nom_geo"></default>
-        <default applyOnUpdate="0" expression="" field="level"></default>
-        <default applyOnUpdate="0" expression="" field="p_pop1999"></default>
-        <default applyOnUpdate="0" expression="" field="p_pop2008"></default>
-        <default applyOnUpdate="0" expression="" field="p_pop2009"></default>
-        <default applyOnUpdate="0" expression="" field="p_pop2010"></default>
-        <default applyOnUpdate="0" expression="" field="p_pop2013"></default>
-        <default applyOnUpdate="0" expression="" field="p_pop2014"></default>
-        <default applyOnUpdate="0" expression="" field="p_pop2015"></default>
-        <default applyOnUpdate="0" expression="" field="ev_08_13"></default>
-        <default applyOnUpdate="0" expression="" field="ev_09_14"></default>
-        <default applyOnUpdate="0" expression="" field="ev_10_15"></default>
-      </defaults>
-      <constraints>
-        <constraint constraints="3" exp_strength="0" field="fid" notnull_strength="1" unique_strength="1"></constraint>
-        <constraint constraints="0" exp_strength="0" field="gml_id" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="code_geo" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="nom_geo" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="level" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="p_pop1999" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="p_pop2008" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="p_pop2009" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="p_pop2010" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="p_pop2013" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="p_pop2014" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="p_pop2015" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="ev_08_13" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="ev_09_14" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="ev_10_15" notnull_strength="0" unique_strength="0"></constraint>
-      </constraints>
-      <constraintExpressions>
-        <constraint desc="" exp="" field="fid"></constraint>
-        <constraint desc="" exp="" field="gml_id"></constraint>
-        <constraint desc="" exp="" field="code_geo"></constraint>
-        <constraint desc="" exp="" field="nom_geo"></constraint>
-        <constraint desc="" exp="" field="level"></constraint>
-        <constraint desc="" exp="" field="p_pop1999"></constraint>
-        <constraint desc="" exp="" field="p_pop2008"></constraint>
-        <constraint desc="" exp="" field="p_pop2009"></constraint>
-        <constraint desc="" exp="" field="p_pop2010"></constraint>
-        <constraint desc="" exp="" field="p_pop2013"></constraint>
-        <constraint desc="" exp="" field="p_pop2014"></constraint>
-        <constraint desc="" exp="" field="p_pop2015"></constraint>
-        <constraint desc="" exp="" field="ev_08_13"></constraint>
-        <constraint desc="" exp="" field="ev_09_14"></constraint>
-        <constraint desc="" exp="" field="ev_10_15"></constraint>
-      </constraintExpressions>
-      <expressionfields></expressionfields>
-      <attributeactions>
-        <defaultAction key="Canvas" value="{00000000-0000-0000-0000-000000000000}"></defaultAction>
-      </attributeactions>
-      <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="0">
-        <columns>
-          <column hidden="0" name="fid" type="field" width="-1"></column>
-          <column hidden="0" name="gml_id" type="field" width="-1"></column>
-          <column hidden="0" name="code_geo" type="field" width="-1"></column>
-          <column hidden="0" name="nom_geo" type="field" width="-1"></column>
-          <column hidden="0" name="level" type="field" width="-1"></column>
-          <column hidden="0" name="p_pop1999" type="field" width="-1"></column>
-          <column hidden="0" name="p_pop2008" type="field" width="-1"></column>
-          <column hidden="0" name="p_pop2009" type="field" width="-1"></column>
-          <column hidden="0" name="p_pop2010" type="field" width="-1"></column>
-          <column hidden="0" name="p_pop2013" type="field" width="-1"></column>
-          <column hidden="0" name="p_pop2014" type="field" width="-1"></column>
-          <column hidden="0" name="p_pop2015" type="field" width="-1"></column>
-          <column hidden="0" name="ev_08_13" type="field" width="-1"></column>
-          <column hidden="0" name="ev_09_14" type="field" width="-1"></column>
-          <column hidden="0" name="ev_10_15" type="field" width="-1"></column>
-          <column hidden="1" type="actions" width="-1"></column>
-        </columns>
-      </attributetableconfig>
-      <conditionalstyles>
-        <rowstyles></rowstyles>
-        <fieldstyles></fieldstyles>
-      </conditionalstyles>
-      <editform tolerant="1"></editform>
-      <editforminit></editforminit>
-      <editforminitcodesource>0</editforminitcodesource>
-      <editforminitfilepath></editforminitfilepath>
-      <editforminitcode># -*- coding: utf-8 -*-
-"""
-Les formulaires QGIS peuvent avoir une fonction Python qui sera appelée à l'ouverture du formulaire.
-
-Utilisez cette fonction pour ajouter plus de fonctionnalités à vos formulaires.
-
-Entrez le nom de la fonction dans le champ "Fonction d'initialisation Python".
-Voici un exemple à suivre:
-"""
-from qgis.PyQt.QtWidgets import QWidget
-
-def my_form_open(dialog, layer, feature):
-    geom = feature.geometry()
-    control = dialog.findChild(QWidget, "MyLineEdit")
-
-</editforminitcode>
-      <featformsuppress>0</featformsuppress>
-      <editorlayout>generatedlayout</editorlayout>
-      <editable>
-        <field editable="1" name="code_geo"></field>
-        <field editable="1" name="ev_08_13"></field>
-        <field editable="1" name="ev_09_14"></field>
-        <field editable="1" name="ev_10_15"></field>
-        <field editable="1" name="fid"></field>
-        <field editable="1" name="gml_id"></field>
-        <field editable="1" name="level"></field>
-        <field editable="1" name="nom_geo"></field>
-        <field editable="1" name="p_pop1999"></field>
-        <field editable="1" name="p_pop2008"></field>
-        <field editable="1" name="p_pop2009"></field>
-        <field editable="1" name="p_pop2010"></field>
-        <field editable="1" name="p_pop2013"></field>
-        <field editable="1" name="p_pop2014"></field>
-        <field editable="1" name="p_pop2015"></field>
-      </editable>
-      <labelOnTop>
-        <field labelOnTop="0" name="code_geo"></field>
-        <field labelOnTop="0" name="ev_08_13"></field>
-        <field labelOnTop="0" name="ev_09_14"></field>
-        <field labelOnTop="0" name="ev_10_15"></field>
-        <field labelOnTop="0" name="fid"></field>
-        <field labelOnTop="0" name="gml_id"></field>
-        <field labelOnTop="0" name="level"></field>
-        <field labelOnTop="0" name="nom_geo"></field>
-        <field labelOnTop="0" name="p_pop1999"></field>
-        <field labelOnTop="0" name="p_pop2008"></field>
-        <field labelOnTop="0" name="p_pop2009"></field>
-        <field labelOnTop="0" name="p_pop2010"></field>
-        <field labelOnTop="0" name="p_pop2013"></field>
-        <field labelOnTop="0" name="p_pop2014"></field>
-        <field labelOnTop="0" name="p_pop2015"></field>
-      </labelOnTop>
-      <widgets></widgets>
-      <previewExpression>fid</previewExpression>
+      <previewExpression>id</previewExpression>
       <mapTip></mapTip>
     </maplayer>
   </projectlayers>
   <layerorder>
-    <layer id="data_pluviometrie_stations_technique_20de0200_113f_4694_b830_61bd9fefc1c8"></layer>
-    <layer id="data_rp_struct_pop_evolution_geom_rb_rp_struct_pop_evolution_geom_f218c182_2118_4321_bd8a_b46458666f29"></layer>
+    <layer id="montpellier_districts_ce998572_8ca4_4701_8e70_f7c97bdfef7a"></layer>
+    <layer id="montpellier_sub_districts_74992fb6_2dfb_4f01_a8c5_593e9e9b8546"></layer>
+    <layer id="pluviometers_cba7ffdb_07e2_4aa7_9ff5_7a2b67959d36"></layer>
   </layerorder>
   <properties>
     <WCSLayers type="QStringList"></WCSLayers>

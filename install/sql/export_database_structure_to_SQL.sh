@@ -17,7 +17,7 @@ if [ -n "$2" ]; then
   SCHEMA=$2
 else
   echo "# DEFAULT SCHEMA: test";
-  SCHEMA="test"
+  SCHEMA="lizsync"
 fi
 echo ""
 
