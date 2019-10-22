@@ -17,7 +17,7 @@ SET client_min_messages = warning;
 SET row_security = off;
 
 -- add_uid_columns(text, text)
-CREATE FUNCTION lizsync.add_uid_columns(p_schema_name text, p_table_name text) RETURNS void
+CREATE FUNCTION lizsync.add_uid_columns(p_schema_name text, p_table_name text) RETURNS boolean
     LANGUAGE plpgsql
     AS $$
 DECLARE
@@ -33,8 +33,10 @@ BEGIN
         );
         execute query;
         RAISE NOTICE 'uid column created for % %', quote_ident(p_schema_name), quote_ident(p_table_name);
+        RETURN True;
     EXCEPTION WHEN OTHERS THEN
         RAISE NOTICE 'ERROR - uid column already exists';
+        RETURN False;
     END;
 
 END;
