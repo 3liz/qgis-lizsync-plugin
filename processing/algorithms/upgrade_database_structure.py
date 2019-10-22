@@ -69,7 +69,6 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
         with some other properties.
         """
         # INPUTS
-
         self.addParameter(
             QgsProcessingParameterBoolean(
                 self.RUNIT,
@@ -259,5 +258,5 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
 
         return {
             self.OUTPUT_STATUS: 1,
-            self.OUTPUT_STRING: self.tr('*** LIZSYNC STRUCTURE HAS BEEN SUCCESSFULLY UPGRADED ***')
+            self.OUTPUT_STRING: self.tr('Lizsync database structure has been successfully upgraded.')
         }

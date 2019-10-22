@@ -40,7 +40,8 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
     # used when calling the algorithm from another algorithm, or when
     # calling from the QGIS console.
 
-    OVERRIDE = 'OVERRIDE'
+    OVERRIDE_AUDIT = 'OVERRIDE_AUDIT'
+    OVERRIDE_LIZSYNC = 'OVERRIDE_LIZSYNC'
     NOM = 'NOM'
     SIREN = 'SIREN'
     CODE = 'CODE'
@@ -73,8 +74,16 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         # INPUTS
         self.addParameter(
             QgsProcessingParameterBoolean(
-                self.OVERRIDE,
-                self.tr('DROP lizsync schema and all data ? ** CAUTION **'),
+                self.OVERRIDE_AUDIT,
+                self.tr('Drop audit schema and all data ?'),
+                defaultValue=False,
+                optional=False
+            )
+        )
+        self.addParameter(
+            QgsProcessingParameterBoolean(
+                self.OVERRIDE_LIZSYNC,
+                self.tr('Drop lizsync schema and all data ?'),
                 defaultValue=False,
                 optional=False
             )
@@ -97,7 +106,7 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
     def checkParameterValues(self, parameters, context):
 
         # Check that the connection name has been configured
-        connection_name = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name')
+        connection_name = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
         if not connection_name:
             return False, self.tr('You must use the "Configure Lizsync plugin" alg to set the database connection name')
 
@@ -107,68 +116,87 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         if connection_name not in connections:
             return False, self.tr('The configured connection name does not exists in QGIS')
 
-        # Check database content
-        ok, msg = self.checkSchema(parameters, context)
+        # Check audit schema
+        ok, msg = self.checkSchema('audit', parameters, context)
+        if not ok:
+            return False, msg
+
+        # Check audit schema
+        ok, msg = self.checkSchema('lizsync', parameters, context)
         if not ok:
             return False, msg
 
         return super(CreateDatabaseStructure, self).checkParameterValues(parameters, context)
 
-    def checkSchema(self, parameters, context):
+    def checkSchema(self, schema_name, parameters, context):
         sql = '''
             SELECT schema_name
             FROM information_schema.schemata
-            WHERE schema_name = 'lizsync';
-        '''
-        connection_name = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name')
+            WHERE schema_name = '{0}'
+        '''.format(
+            schema_name
+        )
+        connection_name = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
         [header, data, rowCount, ok, error_message] = fetchDataFromSqlQuery(
             connection_name,
             sql
         )
         if not ok:
             return ok, error_message
-        override = parameters[self.OVERRIDE]
-        msg = self.tr('Schema lizsync does not exists. Continue...')
+        if schema_name == 'audit':
+            override = parameters[self.OVERRIDE_AUDIT]
+        if schema_name == 'lizsync':
+            override = parameters[self.OVERRIDE_LIZSYNC]
+        msg = schema_name.upper() + ' - ' + self.tr('Schema does not exists. Continue')
         for a in data:
             schema = a[0]
-            if schema == 'lizsync' and not override:
+            if schema == schema_name and not override:
                 ok = False
-                msg = self.tr("Schema lizsync already exists in database ! If you REALLY want to drop and recreate it (and loose all data), check the *Overwrite* checkbox")
+                msg = schema_name.upper() + ' - '
+                msg+= self.tr("Schema already exists in database ! If you REALLY want to drop and recreate it (and loose all data), check the *Overwrite* checkbox")
         return ok, msg
 
     def processAlgorithm(self, parameters, context, feedback):
         """
         Here is where the processing itself takes place.
         """
-        connection_name = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name')
+        connection_name = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
 
-        # Drop schema if needed
-        override = self.parameterAsBool(parameters, self.OVERRIDE, context)
-        if override:
-            feedback.pushInfo(self.tr("Trying to drop schema lizsync"))
-            sql = '''
-                DROP SCHEMA IF EXISTS lizsync CASCADE;
-            '''
+        # Drop schemas if needed
+        override_audit = self.parameterAsBool(parameters, self.OVERRIDE_AUDIT, context)
+        override_lizsync = self.parameterAsBool(parameters, self.OVERRIDE_LIZSYNC, context)
+        schemas = {
+            'audit': override_audit,
+            'lizsync': override_lizsync
+        }
+        for s, override in schemas.items():
+            if override:
+                feedback.pushInfo(self.tr("Trying to drop schema") + ' ' + s.upper())
+                sql = '''
+                    DROP SCHEMA IF EXISTS {} CASCADE;
+                '''.format(
+                    s
+                )
 
-            [header, data, rowCount, ok, error_message] = fetchDataFromSqlQuery(
-                connection_name,
-                sql
-            )
-            if ok:
-                feedback.pushInfo(self.tr("* Schema lizsync has been droped."))
-            else:
-                feedback.pushInfo(error_message)
-                status = 0
-                # raise Exception(msg)
-                return {
-                    self.OUTPUT_STATUS: status,
-                    self.OUTPUT_STRING: msg
-                }
+                [header, data, rowCount, ok, error_message] = fetchDataFromSqlQuery(
+                    connection_name,
+                    sql
+                )
+                if ok:
+                    feedback.pushInfo(self.tr("* Schema has been droped") + ' - ' + s.upper())
+                else:
+                    feedback.pushInfo(error_message)
+                    status = 0
+                    # raise Exception(msg)
+                    return {
+                        self.OUTPUT_STATUS: status,
+                        self.OUTPUT_STRING: msg
+                    }
 
         # Create full structure
         sql_files = [
             '00_initialize_database.sql',
-            'audit/audit.sql',
+            'audit.sql',
             'lizsync/10_FUNCTION.sql',
             'lizsync/20_TABLE_SEQUENCE_DEFAULT.sql',
             'lizsync/30_VIEW.sql',
@@ -176,7 +204,7 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
             'lizsync/50_TRIGGER.sql',
             'lizsync/60_CONSTRAINT.sql',
             'lizsync/70_COMMENT.sql',
-            'lizsync/90_GLOSSARY.sql',
+            # 'lizsync/90_GLOSSARY.sql',
             '99_finalize_database.sql',
         ]
         msg = ''
@@ -226,5 +254,5 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
 
         return {
             self.OUTPUT_STATUS: 1,
-            self.OUTPUT_STRING: self.tr('*** LIZSYNC STRUCTURE HAS BEEN SUCCESSFULLY CREATED ***')
+            self.OUTPUT_STRING: self.tr('Lizsync database structure has been successfully created.')
         }

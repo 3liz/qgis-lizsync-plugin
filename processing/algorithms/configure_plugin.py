@@ -125,9 +125,9 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
 
         # Set global variable
         QgsExpressionContextUtils.setGlobalVariable('lizsync_connection_name_central', connection_name_central)
-        feedback.pushInfo(self.tr('PostgreSQL connection to CENTRAL database') + ' = ' + connection_name)
+        feedback.pushInfo(self.tr('PostgreSQL connection to CENTRAL database') + ' = ' + connection_name_central)
         QgsExpressionContextUtils.setGlobalVariable('lizsync_connection_name_clone', connection_name_clone)
-        feedback.pushInfo(self.tr('PostgreSQL connection to CLONE database') + ' = ' + connection_name)
+        feedback.pushInfo(self.tr('PostgreSQL connection to CLONE database') + ' = ' + connection_name_clone)
 
         msg = self.tr('Configuration has been saved')
         feedback.pushInfo(msg)

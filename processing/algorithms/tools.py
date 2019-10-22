@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 /***************************************************************************
  *                                                                         *
@@ -15,16 +13,14 @@ __author__ = '3liz'
 __date__ = '2019-02-15'
 __copyright__ = '(C) 2019 by 3liz'
 
-from PyQt5.QtCore import QCoreApplication
-from qgis.core import (
-    QgsDataSourceUri
-)
+from qgis.PyQt.QtCore import QCoreApplication
+
 
 def tr(string):
     return QCoreApplication.translate('Processing', string)
 
-def fetchDataFromSqlQuery(connection_name, sql):
 
+def fetchDataFromSqlQuery(connection_name, sql):
     from db_manager.db_plugins.plugin import BaseError
     from db_manager.db_plugins import createDbPlugin
     from db_manager.db_plugins.postgis.connector import PostGisDBConnector
@@ -111,3 +107,12 @@ def validateTimestamp(timestamp_text):
         valid = False
         msg = str(e)
     return valid, msg
+
+def getVersionInteger(f):
+    '''
+    Transform "0.1.2" into "000102"
+    Transform "10.9.12" into "100912"
+    to allow comparing versions
+    and sorting the upgrade files
+    '''
+    return ''.join([a.zfill(2) for a in f.strip().split('.')])
