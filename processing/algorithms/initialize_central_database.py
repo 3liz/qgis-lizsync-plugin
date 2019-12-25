@@ -202,6 +202,11 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
                 feedback.pushInfo(error_message)
                 status = 0
 
+# Add audit on all the tables in the central server
+#echo "Add audit triggers on all table in the schema $SRV_SCHEMA"
+#psql -h $SRV_DBHOST -d $SRV_DBNAME -U $SRV_DBUSER -c "SELECT count(*) nb FROM (SELECT audit.audit_table((quote_ident(table_schema) || '.' || quote_ident(table_name))::text) FROM information_schema.tables WHERE table_schema = '$SRV_SCHEMA' AND table_type = 'BASE TABLE' AND (quote_ident(table_schema) || '.' || quote_ident(table_name))::text NOT IN (SELECT (tgrelid::regclass)::text FROM pg_trigger WHERE tgname LIKE 'audit_trigger_%' )) foo;"
+
+
         return {
             self.OUTPUT_STATUS: status,
             self.OUTPUT_STRING: msg

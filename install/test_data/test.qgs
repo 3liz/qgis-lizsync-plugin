@@ -20,37 +20,37 @@
     <customproperties></customproperties>
     <layer-tree-group checked="Qt::Checked" expanded="1" name="data">
       <customproperties></customproperties>
-      <layer-tree-layer checked="Qt::Checked" expanded="1" id="pluviometers_cba7ffdb_07e2_4aa7_9ff5_7a2b67959d36" name="pluviometers" providerKey="ogr" source="./data/pluviometers.geojson">
+      <layer-tree-layer checked="Qt::Checked" expanded="1" id="pluviometers_05dbd06b_8862_4c77_94ea_a096adebd6cc" name="pluviometers" providerKey="postgres" source="service='lizsync_central' sslmode=disable key='id' srid=2154 type=Point checkPrimaryKeyUnicity='1' table=&quot;test&quot;.&quot;pluviometers&quot; (geom) sql=">
         <customproperties></customproperties>
       </layer-tree-layer>
-      <layer-tree-layer checked="Qt::Checked" expanded="1" id="montpellier_sub_districts_74992fb6_2dfb_4f01_a8c5_593e9e9b8546" name="montpellier_sub_districts" providerKey="ogr" source="./data/montpellier_sub_districts.geojson">
+      <layer-tree-layer checked="Qt::Checked" expanded="1" id="montpellier_sub_districts_23d82c93_a8a8_4487_8db6_c0da45f16244" name="montpellier_sub_districts" providerKey="postgres" source="service='lizsync_central' sslmode=disable key='ogc_fid' srid=2154 type=MultiPolygon checkPrimaryKeyUnicity='1' table=&quot;test&quot;.&quot;montpellier_sub_districts&quot; (geom) sql=">
         <customproperties></customproperties>
       </layer-tree-layer>
-      <layer-tree-layer checked="Qt::Checked" expanded="1" id="montpellier_districts_ce998572_8ca4_4701_8e70_f7c97bdfef7a" name="montpellier_districts" providerKey="ogr" source="./data/montpellier_districts.geojson">
+      <layer-tree-layer checked="Qt::Checked" expanded="1" id="montpellier_districts_2430b29a_25f7_44a0_be14_abc5832b7e4b" name="montpellier_districts" providerKey="postgres" source="service='lizsync_central' sslmode=disable key='ogc_fid' srid=2154 type=Polygon checkPrimaryKeyUnicity='1' table=&quot;test&quot;.&quot;montpellier_districts&quot; (geom) sql=">
         <customproperties></customproperties>
       </layer-tree-layer>
     </layer-tree-group>
     <custom-order enabled="0">
-      <item>montpellier_districts_ce998572_8ca4_4701_8e70_f7c97bdfef7a</item>
-      <item>montpellier_sub_districts_74992fb6_2dfb_4f01_a8c5_593e9e9b8546</item>
-      <item>pluviometers_cba7ffdb_07e2_4aa7_9ff5_7a2b67959d36</item>
+      <item>montpellier_districts_2430b29a_25f7_44a0_be14_abc5832b7e4b</item>
+      <item>montpellier_sub_districts_23d82c93_a8a8_4487_8db6_c0da45f16244</item>
+      <item>pluviometers_05dbd06b_8862_4c77_94ea_a096adebd6cc</item>
     </custom-order>
   </layer-tree-group>
   <snapping-settings enabled="0" intersection-snapping="0" mode="2" tolerance="0" type="1" unit="2">
     <individual-layer-settings>
-      <layer-setting enabled="0" id="montpellier_districts_ce998572_8ca4_4701_8e70_f7c97bdfef7a" tolerance="0" type="1" units="2"></layer-setting>
-      <layer-setting enabled="0" id="pluviometers_cba7ffdb_07e2_4aa7_9ff5_7a2b67959d36" tolerance="0" type="1" units="2"></layer-setting>
-      <layer-setting enabled="0" id="montpellier_sub_districts_74992fb6_2dfb_4f01_a8c5_593e9e9b8546" tolerance="0" type="1" units="2"></layer-setting>
+      <layer-setting enabled="0" id="montpellier_districts_2430b29a_25f7_44a0_be14_abc5832b7e4b" tolerance="0" type="1" units="2"></layer-setting>
+      <layer-setting enabled="0" id="pluviometers_05dbd06b_8862_4c77_94ea_a096adebd6cc" tolerance="0" type="1" units="2"></layer-setting>
+      <layer-setting enabled="0" id="montpellier_sub_districts_23d82c93_a8a8_4487_8db6_c0da45f16244" tolerance="0" type="1" units="2"></layer-setting>
     </individual-layer-settings>
   </snapping-settings>
   <relations></relations>
   <mapcanvas annotationsVisible="1" name="theMapCanvas">
     <units>meters</units>
     <extent>
-      <xmin>764873.73525000002700835</xmin>
-      <ymin>6274320.51249999925494194</ymin>
-      <xmax>776303.81475000001955777</xmax>
-      <ymax>6284430.22749999910593033</ymax>
+      <xmin>764873.73768250003922731</xmin>
+      <ymin>6274320.51484249904751778</ymin>
+      <xmax>776303.81161750003229827</xmax>
+      <ymax>6284430.22805749997496605</ymax>
     </extent>
     <rotation>0</rotation>
     <destinationsrs>
@@ -72,17 +72,17 @@
     <legendgroup checked="Qt::Checked" name="data" open="true">
       <legendlayer checked="Qt::Checked" drawingOrder="-1" name="pluviometers" open="true" showFeatureCount="0">
         <filegroup hidden="false" open="true">
-          <legendlayerfile isInOverview="0" layerid="pluviometers_cba7ffdb_07e2_4aa7_9ff5_7a2b67959d36" visible="1"></legendlayerfile>
+          <legendlayerfile isInOverview="0" layerid="pluviometers_05dbd06b_8862_4c77_94ea_a096adebd6cc" visible="1"></legendlayerfile>
         </filegroup>
       </legendlayer>
       <legendlayer checked="Qt::Checked" drawingOrder="-1" name="montpellier_sub_districts" open="true" showFeatureCount="0">
         <filegroup hidden="false" open="true">
-          <legendlayerfile isInOverview="0" layerid="montpellier_sub_districts_74992fb6_2dfb_4f01_a8c5_593e9e9b8546" visible="1"></legendlayerfile>
+          <legendlayerfile isInOverview="0" layerid="montpellier_sub_districts_23d82c93_a8a8_4487_8db6_c0da45f16244" visible="1"></legendlayerfile>
         </filegroup>
       </legendlayer>
       <legendlayer checked="Qt::Checked" drawingOrder="-1" name="montpellier_districts" open="true" showFeatureCount="0">
         <filegroup hidden="false" open="true">
-          <legendlayerfile isInOverview="0" layerid="montpellier_districts_ce998572_8ca4_4701_8e70_f7c97bdfef7a" visible="1"></legendlayerfile>
+          <legendlayerfile isInOverview="0" layerid="montpellier_districts_2430b29a_25f7_44a0_be14_abc5832b7e4b" visible="1"></legendlayerfile>
         </filegroup>
       </legendlayer>
     </legendgroup>
@@ -159,15 +159,15 @@
     <rendermaptile>0</rendermaptile>
   </mapcanvas>
   <projectlayers>
-    <maplayer autoRefreshEnabled="0" autoRefreshTime="0" geometry="Polygon" hasScaleBasedVisibilityFlag="0" labelsEnabled="0" maxScale="0" minScale="1e+8" readOnly="0" refreshOnNotifyEnabled="0" refreshOnNotifyMessage="" simplifyAlgorithm="0" simplifyDrawingHints="1" simplifyDrawingTol="1" simplifyLocal="1" simplifyMaxScale="1" styleCategories="AllStyleCategories" type="vector">
+    <maplayer autoRefreshEnabled="0" autoRefreshTime="0" geometry="Polygon" hasScaleBasedVisibilityFlag="0" labelsEnabled="1" maxScale="0" minScale="0" readOnly="0" refreshOnNotifyEnabled="0" refreshOnNotifyMessage="" simplifyAlgorithm="0" simplifyDrawingHints="1" simplifyDrawingTol="1" simplifyLocal="1" simplifyMaxScale="1" styleCategories="AllStyleCategories" type="vector">
       <extent>
         <xmin>765145.88000000000465661</xmin>
         <ymin>6274561.21999999973922968</ymin>
         <xmax>776031.67000000004190952</xmax>
         <ymax>6284189.51999999955296516</ymax>
       </extent>
-      <id>montpellier_districts_ce998572_8ca4_4701_8e70_f7c97bdfef7a</id>
-      <datasource>./data/montpellier_districts.geojson</datasource>
+      <id>montpellier_districts_2430b29a_25f7_44a0_be14_abc5832b7e4b</id>
+      <datasource>service='lizsync_central' sslmode=disable key='ogc_fid' srid=2154 type=Polygon checkPrimaryKeyUnicity='1' table="test"."montpellier_districts" (geom) sql=</datasource>
       <keywordList>
         <value></value>
       </keywordList>
@@ -188,44 +188,27 @@
         <identifier></identifier>
         <parentidentifier></parentidentifier>
         <language></language>
-        <type></type>
+        <type>dataset</type>
         <title></title>
         <abstract></abstract>
-        <contact>
-          <name></name>
-          <organization></organization>
-          <position></position>
-          <voice></voice>
-          <fax></fax>
-          <email></email>
-          <role></role>
-        </contact>
         <links></links>
         <fees></fees>
         <encoding></encoding>
         <crs>
           <spatialrefsys>
-            <proj4></proj4>
-            <srsid>0</srsid>
-            <srid>0</srid>
-            <authid></authid>
-            <description></description>
-            <projectionacronym></projectionacronym>
-            <ellipsoidacronym></ellipsoidacronym>
+            <proj4>+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs</proj4>
+            <srsid>145</srsid>
+            <srid>2154</srid>
+            <authid>EPSG:2154</authid>
+            <description>RGF93 / Lambert-93</description>
+            <projectionacronym>lcc</projectionacronym>
+            <ellipsoidacronym>GRS80</ellipsoidacronym>
             <geographicflag>false</geographicflag>
           </spatialrefsys>
         </crs>
-        <extent>
-          <spatial crs="" dimensions="2" maxx="0" maxy="0" maxz="0" minx="0" miny="0" minz="0"></spatial>
-          <temporal>
-            <period>
-              <start></start>
-              <end></end>
-            </period>
-          </temporal>
-        </extent>
+        <extent></extent>
       </resourceMetadata>
-      <provider encoding="UTF-8">ogr</provider>
+      <provider encoding="UTF-8">postgres</provider>
       <vectorjoins></vectorjoins>
       <layerDependencies></layerDependencies>
       <dataDependencies></dataDependencies>
@@ -268,56 +251,45 @@
         <rotation></rotation>
         <sizescale></sizescale>
       </renderer-v2>
-      <customproperties>
-        <property key="embeddedWidgets/count" value="0"></property>
-        <property key="variableNames"></property>
-        <property key="variableValues"></property>
-      </customproperties>
+      <customproperties></customproperties>
       <blendMode>0</blendMode>
       <featureBlendMode>0</featureBlendMode>
       <layerOpacity>1</layerOpacity>
-      <SingleCategoryDiagramRenderer attributeLegend="1" diagramType="Histogram">
-        <DiagramCategory backgroundAlpha="255" backgroundColor="#ffffff" barWidth="5" diagramOrientation="Up" enabled="0" height="15" labelPlacementMethod="XHeight" lineSizeScale="3x:0,0,0,0,0,0" lineSizeType="MM" maxScaleDenominator="1e+8" minScaleDenominator="0" minimumSize="0" opacity="1" penAlpha="255" penColor="#000000" penWidth="0" rotationOffset="270" scaleBasedVisibility="0" scaleDependency="Area" sizeScale="3x:0,0,0,0,0,0" sizeType="MM" width="15">
-          <fontProperties description="Ubuntu,11,-1,5,50,0,0,0,0,0" style=""></fontProperties>
-        </DiagramCategory>
-      </SingleCategoryDiagramRenderer>
-      <DiagramLayerSettings dist="0" linePlacementFlags="18" obstacle="0" placement="1" priority="0" showAll="1" zIndex="0">
-        <properties>
-          <Option type="Map">
-            <Option name="name" type="QString" value=""></Option>
-            <Option name="properties"></Option>
-            <Option name="type" type="QString" value="collection"></Option>
-          </Option>
-        </properties>
-      </DiagramLayerSettings>
       <geometryOptions geometryPrecision="0" removeDuplicateNodes="0">
         <activeChecks></activeChecks>
         <checkConfiguration></checkConfiguration>
       </geometryOptions>
       <fieldConfiguration>
+        <field name="ogc_fid">
+          <editWidget type="">
+            <config>
+              <Option></Option>
+            </config>
+          </editWidget>
+        </field>
         <field name="fid">
-          <editWidget type="Range">
+          <editWidget type="">
             <config>
               <Option></Option>
             </config>
           </editWidget>
         </field>
-        <field name="QUARTMNO">
-          <editWidget type="TextEdit">
+        <field name="quartmno">
+          <editWidget type="">
             <config>
               <Option></Option>
             </config>
           </editWidget>
         </field>
-        <field name="LIBQUART">
-          <editWidget type="TextEdit">
+        <field name="libquart">
+          <editWidget type="">
             <config>
               <Option></Option>
             </config>
           </editWidget>
         </field>
         <field name="url">
-          <editWidget type="TextEdit">
+          <editWidget type="">
             <config>
               <Option></Option>
             </config>
@@ -325,29 +297,33 @@
         </field>
       </fieldConfiguration>
       <aliases>
-        <alias field="fid" index="0" name=""></alias>
-        <alias field="QUARTMNO" index="1" name=""></alias>
-        <alias field="LIBQUART" index="2" name=""></alias>
-        <alias field="url" index="3" name=""></alias>
+        <alias field="ogc_fid" index="0" name=""></alias>
+        <alias field="fid" index="1" name=""></alias>
+        <alias field="quartmno" index="2" name=""></alias>
+        <alias field="libquart" index="3" name=""></alias>
+        <alias field="url" index="4" name=""></alias>
       </aliases>
       <excludeAttributesWMS></excludeAttributesWMS>
       <excludeAttributesWFS></excludeAttributesWFS>
       <defaults>
+        <default applyOnUpdate="0" expression="" field="ogc_fid"></default>
         <default applyOnUpdate="0" expression="" field="fid"></default>
-        <default applyOnUpdate="0" expression="" field="QUARTMNO"></default>
-        <default applyOnUpdate="0" expression="" field="LIBQUART"></default>
+        <default applyOnUpdate="0" expression="" field="quartmno"></default>
+        <default applyOnUpdate="0" expression="" field="libquart"></default>
         <default applyOnUpdate="0" expression="" field="url"></default>
       </defaults>
       <constraints>
+        <constraint constraints="3" exp_strength="0" field="ogc_fid" notnull_strength="1" unique_strength="1"></constraint>
         <constraint constraints="0" exp_strength="0" field="fid" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="QUARTMNO" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="LIBQUART" notnull_strength="0" unique_strength="0"></constraint>
+        <constraint constraints="0" exp_strength="0" field="quartmno" notnull_strength="0" unique_strength="0"></constraint>
+        <constraint constraints="0" exp_strength="0" field="libquart" notnull_strength="0" unique_strength="0"></constraint>
         <constraint constraints="0" exp_strength="0" field="url" notnull_strength="0" unique_strength="0"></constraint>
       </constraints>
       <constraintExpressions>
+        <constraint desc="" exp="" field="ogc_fid"></constraint>
         <constraint desc="" exp="" field="fid"></constraint>
-        <constraint desc="" exp="" field="QUARTMNO"></constraint>
-        <constraint desc="" exp="" field="LIBQUART"></constraint>
+        <constraint desc="" exp="" field="quartmno"></constraint>
+        <constraint desc="" exp="" field="libquart"></constraint>
         <constraint desc="" exp="" field="url"></constraint>
       </constraintExpressions>
       <expressionfields></expressionfields>
@@ -355,13 +331,7 @@
         <defaultAction key="Canvas" value="{00000000-0000-0000-0000-000000000000}"></defaultAction>
       </attributeactions>
       <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="0">
-        <columns>
-          <column hidden="0" name="fid" type="field" width="-1"></column>
-          <column hidden="0" name="QUARTMNO" type="field" width="-1"></column>
-          <column hidden="0" name="LIBQUART" type="field" width="-1"></column>
-          <column hidden="0" name="url" type="field" width="-1"></column>
-          <column hidden="1" type="actions" width="-1"></column>
-        </columns>
+        <columns></columns>
       </attributetableconfig>
       <conditionalstyles>
         <rowstyles></rowstyles>
@@ -371,49 +341,24 @@
       <editforminit></editforminit>
       <editforminitcodesource>0</editforminitcodesource>
       <editforminitfilepath></editforminitfilepath>
-      <editforminitcode># -*- coding: utf-8 -*-
-"""
-Les formulaires QGIS peuvent avoir une fonction Python qui sera appelée à l'ouverture du formulaire.
-
-Utilisez cette fonction pour ajouter plus de fonctionnalités à vos formulaires.
-
-Entrez le nom de la fonction dans le champ "Fonction d'initialisation Python".
-Voici un exemple à suivre:
-"""
-from qgis.PyQt.QtWidgets import QWidget
-
-def my_form_open(dialog, layer, feature):
-    geom = feature.geometry()
-    control = dialog.findChild(QWidget, "MyLineEdit")
-
-</editforminitcode>
+      <editforminitcode></editforminitcode>
       <featformsuppress>0</featformsuppress>
       <editorlayout>generatedlayout</editorlayout>
-      <editable>
-        <field editable="1" name="LIBQUART"></field>
-        <field editable="1" name="QUARTMNO"></field>
-        <field editable="1" name="fid"></field>
-        <field editable="1" name="url"></field>
-      </editable>
-      <labelOnTop>
-        <field labelOnTop="0" name="LIBQUART"></field>
-        <field labelOnTop="0" name="QUARTMNO"></field>
-        <field labelOnTop="0" name="fid"></field>
-        <field labelOnTop="0" name="url"></field>
-      </labelOnTop>
+      <editable></editable>
+      <labelOnTop></labelOnTop>
       <widgets></widgets>
-      <previewExpression>fid</previewExpression>
+      <previewExpression></previewExpression>
       <mapTip></mapTip>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" autoRefreshTime="0" geometry="Polygon" hasScaleBasedVisibilityFlag="0" labelsEnabled="0" maxScale="0" minScale="1e+8" readOnly="0" refreshOnNotifyEnabled="0" refreshOnNotifyMessage="" simplifyAlgorithm="0" simplifyDrawingHints="1" simplifyDrawingTol="1" simplifyLocal="1" simplifyMaxScale="1" styleCategories="AllStyleCategories" type="vector">
+    <maplayer autoRefreshEnabled="0" autoRefreshTime="0" geometry="Polygon" hasScaleBasedVisibilityFlag="0" labelsEnabled="1" maxScale="0" minScale="0" readOnly="0" refreshOnNotifyEnabled="0" refreshOnNotifyMessage="" simplifyAlgorithm="0" simplifyDrawingHints="1" simplifyDrawingTol="1" simplifyLocal="1" simplifyMaxScale="1" styleCategories="AllStyleCategories" type="vector">
       <extent>
         <xmin>765145.88230000005569309</xmin>
         <ymin>6274561.22229999955743551</ymin>
         <xmax>776031.66700000001583248</xmax>
         <ymax>6284189.52060000039637089</ymax>
       </extent>
-      <id>montpellier_sub_districts_74992fb6_2dfb_4f01_a8c5_593e9e9b8546</id>
-      <datasource>./data/montpellier_sub_districts.geojson</datasource>
+      <id>montpellier_sub_districts_23d82c93_a8a8_4487_8db6_c0da45f16244</id>
+      <datasource>service='lizsync_central' sslmode=disable key='ogc_fid' srid=2154 type=MultiPolygon checkPrimaryKeyUnicity='1' table="test"."montpellier_sub_districts" (geom) sql=</datasource>
       <keywordList>
         <value></value>
       </keywordList>
@@ -434,44 +379,27 @@ def my_form_open(dialog, layer, feature):
         <identifier></identifier>
         <parentidentifier></parentidentifier>
         <language></language>
-        <type></type>
+        <type>dataset</type>
         <title></title>
         <abstract></abstract>
-        <contact>
-          <name></name>
-          <organization></organization>
-          <position></position>
-          <voice></voice>
-          <fax></fax>
-          <email></email>
-          <role></role>
-        </contact>
         <links></links>
         <fees></fees>
         <encoding></encoding>
         <crs>
           <spatialrefsys>
-            <proj4></proj4>
-            <srsid>0</srsid>
-            <srid>0</srid>
-            <authid></authid>
-            <description></description>
-            <projectionacronym></projectionacronym>
-            <ellipsoidacronym></ellipsoidacronym>
+            <proj4>+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs</proj4>
+            <srsid>145</srsid>
+            <srid>2154</srid>
+            <authid>EPSG:2154</authid>
+            <description>RGF93 / Lambert-93</description>
+            <projectionacronym>lcc</projectionacronym>
+            <ellipsoidacronym>GRS80</ellipsoidacronym>
             <geographicflag>false</geographicflag>
           </spatialrefsys>
         </crs>
-        <extent>
-          <spatial crs="" dimensions="2" maxx="0" maxy="0" maxz="0" minx="0" miny="0" minz="0"></spatial>
-          <temporal>
-            <period>
-              <start></start>
-              <end></end>
-            </period>
-          </temporal>
-        </extent>
+        <extent></extent>
       </resourceMetadata>
-      <provider encoding="UTF-8">ogr</provider>
+      <provider encoding="UTF-8">postgres</provider>
       <vectorjoins></vectorjoins>
       <layerDependencies></layerDependencies>
       <dataDependencies></dataDependencies>
@@ -514,49 +442,38 @@ def my_form_open(dialog, layer, feature):
         <rotation></rotation>
         <sizescale></sizescale>
       </renderer-v2>
-      <customproperties>
-        <property key="embeddedWidgets/count" value="0"></property>
-        <property key="variableNames"></property>
-        <property key="variableValues"></property>
-      </customproperties>
+      <customproperties></customproperties>
       <blendMode>0</blendMode>
       <featureBlendMode>0</featureBlendMode>
       <layerOpacity>1</layerOpacity>
-      <SingleCategoryDiagramRenderer attributeLegend="1" diagramType="Histogram">
-        <DiagramCategory backgroundAlpha="255" backgroundColor="#ffffff" barWidth="5" diagramOrientation="Up" enabled="0" height="15" labelPlacementMethod="XHeight" lineSizeScale="3x:0,0,0,0,0,0" lineSizeType="MM" maxScaleDenominator="1e+8" minScaleDenominator="0" minimumSize="0" opacity="1" penAlpha="255" penColor="#000000" penWidth="0" rotationOffset="270" scaleBasedVisibility="0" scaleDependency="Area" sizeScale="3x:0,0,0,0,0,0" sizeType="MM" width="15">
-          <fontProperties description="Ubuntu,11,-1,5,50,0,0,0,0,0" style=""></fontProperties>
-        </DiagramCategory>
-      </SingleCategoryDiagramRenderer>
-      <DiagramLayerSettings dist="0" linePlacementFlags="18" obstacle="0" placement="1" priority="0" showAll="1" zIndex="0">
-        <properties>
-          <Option type="Map">
-            <Option name="name" type="QString" value=""></Option>
-            <Option name="properties"></Option>
-            <Option name="type" type="QString" value="collection"></Option>
-          </Option>
-        </properties>
-      </DiagramLayerSettings>
       <geometryOptions geometryPrecision="0" removeDuplicateNodes="0">
         <activeChecks></activeChecks>
         <checkConfiguration></checkConfiguration>
       </geometryOptions>
       <fieldConfiguration>
-        <field name="QUARTMNO">
-          <editWidget type="TextEdit">
+        <field name="ogc_fid">
+          <editWidget type="">
             <config>
               <Option></Option>
             </config>
           </editWidget>
         </field>
-        <field name="SQUARTMNO">
-          <editWidget type="TextEdit">
+        <field name="quartmno">
+          <editWidget type="">
             <config>
               <Option></Option>
             </config>
           </editWidget>
         </field>
-        <field name="LIBSQUART">
-          <editWidget type="TextEdit">
+        <field name="squartmno">
+          <editWidget type="">
+            <config>
+              <Option></Option>
+            </config>
+          </editWidget>
+        </field>
+        <field name="libsquart">
+          <editWidget type="">
             <config>
               <Option></Option>
             </config>
@@ -564,38 +481,37 @@ def my_form_open(dialog, layer, feature):
         </field>
       </fieldConfiguration>
       <aliases>
-        <alias field="QUARTMNO" index="0" name=""></alias>
-        <alias field="SQUARTMNO" index="1" name=""></alias>
-        <alias field="LIBSQUART" index="2" name=""></alias>
+        <alias field="ogc_fid" index="0" name=""></alias>
+        <alias field="quartmno" index="1" name=""></alias>
+        <alias field="squartmno" index="2" name=""></alias>
+        <alias field="libsquart" index="3" name=""></alias>
       </aliases>
       <excludeAttributesWMS></excludeAttributesWMS>
       <excludeAttributesWFS></excludeAttributesWFS>
       <defaults>
-        <default applyOnUpdate="0" expression="" field="QUARTMNO"></default>
-        <default applyOnUpdate="0" expression="" field="SQUARTMNO"></default>
-        <default applyOnUpdate="0" expression="" field="LIBSQUART"></default>
+        <default applyOnUpdate="0" expression="" field="ogc_fid"></default>
+        <default applyOnUpdate="0" expression="" field="quartmno"></default>
+        <default applyOnUpdate="0" expression="" field="squartmno"></default>
+        <default applyOnUpdate="0" expression="" field="libsquart"></default>
       </defaults>
       <constraints>
-        <constraint constraints="0" exp_strength="0" field="QUARTMNO" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="SQUARTMNO" notnull_strength="0" unique_strength="0"></constraint>
-        <constraint constraints="0" exp_strength="0" field="LIBSQUART" notnull_strength="0" unique_strength="0"></constraint>
+        <constraint constraints="3" exp_strength="0" field="ogc_fid" notnull_strength="1" unique_strength="1"></constraint>
+        <constraint constraints="0" exp_strength="0" field="quartmno" notnull_strength="0" unique_strength="0"></constraint>
+        <constraint constraints="0" exp_strength="0" field="squartmno" notnull_strength="0" unique_strength="0"></constraint>
+        <constraint constraints="0" exp_strength="0" field="libsquart" notnull_strength="0" unique_strength="0"></constraint>
       </constraints>
       <constraintExpressions>
-        <constraint desc="" exp="" field="QUARTMNO"></constraint>
-        <constraint desc="" exp="" field="SQUARTMNO"></constraint>
-        <constraint desc="" exp="" field="LIBSQUART"></constraint>
+        <constraint desc="" exp="" field="ogc_fid"></constraint>
+        <constraint desc="" exp="" field="quartmno"></constraint>
+        <constraint desc="" exp="" field="squartmno"></constraint>
+        <constraint desc="" exp="" field="libsquart"></constraint>
       </constraintExpressions>
       <expressionfields></expressionfields>
       <attributeactions>
         <defaultAction key="Canvas" value="{00000000-0000-0000-0000-000000000000}"></defaultAction>
       </attributeactions>
       <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="0">
-        <columns>
-          <column hidden="0" name="QUARTMNO" type="field" width="-1"></column>
-          <column hidden="0" name="SQUARTMNO" type="field" width="-1"></column>
-          <column hidden="0" name="LIBSQUART" type="field" width="-1"></column>
-          <column hidden="1" type="actions" width="-1"></column>
-        </columns>
+        <columns></columns>
       </attributetableconfig>
       <conditionalstyles>
         <rowstyles></rowstyles>
@@ -605,47 +521,24 @@ def my_form_open(dialog, layer, feature):
       <editforminit></editforminit>
       <editforminitcodesource>0</editforminitcodesource>
       <editforminitfilepath></editforminitfilepath>
-      <editforminitcode># -*- coding: utf-8 -*-
-"""
-Les formulaires QGIS peuvent avoir une fonction Python qui sera appelée à l'ouverture du formulaire.
-
-Utilisez cette fonction pour ajouter plus de fonctionnalités à vos formulaires.
-
-Entrez le nom de la fonction dans le champ "Fonction d'initialisation Python".
-Voici un exemple à suivre:
-"""
-from qgis.PyQt.QtWidgets import QWidget
-
-def my_form_open(dialog, layer, feature):
-    geom = feature.geometry()
-    control = dialog.findChild(QWidget, "MyLineEdit")
-
-</editforminitcode>
+      <editforminitcode></editforminitcode>
       <featformsuppress>0</featformsuppress>
       <editorlayout>generatedlayout</editorlayout>
-      <editable>
-        <field editable="1" name="LIBSQUART"></field>
-        <field editable="1" name="QUARTMNO"></field>
-        <field editable="1" name="SQUARTMNO"></field>
-      </editable>
-      <labelOnTop>
-        <field labelOnTop="0" name="LIBSQUART"></field>
-        <field labelOnTop="0" name="QUARTMNO"></field>
-        <field labelOnTop="0" name="SQUARTMNO"></field>
-      </labelOnTop>
+      <editable></editable>
+      <labelOnTop></labelOnTop>
       <widgets></widgets>
-      <previewExpression>QUARTMNO</previewExpression>
+      <previewExpression></previewExpression>
       <mapTip></mapTip>
     </maplayer>
-    <maplayer autoRefreshEnabled="0" autoRefreshTime="0" geometry="Point" hasScaleBasedVisibilityFlag="0" labelsEnabled="0" maxScale="0" minScale="1e+8" readOnly="0" refreshOnNotifyEnabled="0" refreshOnNotifyMessage="" simplifyAlgorithm="0" simplifyDrawingHints="0" simplifyDrawingTol="1" simplifyLocal="1" simplifyMaxScale="1" styleCategories="AllStyleCategories" type="vector">
+    <maplayer autoRefreshEnabled="0" autoRefreshTime="0" geometry="Point" hasScaleBasedVisibilityFlag="0" labelsEnabled="1" maxScale="0" minScale="0" readOnly="0" refreshOnNotifyEnabled="0" refreshOnNotifyMessage="" simplifyAlgorithm="0" simplifyDrawingHints="1" simplifyDrawingTol="1" simplifyLocal="1" simplifyMaxScale="1" styleCategories="AllStyleCategories" type="vector">
       <extent>
         <xmin>765578.82999999995809048</xmin>
         <ymin>6275998.04999999981373549</ymin>
         <xmax>775350.7900000000372529</xmax>
         <ymax>6283553.33000000007450581</ymax>
       </extent>
-      <id>pluviometers_cba7ffdb_07e2_4aa7_9ff5_7a2b67959d36</id>
-      <datasource>./data/pluviometers.geojson</datasource>
+      <id>pluviometers_05dbd06b_8862_4c77_94ea_a096adebd6cc</id>
+      <datasource>service='lizsync_central' sslmode=disable key='id' srid=2154 type=Point checkPrimaryKeyUnicity='1' table="test"."pluviometers" (geom) sql=</datasource>
       <keywordList>
         <value></value>
       </keywordList>
@@ -666,44 +559,27 @@ def my_form_open(dialog, layer, feature):
         <identifier></identifier>
         <parentidentifier></parentidentifier>
         <language></language>
-        <type></type>
+        <type>dataset</type>
         <title></title>
         <abstract></abstract>
-        <contact>
-          <name></name>
-          <organization></organization>
-          <position></position>
-          <voice></voice>
-          <fax></fax>
-          <email></email>
-          <role></role>
-        </contact>
         <links></links>
         <fees></fees>
         <encoding></encoding>
         <crs>
           <spatialrefsys>
-            <proj4></proj4>
-            <srsid>0</srsid>
-            <srid>0</srid>
-            <authid></authid>
-            <description></description>
-            <projectionacronym></projectionacronym>
-            <ellipsoidacronym></ellipsoidacronym>
+            <proj4>+proj=lcc +lat_1=49 +lat_2=44 +lat_0=46.5 +lon_0=3 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs</proj4>
+            <srsid>145</srsid>
+            <srid>2154</srid>
+            <authid>EPSG:2154</authid>
+            <description>RGF93 / Lambert-93</description>
+            <projectionacronym>lcc</projectionacronym>
+            <ellipsoidacronym>GRS80</ellipsoidacronym>
             <geographicflag>false</geographicflag>
           </spatialrefsys>
         </crs>
-        <extent>
-          <spatial crs="" dimensions="2" maxx="0" maxy="0" maxz="0" minx="0" miny="0" minz="0"></spatial>
-          <temporal>
-            <period>
-              <start></start>
-              <end></end>
-            </period>
-          </temporal>
-        </extent>
+        <extent></extent>
       </resourceMetadata>
-      <provider encoding="UTF-8">ogr</provider>
+      <provider encoding="UTF-8">postgres</provider>
       <vectorjoins></vectorjoins>
       <layerDependencies></layerDependencies>
       <dataDependencies></dataDependencies>
@@ -754,41 +630,27 @@ def my_form_open(dialog, layer, feature):
         <sizescale></sizescale>
       </renderer-v2>
       <customproperties>
-        <property key="embeddedWidgets/count" value="0"></property>
-        <property key="variableNames"></property>
-        <property key="variableValues"></property>
+        <property key="dualview/previewExpressions">
+          <value>"id"</value>
+        </property>
       </customproperties>
       <blendMode>0</blendMode>
       <featureBlendMode>0</featureBlendMode>
       <layerOpacity>1</layerOpacity>
-      <SingleCategoryDiagramRenderer attributeLegend="1" diagramType="Histogram">
-        <DiagramCategory backgroundAlpha="255" backgroundColor="#ffffff" barWidth="5" diagramOrientation="Up" enabled="0" height="15" labelPlacementMethod="XHeight" lineSizeScale="3x:0,0,0,0,0,0" lineSizeType="MM" maxScaleDenominator="1e+8" minScaleDenominator="0" minimumSize="0" opacity="1" penAlpha="255" penColor="#000000" penWidth="0" rotationOffset="270" scaleBasedVisibility="0" scaleDependency="Area" sizeScale="3x:0,0,0,0,0,0" sizeType="MM" width="15">
-          <fontProperties description="Ubuntu,11,-1,5,50,0,0,0,0,0" style=""></fontProperties>
-        </DiagramCategory>
-      </SingleCategoryDiagramRenderer>
-      <DiagramLayerSettings dist="0" linePlacementFlags="18" obstacle="0" placement="0" priority="0" showAll="1" zIndex="0">
-        <properties>
-          <Option type="Map">
-            <Option name="name" type="QString" value=""></Option>
-            <Option name="properties"></Option>
-            <Option name="type" type="QString" value="collection"></Option>
-          </Option>
-        </properties>
-      </DiagramLayerSettings>
       <geometryOptions geometryPrecision="0" removeDuplicateNodes="0">
         <activeChecks></activeChecks>
         <checkConfiguration></checkConfiguration>
       </geometryOptions>
       <fieldConfiguration>
         <field name="id">
-          <editWidget type="Range">
+          <editWidget type="">
             <config>
               <Option></Option>
             </config>
           </editWidget>
         </field>
         <field name="nom">
-          <editWidget type="TextEdit">
+          <editWidget type="">
             <config>
               <Option></Option>
             </config>
@@ -806,7 +668,7 @@ def my_form_open(dialog, layer, feature):
         <default applyOnUpdate="0" expression="" field="nom"></default>
       </defaults>
       <constraints>
-        <constraint constraints="0" exp_strength="0" field="id" notnull_strength="0" unique_strength="0"></constraint>
+        <constraint constraints="3" exp_strength="0" field="id" notnull_strength="1" unique_strength="1"></constraint>
         <constraint constraints="0" exp_strength="0" field="nom" notnull_strength="0" unique_strength="0"></constraint>
       </constraints>
       <constraintExpressions>
@@ -818,11 +680,7 @@ def my_form_open(dialog, layer, feature):
         <defaultAction key="Canvas" value="{00000000-0000-0000-0000-000000000000}"></defaultAction>
       </attributeactions>
       <attributetableconfig actionWidgetStyle="dropDown" sortExpression="" sortOrder="0">
-        <columns>
-          <column hidden="0" name="id" type="field" width="-1"></column>
-          <column hidden="0" name="nom" type="field" width="-1"></column>
-          <column hidden="1" type="actions" width="-1"></column>
-        </columns>
+        <columns></columns>
       </attributetableconfig>
       <conditionalstyles>
         <rowstyles></rowstyles>
@@ -832,41 +690,20 @@ def my_form_open(dialog, layer, feature):
       <editforminit></editforminit>
       <editforminitcodesource>0</editforminitcodesource>
       <editforminitfilepath></editforminitfilepath>
-      <editforminitcode># -*- coding: utf-8 -*-
-"""
-Les formulaires QGIS peuvent avoir une fonction Python qui sera appelée à l'ouverture du formulaire.
-
-Utilisez cette fonction pour ajouter plus de fonctionnalités à vos formulaires.
-
-Entrez le nom de la fonction dans le champ "Fonction d'initialisation Python".
-Voici un exemple à suivre:
-"""
-from qgis.PyQt.QtWidgets import QWidget
-
-def my_form_open(dialog, layer, feature):
-    geom = feature.geometry()
-    control = dialog.findChild(QWidget, "MyLineEdit")
-
-</editforminitcode>
+      <editforminitcode></editforminitcode>
       <featformsuppress>0</featformsuppress>
       <editorlayout>generatedlayout</editorlayout>
-      <editable>
-        <field editable="1" name="id"></field>
-        <field editable="1" name="nom"></field>
-      </editable>
-      <labelOnTop>
-        <field labelOnTop="0" name="id"></field>
-        <field labelOnTop="0" name="nom"></field>
-      </labelOnTop>
+      <editable></editable>
+      <labelOnTop></labelOnTop>
       <widgets></widgets>
-      <previewExpression>id</previewExpression>
+      <previewExpression></previewExpression>
       <mapTip></mapTip>
     </maplayer>
   </projectlayers>
   <layerorder>
-    <layer id="montpellier_districts_ce998572_8ca4_4701_8e70_f7c97bdfef7a"></layer>
-    <layer id="montpellier_sub_districts_74992fb6_2dfb_4f01_a8c5_593e9e9b8546"></layer>
-    <layer id="pluviometers_cba7ffdb_07e2_4aa7_9ff5_7a2b67959d36"></layer>
+    <layer id="montpellier_districts_2430b29a_25f7_44a0_be14_abc5832b7e4b"></layer>
+    <layer id="montpellier_sub_districts_23d82c93_a8a8_4487_8db6_c0da45f16244"></layer>
+    <layer id="pluviometers_05dbd06b_8862_4c77_94ea_a096adebd6cc"></layer>
   </layerorder>
   <properties>
     <WCSLayers type="QStringList"></WCSLayers>

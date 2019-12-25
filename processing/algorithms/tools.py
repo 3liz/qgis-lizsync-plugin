@@ -14,26 +14,19 @@ __date__ = '2019-02-15'
 __copyright__ = '(C) 2019 by 3liz'
 
 from qgis.PyQt.QtCore import QCoreApplication
-
+from db_manager.db_plugins.plugin import BaseError
+from db_manager.db_plugins import createDbPlugin
+from db_manager.db_plugins.postgis.connector import PostGisDBConnector
 
 def tr(string):
     return QCoreApplication.translate('Processing', string)
 
-
-def fetchDataFromSqlQuery(connection_name, sql):
-    from db_manager.db_plugins.plugin import BaseError
-    from db_manager.db_plugins import createDbPlugin
-    from db_manager.db_plugins.postgis.connector import PostGisDBConnector
-
-    header = None
-    data = []
-    header = []
-    rowCount = 0
-    error_message = None
-    connection = None
+def getUriFromConnectionName(connection_name):
 
     # Create plugin class and try to connect
     ok = True
+    uri = None
+    error_message = ''
     try:
         dbpluginclass = createDbPlugin( 'postgis', connection_name )
         connection = dbpluginclass.connect()
@@ -46,16 +39,32 @@ def fetchDataFromSqlQuery(connection_name, sql):
         error_message = 'Cannot connect to database'
 
     if not connection:
-        return [header, data, rowCount, ok, error_message]
+        return None
 
     db = dbpluginclass.database()
     if not db:
         ok = False
         error_message = 'Unable to get database from connection'
-        return [header, data, rowCount, ok, error_message]
+        return uri, error_message
+
+    uri = db.uri()
+    return uri, 'ok'
+
+def fetchDataFromSqlQuery(connection_name, sql):
+
+    header = None
+    data = []
+    header = []
+    rowCount = 0
+    error_message = None
+    connection = None
+    ok = True
 
     # Get URI
-    uri = db.uri()
+    [uri, error_message] = getUriFromConnectionName(connection_name)
+    if not uri:
+        ok = False
+        [header, data, rowCount, ok, error_message]
     try:
         connector = PostGisDBConnector(uri)
     except:
@@ -116,3 +125,23 @@ def getVersionInteger(f):
     and sorting the upgrade files
     '''
     return ''.join([a.zfill(2) for a in f.strip().split('.')])
+
+
+def run_command(cmd, feedback):
+    '''
+    Run any command using subprocess
+    '''
+    process = subprocess.Popen(
+        " ".join(cmd),
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE
+    )
+    for line in process.stdout:
+        output = "{}".format(line.rstrip().decode("utf-8"))
+        if output == '' and process.poll() is not None:
+            break
+        if output:
+            feedback.pushInfo( output )
+    rc = process.poll()
+    return rc
