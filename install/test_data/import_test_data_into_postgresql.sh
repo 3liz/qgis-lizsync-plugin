@@ -21,13 +21,13 @@ echo ""
 
 # Run needed actions
 echo "# CREATE SCHEMA IF NEEDED"
-psql service=$SERVICE -c "CREATE SCHEMA IF NOT EXISTS $SCHEMA"
+psql service=$SERVICE -c "DROP SCHEMA IF EXISTS $SCHEMA CASCADE;CREATE SCHEMA IF NOT EXISTS $SCHEMA"
 
 echo "# CREATE EXTENSION postgis IF NEEDED"
 psql service=$SERVICE -c "CREATE EXTENSION IF NOT EXISTS postgis"
 
 echo "# IMPORT DATA"
-for f in data/*.geojson; do ogr2ogr -overwrite -f PostgreSQL  "PG:service=$SERVICE active_schema=$SCHEMA" $f -lco geometry_name=geom; done;
+for f in data/*.geojson; do ogr2ogr -overwrite -f PostgreSQL  "PG:service=$SERVICE active_schema=$SCHEMA" $f -lco geometry_name=geom -lco fid=ogc_fid; done;
 
 echo "# LIST TABLES IN SCHEMA"
 psql service=$SERVICE -c "\dt $SCHEMA."

@@ -1,6 +1,7 @@
 *.py[cod]
 __pycache__/*
 
+*.bak
 *.orig
 *.rej
 *~
@@ -19,3 +20,4 @@ lizmap.cfg
 build/
 dist/
 
+TODO
