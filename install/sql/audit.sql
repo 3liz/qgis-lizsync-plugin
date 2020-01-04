@@ -128,14 +128,14 @@ BEGIN
         NULL, NULL,                                   -- row_data, changed_fields
         'f',                                          -- statement_only
         jsonb_build_object(
-            'origin', current_setting('sync.server_from', true),
+            'origin', current_setting('lizsync.server_from', true),
             'replayed_by',
             CASE
-                WHEN current_setting('sync.server_to', true) IS NOT NULL
-                AND current_setting('sync.sync_id', true) IS NOT NULL
+                WHEN current_setting('lizsync.server_to', true) IS NOT NULL
+                AND current_setting('lizsync.sync_id', true) IS NOT NULL
                     THEN jsonb_build_object(
-                        current_setting('sync.server_to', true),
-                        current_setting('sync.sync_id', true)
+                        current_setting('lizsync.server_to', true),
+                        current_setting('lizsync.sync_id', true)
                     )
                 ELSE jsonb_build_object()
             END

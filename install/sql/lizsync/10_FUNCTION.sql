@@ -2,8 +2,8 @@
 -- PostgreSQL database dump
 --
 
--- Dumped from database version 9.6.15
--- Dumped by pg_dump version 9.6.15
+-- Dumped from database version 9.6.16
+-- Dumped by pg_dump version 9.6.16
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -50,36 +50,50 @@ CREATE FUNCTION lizsync.get_event_sql(pevent_id bigint, puid_column text) RETURN
 DECLARE
   sql text;
 BEGIN
-    with
-    event as (
-        select * from audit.logged_actions where event_id = pevent_id
+    WITH
+    event AS (
+        SELECT * FROM audit.logged_actions WHERE event_id = pevent_id
     )
     -- get primary key names
-    , where_pks as (
-        select array_agg(uid_column) as pkey_fields
-        from audit.logged_relations r
-        join event on relation_name = (quote_ident(schema_name) || '.' || quote_ident(table_name))
+    , where_pks AS (
+        SELECT array_agg(uid_column) as pkey_fields
+        FROM audit.logged_relations r
+        JOIN event ON relation_name = (quote_ident(schema_name) || '.' || quote_ident(table_name))
     )
     -- create where clause with uid column
     -- not with primary keys, to manage multi-way sync
-    , where_uid as (
-        select puid_column || '=' || quote_literal(row_data->puid_column) as where_clause
-        from event
+    , where_uid AS (
+        SELECT '"' || puid_column || '" = ' || quote_literal(row_data->puid_column) AS where_clause
+        FROM event
     )
-    select into sql
-        case
-            when action = 'I' then
+    SELECT INTO sql
+        CASE
+            WHEN action = 'I' THEN
                 'INSERT INTO "' || schema_name || '"."' || table_name || '"' ||
-                ' ('||(select string_agg(key, ',') from each(row_data) WHERE key != ANY(pkey_fields))||') VALUES ' ||
-                '('||(select string_agg(case when value is null then 'null' else quote_literal(value) end, ',') from each(row_data) WHERE key != ANY(pkey_fields))||')'
-            when action = 'D' then
+                ' ('||(
+                    SELECT string_agg('"' || key || '"', ',')
+                    FROM each(row_data)
+                    WHERE key != ANY(pkey_fields))||') VALUES ' ||
+                '('||(
+                    SELECT string_agg(CASE WHEN value IS NULL THEN 'NULL' ELSE quote_literal(value) END, ',')
+                    FROM EACH(row_data)
+                    WHERE key != ANY(pkey_fields))||')'
+            WHEN action = 'D' THEN
                 'DELETE FROM "' || schema_name || '"."' || table_name || '"' ||
                 ' WHERE ' || where_clause
-            when action = 'U' then
+            WHEN action = 'U' then
                 'UPDATE "' || schema_name || '"."' || table_name || '"' ||
-                ' SET ' || (select string_agg(key || '=' || case when value is null then 'null' else quote_literal(value) end, ',') from each(changed_fields) WHERE key != ANY(pkey_fields)) ||
+                ' SET ' || (
+                    SELECT string_agg('"' || key || '"' || ' = ' ||
+                    CASE
+                        WHEN value IS NULL THEN 'NULL'
+                        ELSE quote_literal(value)
+                    END, ','
+                    ) FROM each(changed_fields)
+                    WHERE key != ANY(pkey_fields)
+                ) ||
                 ' WHERE ' || where_clause
-        end
+        END
     from
         event, where_pks, where_uid
     ;
