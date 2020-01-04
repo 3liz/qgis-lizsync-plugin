@@ -138,7 +138,7 @@ class ExecuteSql(QgsProcessingAlgorithm):
         feedback.pushInfo(self.SQL)
 
         # Run SQL
-        [header, data, rowCount, ok, error_message] = fetchDataFromSqlQuery(
+        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
             connection_name,
             self.SQL
         )

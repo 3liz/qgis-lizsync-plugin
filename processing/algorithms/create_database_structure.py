@@ -40,11 +40,10 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
     # used when calling the algorithm from another algorithm, or when
     # calling from the QGIS console.
 
+    CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     OVERRIDE_AUDIT = 'OVERRIDE_AUDIT'
     OVERRIDE_LIZSYNC = 'OVERRIDE_LIZSYNC'
-    NOM = 'NOM'
-    SIREN = 'SIREN'
-    CODE = 'CODE'
+
     OUTPUT_STATUS = 'OUTPUT_STATUS'
     OUTPUT_STRING = 'OUTPUT_STRING'
 
@@ -72,6 +71,20 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         with some other properties.
         """
         # INPUTS
+        connection_name_central = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
+        db_param_a = QgsProcessingParameterString(
+            self.CONNECTION_NAME_CENTRAL,
+            self.tr('PostgreSQL connection to the CENTRAL database'),
+            defaultValue=connection_name_central,
+            optional=False
+        )
+        db_param_a.setMetadata({
+            'widget_wrapper': {
+                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
+            }
+        })
+        self.addParameter(db_param_a)
+
         self.addParameter(
             QgsProcessingParameterBoolean(
                 self.OVERRIDE_AUDIT,
@@ -106,14 +119,14 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
     def checkParameterValues(self, parameters, context):
 
         # Check that the connection name has been configured
-        connection_name = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
-        if not connection_name:
-            return False, self.tr('You must use the "Configure Lizsync plugin" alg to set the database connection name')
+        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+        if not connection_name_central:
+            return False, self.tr('You must use the "Configure Lizsync plugin" alg to set the central database connection name')
 
         # Check that it corresponds to an existing connection
         dbpluginclass = createDbPlugin( 'postgis' )
         connections = [c.connectionName() for c in dbpluginclass.connections()]
-        if connection_name not in connections:
+        if connection_name_central not in connections:
             return False, self.tr('The configured connection name does not exists in QGIS')
 
         # Check audit schema
@@ -129,6 +142,7 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         return super(CreateDatabaseStructure, self).checkParameterValues(parameters, context)
 
     def checkSchema(self, schema_name, parameters, context):
+        # Check if schema exists in database
         sql = '''
             SELECT schema_name
             FROM information_schema.schemata
@@ -136,17 +150,20 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         '''.format(
             schema_name
         )
-        connection_name = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
-        [header, data, rowCount, ok, error_message] = fetchDataFromSqlQuery(
-            connection_name,
+        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            connection_name_central,
             sql
         )
         if not ok:
             return ok, error_message
+
+        # Get override parameter for the schema to check
         if schema_name == 'audit':
             override = parameters[self.OVERRIDE_AUDIT]
         if schema_name == 'lizsync':
             override = parameters[self.OVERRIDE_LIZSYNC]
+
         msg = schema_name.upper() + ' - ' + self.tr('Schema does not exists. Continue')
         for a in data:
             schema = a[0]
@@ -160,7 +177,7 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         """
         Here is where the processing itself takes place.
         """
-        connection_name = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
+        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
 
         # Drop schemas if needed
         override_audit = self.parameterAsBool(parameters, self.OVERRIDE_AUDIT, context)
@@ -178,8 +195,8 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
                     s
                 )
 
-                [header, data, rowCount, ok, error_message] = fetchDataFromSqlQuery(
-                    connection_name,
+                header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+                    connection_name_central,
                     sql
                 )
                 if ok:
@@ -221,8 +238,8 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
                     feedback.pushInfo('  Skipped (empty file)')
                     continue
 
-                [header, data, rowCount, ok, error_message] = fetchDataFromSqlQuery(
-                    connection_name,
+                header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+                    connection_name_central,
                     sql
                 )
                 if ok:
@@ -247,8 +264,8 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
                 '%s', now()::timestamp(0)
             )
         ''' % version
-        [header, data, rowCount, ok, error_message] = fetchDataFromSqlQuery(
-            connection_name,
+        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            connection_name_central,
             sql
         )
 

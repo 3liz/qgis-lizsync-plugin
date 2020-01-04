@@ -24,11 +24,13 @@ from qgis.core import (
     QgsProcessingParameterNumber,
     QgsProcessingParameterFile,
     QgsProcessingOutputString,
+    QgsExpressionContextUtils
 )
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery
-import os, subprocess
+import os, subprocess, tempfile, zipfile
 from pathlib import Path
 import processing
+from .tools import *
 
 class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
     """
@@ -39,26 +41,13 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
     # Constants used to refer to parameters and outputs. They will be
     # used when calling the algorithm from another algorithm, or when
     # calling from the QGIS console.
-
-    DBHOST = 'DBHOST'
-    DBPORT = 'DBPORT'
-    DBNAME = 'DBNAME'
-    DBUSER = 'DBUSER'
-    DBPASS = 'DBPASS'
-    ARCHIVE = 'ARCHIVE'
+    CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
+    CONNECTION_NAME_CLONE = 'CONNECTION_NAME_CLONE'
+    ZIP_FILE = 'ZIP_FILE'
     PACKAGE_FILE = ''
-    OUTPUT_STRING = 'OUTPUT_STRING'
 
-    servers = {
-        'central': {
-            'host': 'qgisdb-valabre.lizmap.com', 'port': 5432, 'dbname': 'lizmap_valabre_geopoppy',
-            'user': 'geopoppy@valabre', 'password':'gfrkGd5UvrJbCxE'
-        },
-        'geopoppy': {
-            'host': '172.24.1.1', 'port': 5432, 'dbname': 'geopoppy',
-            'user': 'docker', 'password':'docker'
-        }
-    }
+    OUTPUT_STATUS = 'OUTPUT_STATUS'
+    OUTPUT_STRING = 'OUTPUT_STRING'
 
     def name(self):
         return 'deploy_database_server_package'
@@ -84,48 +73,58 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         with some other properties.
         """
         # INPUTS
+        # central database
+        connection_name_central = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
+        db_param_a = QgsProcessingParameterString(
+            self.CONNECTION_NAME_CENTRAL,
+            self.tr('PostgreSQL connection to the CENTRAL database'),
+            defaultValue=connection_name_central,
+            optional=False
+        )
+        db_param_a.setMetadata({
+            'widget_wrapper': {
+                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
+            }
+        })
+        self.addParameter(db_param_a)
+
+        # Clone database connection parameters
+        connection_name_clone = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_clone')
+        db_param_b = QgsProcessingParameterString(
+            self.CONNECTION_NAME_CLONE,
+            self.tr('PostgreSQL connection to the CLONE database'),
+            defaultValue=connection_name_clone,
+            optional=False
+        )
+        db_param_b.setMetadata({
+            'widget_wrapper': {
+                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
+            }
+        })
+        self.addParameter(db_param_b)
+
         self.addParameter(
             QgsProcessingParameterString(
-                self.DBHOST, 'Host',
-                defaultValue='172.24.1.1',
-                optional=False
-            )
-        )
-        self.addParameter(
-            QgsProcessingParameterNumber(
-                self.DBPORT, 'Port',
-                defaultValue=5432,
-                optional=False
-            )
-        )
-        self.addParameter(
-            QgsProcessingParameterString(
-                self.DBNAME, 'Database',
-                defaultValue='geopoppy',
-                optional=False
-            )
-        )
-        self.addParameter(
-            QgsProcessingParameterString(
-                self.DBUSER, 'User',
-                defaultValue='docker',
-                optional=False
-            )
-        )
-        self.addParameter(
-            QgsProcessingParameterString(
-                self.DBPASS, 'Password',
-                defaultValue='docker',
-                optional=False
-            )
-        )
-        self.addParameter(
-            QgsProcessingParameterString(
-                self.ARCHIVE, 'Full archive path. Leave empty inside GeoPoppy',
-                defaultValue='/projects/geopoppy/archives/geopoppy_package.tar.gz',
+                self.ZIP_FILE, 'Full archive path. Leave empty inside clone database',
+                defaultValue=os.path.join(tempfile.gettempdir(), 'central_database_package.zip'),
                 optional=True
             )
         )
+
+        # Clone database connection parameters
+        connection_name_clone = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_clone')
+        db_param_b = QgsProcessingParameterString(
+            self.CONNECTION_NAME_CLONE,
+            self.tr('PostgreSQL connection to the CLONE database'),
+            defaultValue=connection_name_clone,
+            optional=False
+        )
+        db_param_b.setMetadata({
+            'widget_wrapper': {
+                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
+            }
+        })
+        self.addParameter(db_param_b)
 
         # OUTPUTS
         # Add output for message
@@ -138,20 +137,20 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
     def checkParameterValues(self, parameters, context):
         # Check inputs
 
-        package_file = parameters[self.ARCHIVE]
+        package_file = parameters[self.ZIP_FILE]
         if not os.path.exists(package_file):
             package_file = os.path.join(
-                '/projects/geopoppy/archives/geopoppy_package.tar.gz',
-                'geopoppy_package.tar.gz'
+                tempfile.gettempdir(),
+                'central_database_package.zip'
             )
         ok = os.path.exists(package_file)
 
-        # Check database content
+        # Check ZIP archive content
         if not ok:
             return False, "The package does not exists: {0}".format(package_file)
-        parameters[self.ARCHIVE] = package_file
+        parameters[self.ZIP_FILE] = package_file
 
-        return super(GeopoppyDeployServerPackage, self).checkParameterValues(parameters, context)
+        return super(DeployDatabaseServerPackage, self).checkParameterValues(parameters, context)
 
     def check_internet(self):
         # return True
@@ -164,29 +163,13 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         except requests.ConnectionError:
             return False
 
-    def run_sql(self, sql, servername, parameters, context, feedback):
-        profil = self.servers[servername]
-
-        exec_result = processing.run("script:geopoppy_execute_sql_on_database", {
-            'DBHOST': profil['host'],
-            'DBPORT': profil['port'],
-            'DBNAME': profil['dbname'],
-            'DBUSER': profil['user'],
-            'DBPASS': profil['password'],
-            'INPUT_SQL': sql
-        }, context=context, feedback=feedback)
-        return exec_result
-
     def processAlgorithm(self, parameters, context, feedback):
         """
         Here is where the processing itself takes place.
         """
-        dbhost = parameters[self.DBHOST]
-        dbport = parameters[self.DBPORT]
-        dbname = parameters[self.DBNAME]
-        dbuser = parameters[self.DBUSER]
-        dbpass = parameters[self.DBPASS]
-        package_file = parameters[self.ARCHIVE]
+        package_file = parameters[self.ZIP_FILE]
+        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+        connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
 
         # Check archive
         if not os.path.exists(package_file):
@@ -198,66 +181,109 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
 
         msg = ''
         # Uncompress package
-        feedback.pushInfo('Uncompress package {0}'.format(package_file))
-        import tarfile
+        feedback.pushInfo(self.tr('UNCOMPRESS PACKAGE') + ' {0}'.format(package_file))
+        import zipfile
         dir_path = os.path.dirname(os.path.abspath(package_file))
         try:
-            with tarfile.open(package_file) as t:
-                tar = t.extractall(dir_path)
+            with zipfile.ZipFile(package_file) as t:
+                zip = t.extractall(dir_path)
+                feedback.pushInfo('Package uncompressed successfully')
         except:
             raise Exception(self.tr('Package extraction error'))
-        finally:
-            print('remove')
-            #os.remove(package_file)
 
+        # CLONE DATABASE
         # Get existing data to avoid recreating server_id for this machine
-        geopoppy_id = None
-        geopoppy_name = None
-        feedback.pushInfo('Check if metadata is already in sync schema')
-        sql = "SELECT * FROM information_schema.tables WHERE table_name = 'server_metadata' and table_schema = 'sync';"
-        get_sql = self.run_sql(sql, 'geopoppy', parameters, context, feedback)
+        feedback.pushInfo(self.tr('GET EXISTING METADATA TO AVOID RECREATING SERVER_ID FOR THIS CLONE'))
+        clone_id = None
+        clone_name = None
+        sql = '''
+        SELECT table_name
+        FROM information_schema.tables
+        WHERE table_name = 'server_metadata' and table_schema = 'lizsync';
+        '''
+        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            connection_name_clone,
+            sql
+        )
         has_sync = False
-        if 'OUTPUT_LAYER' in get_sql:
-            for feature in get_sql['OUTPUT_LAYER'].getFeatures():
-                if feature['table_name'] == 'server_metadata':
+        if ok:
+            for a in data:
+                if a[0] == 'server_metadata':
                     has_sync = True
+                    feedback.pushInfo(self.tr('Clone database already has sync metadata table'))
+        else:
+            raise Exception(error_message)
+        # get existing server_id
         if has_sync:
-            sql = 'SELECT server_id, server_name FROM sync.server_metadata LIMIT 1;'
-            get_sql = self.run_sql(sql, 'geopoppy', parameters, context, feedback)
-            if 'OUTPUT_LAYER' in get_sql:
-                for feature in get_sql['OUTPUT_LAYER'].getFeatures():
-                    geopoppy_id = feature['server_id']
-                    geopoppy_name = feature['server_name']
-                    feedback.pushInfo('* original geopoppy = %s / %s' % (geopoppy_id, geopoppy_name))
+            sql = '''
+            SELECT server_id, server_name
+            FROM lizsync.server_metadata
+            LIMIT 1;
+            '''
+            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+                connection_name_clone,
+                sql
+            )
+            if ok:
+                for a in data:
+                    clone_id = a[0]
+                    clone_name = a[1]
+                    feedback.pushInfo(self.tr('Clone metadata are already set'))
+                    feedback.pushInfo(self.tr('* server id') + ' = {0}'.format(clone_id))
+                    feedback.pushInfo(self.tr('* server name') + ' = {0}'.format(clone_name))
+            else:
+                raise Exception(error_message)
 
         # Get synchronized schemas
+        feedback.pushInfo(self.tr('GET THE LIST OF SYNCHRONIZED SCHEMAS FROM THE FILE sync_schemas.txt'))
         sync_schemas = ''
         with open(os.path.join(dir_path, 'sync_schemas.txt')) as f:
                 sync_schemas = f.readline().strip()
         if sync_schemas == '':
             raise Exception(self.tr('No schema to syncronize'))
 
-        # LOCAL SERVER
-        # Run SQL scripts from archive
+        # CLONE DATABASE
+        # Run SQL scripts from archive with PSQL command
+        feedback.pushInfo(self.tr('RUN SQL SCRIPT FROM THE DECOMPRESSED ZIP FILE'))
         a_sql = os.path.join(dir_path, '01_before.sql')
         b_sql = os.path.join(dir_path, '02_data.sql')
         c_sql = os.path.join(dir_path, '03_after.sql')
+        d_sql = os.path.join(dir_path, '04_lizsync.sql')
         if not os.path.exists(a_sql) or not os.path.exists(b_sql) or not os.path.exists(c_sql):
             raise Exception(self.tr('SQL files not found'))
 
-        for i in (a_sql, b_sql, c_sql):
+        # Build clone database connection parameters for psql
+        status, uri, error_message = getUriFromConnectionName(connection_name_clone)
+        if not uri:
+            msg = self.tr('Error getting database connection information')
+            feedback.pushInfo(msg)
+            raise Exception(error_message)
+        if uri.service():
+            cmdo = [
+                'service={0}'.format(uri.service())
+            ]
+        else:
+            cmdo = [
+                '-h {0}'.format(uri.host()),
+                '-p {0}'.format(uri.port()),
+                '-d {0}'.format(uri.database()),
+                '-U {0}'.format(uri.username()),
+                '-W'
+            ]
+
+        for i in (a_sql, b_sql, c_sql, d_sql):
             try:
                 cmd = [
-                    'psql',
-                    '-h {0}'.format(dbhost),
-                    '-p {0}'.format(dbport),
-                    '-d {0}'.format(dbname),
-                    '-U {0}'.format(dbuser),
+                    'psql'
+                ] + cmdo + [
                     '--no-password',
                     '-f {0}'.format(i)
                 ]
-                feedback.pushInfo('PSQL = %s' % ' '.join(cmd) )
-                myenv = {**{'PGPASSWORD': dbpass}, **os.environ }
+                # feedback.pushInfo('PSQL = %s' % ' '.join(cmd) )
+                # Add password if needed
+                myenv = { **os.environ }
+                if not uri.service():
+                    myenv = {**{'PGPASSWORD': uri.password()}, **os.environ }
 
                 subprocess.run(
                     " ".join(cmd),
@@ -273,100 +299,99 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
             finally:
                 feedback.pushInfo('* {0} has been loaded'.format(i.replace(dir_path, '')))
 
-        # Add server_id in sync.server_metadata if needed
-        if geopoppy_id and geopoppy_name:
+        # CLONE DATABASE
+        # Add server_id in lizsync.server_metadata if needed
+        feedback.pushInfo(self.tr('ADDING THE SERVER ID IN THE CLONE metadata table'))
+        if clone_id and clone_name:
             sql = '''
-            INSERT INTO sync.server_metadata (server_id, server_name)
+            INSERT INTO lizsync.server_metadata (server_id, server_name)
             VALUES ( '{0}', '{1}' )
             RETURNING server_id, server_name
             '''.format(
-                geopoppy_id,
-                geopoppy_name
+                clone_id,
+                clone_name
             )
         else:
             sql = '''
-            INSERT INTO sync.server_metadata (server_name)
-            VALUES ( concat('geopoppy ', '{0}' , ' ', md5((now())::text) ) )
+            INSERT INTO lizsync.server_metadata (server_name)
+            VALUES ( concat('clone',  ' ', md5((now())::text) ) )
             RETURNING server_id, server_name
-            '''.format( sync_schemas )
-        get_sql = self.run_sql(sql, 'geopoppy', parameters, context, feedback)
-        if 'OUTPUT_LAYER' in get_sql:
-            for feature in get_sql['OUTPUT_LAYER'].getFeatures():
-                geopoppy_id = feature['server_id']
-                geopoppy_name = feature['server_name']
-                feedback.pushInfo('* geopoppy id = %s' % geopoppy_id)
-                feedback.pushInfo('* geopoppy name = %s' % geopoppy_name)
+            '''
+        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            connection_name_clone,
+            sql
+        )
+        if ok:
+            for a in data:
+                clone_id = a[0]
+                clone_name = a[1]
+                feedback.pushInfo(self.tr('Server metadata added in the clone database'))
+                feedback.pushInfo(self.tr('* server id') + ' = {0}'.format(clone_id))
+                feedback.pushInfo(self.tr('* server name') + ' = {0}'.format(clone_name))
+        else:
+            msg = self.tr('Error while adding server id in clone metadata table')
+            feedback.pushInfo(msg)
+            raise Exception(error_message)
 
 
-        # CENTRAL SERVER SIDE - Add an item in sync.synchronized_schemas
-        # To know afterward wich schemas to use when performing sync
+        # CENTRAL DATABASE
+        # Add an item in lizsync.synchronized_schemas
+        # to know afterward wich schemas to use when performing sync
+        feedback.pushInfo(self.tr('ADDING THE LIST OF SYNCHRONIZED SCHEMAS FOR THIS CLONE IN THE CENTRAL DATABASE '))
         sql = '''
-            DELETE FROM sync.synchronized_schemas
+            DELETE FROM lizsync.synchronized_schemas
             WHERE server_id = '{0}';
-            INSERT INTO sync.synchronized_schemas
+            INSERT INTO lizsync.synchronized_schemas
             (server_id, sync_schemas)
             VALUES
             ( '{0}', jsonb_build_array( '{1}' ) );
         '''.format(
-            geopoppy_id,
+            clone_id,
             "', '".join([ a.strip() for a in sync_schemas.split(',') ])
         )
-        feedback.pushInfo(sql)
-        get_sql = self.run_sql(sql, 'central', parameters, context, feedback)
+        # feedback.pushInfo(sql)
+        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            connection_name_central,
+            sql
+        )
+        if ok:
+            msg = self.tr('List of synchronized schemas added in central database for this clone')
+            feedback.pushInfo(msg)
+        else:
+            msg = self.tr('Error while adding the synchronized schemas in the central database')
+            feedback.pushInfo(msg)
+            raise Exception(error_message)
 
-        # CENTRAL SERVER SIDE - Add geopoppy Id in the sync.history line
+        # CENTRAL DATABASE - Add clone Id in the lizsync.history line
         # corresponding to this deployed package
+        feedback.pushInfo(self.tr('ADD CLONE ID IN THE CENTRAL DATABASE HISTORY ITEM FOR THIS ARCHIVE DEPLOYEMENT'))
         with open(os.path.join(dir_path, 'sync_id.txt')) as f:
             sync_id = f.readline().strip()
             sql = '''
-                UPDATE sync.history
+                UPDATE lizsync.history
                 SET server_to = array_append(server_to, '{0}')
                 WHERE sync_id = '{1}'
                 ;
             '''.format(
-                geopoppy_id,
+                clone_id,
                 sync_id
             )
-            feedback.pushInfo(sql)
-            get_sql = self.run_sql(sql, 'central', parameters, context, feedback)
+            # feedback.pushInfo(sql)
+            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+                connection_name_central,
+                sql
+            )
+            if ok:
+                msg = self.tr('History item has been successfully updated for this archive deployement in the central database')
+                feedback.pushInfo(msg)
+            else:
+                msg = self.tr('Error while updating the history item for this archive deployement')
+                feedback.pushInfo(msg)
+                raise Exception(error_message)
 
         out = {
-            self.OUTPUT_STRING: msg
+            self.OUTPUT_STATUS: 1,
+            self.OUTPUT_STRING: 'SUCCESS'
         }
         return out
-
-# ## Add sync item in sync.history table
-# sql= '''
-    # INSERT INTO sync.history
-    # (server_from, min_event_id, max_event_id, max_action_tstamp_tx, sync_type, sync_status)
-    # VALUES (
-        # (SELECT server_id FROM sync.server_metadata LIMIT 1),
-        # (SELECT Coalesce(min(event_id),-1) FROM audit.logged_actions),
-        # (SELECT Coalesce(max(event_id),0) FROM audit.logged_actions),
-        # (SELECT Coalesce(max(action_tstamp_tx), now()) FROM audit.logged_actions),
-        # 'full',
-        # 'done'
-    # )
-    # RETURNING sync_id;
-    # '''
-# ##sync_id = ?
-
-# ## Add audit schema and functions
-# audit.sql
-
-# ## Add audit triggers on all table in the schema $SRV_SCHEMA"
-# sql = '''
-    # SELECT count(*) nb FROM (
-        # SELECT audit.audit_table((quote_ident(table_schema) || '.' || quote_ident(table_name))::text)
-        # FROM information_schema.tables
-        # WHERE table_schema = '$SRV_SCHEMA'
-        # AND table_type = 'BASE TABLE'
-        # AND (quote_ident(table_schema) || '.' || quote_ident(table_name))::text NOT IN (
-            # SELECT (tgrelid::regclass)::text
-            # FROM pg_trigger
-            # WHERE tgname LIKE 'audit_trigger_%'
-        # )
-    # ) foo
-    # '''
-
 

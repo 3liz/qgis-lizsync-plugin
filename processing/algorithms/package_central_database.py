@@ -29,7 +29,7 @@ from qgis.core import (
     QgsExpressionContextUtils
 )
 
-import os, subprocess
+import os
 from datetime import date, datetime
 from .tools import *
 import zipfile
@@ -43,6 +43,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
     # Constants used to refer to parameters and outputs. They will be
     # used when calling the algorithm from another algorithm, or when
     # calling from the QGIS console.
+    CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     SCHEMAS = 'SCHEMAS'
     ZIP_FILE = 'ZIP_FILE'
     OUTPUT_STATUS = 'OUTPUT_STATUS'
@@ -87,6 +88,20 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         with some other properties.
         """
         # INPUTS
+        connection_name_central = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
+        db_param_a = QgsProcessingParameterString(
+            self.CONNECTION_NAME_CENTRAL,
+            self.tr('PostgreSQL connection to the CENTRAL database'),
+            defaultValue=connection_name_central,
+            optional=False
+        )
+        db_param_a.setMetadata({
+            'widget_wrapper': {
+                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
+            }
+        })
+        self.addParameter(db_param_a)
+
         self.addParameter(
             QgsProcessingParameterString(
                 self.SCHEMAS,
@@ -100,7 +115,8 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
                 self.ZIP_FILE,
                 self.tr('Output archive file (ZIP)'),
                 fileFilter='zip',
-                optional=False
+                optional=False,
+                defaultValue=os.path.join(tempfile.gettempdir(), 'central_database_package.zip')
             )
         )
 
@@ -119,20 +135,50 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
             )
         )
 
+    def checkCentralDatabase(self, parameters, feedback):
+        '''
+        Check if central database
+        has been initialized
+        '''
+        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+
+        # Check if needed schema and metadata has been created
+        feedback.pushInfo(self.tr('CHECK IF LIZSYNC HAS BEEN INSTALLED AND DATABASE INITIALIZED'))
+        status, tests = check_lizsync_installation_status(
+            connection_name_central,
+            ['structure', 'server id', 'uid columns', 'audit triggers'],
+            parameters[self.SCHEMAS]
+        )
+        if not status:
+            msg = self.tr('Some needed configuration are missing in the central database. Please correct them before proceeding.')
+            feedback.pushInfo(msg)
+            for name,test in tests.items():
+                if not test['status']:
+                    item_msg = '* {name} - {message}'.format(
+                        name = name.upper(),
+                        message=test['message'].replace('"', '')
+                    )
+                    feedback.pushInfo(item_msg)
+            raise Exception(msg)
+        else:
+            feedback.pushInfo(self.tr('Every test has passed successfully !'))
 
     def processAlgorithm(self, parameters, context, feedback):
         """
         Here is where the processing itself takes place.
         """
         msg = ''
+        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
 
-        connection_name = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
+        # First run some test in database
+        self.checkCentralDatabase(parameters, feedback)
 
         # Create temporary files
         sql_file_list = [
             '01_before.sql',
             '02_data.sql',
             '03_after.sql',
+            '04_lizsync.sql',
             'sync_id.txt',
             'sync_schemas.txt'
         ]
@@ -141,7 +187,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         for k in sql_file_list:
             path = os.path.join(tmpdir, k)
             sql_files[k] = path
-        feedback.pushInfo(str(sql_files))
+        # feedback.pushInfo(str(sql_files))
 
         # Get the list of input schemas
         schemas = [
@@ -153,7 +199,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
 
         # 1/ 01_before.sql
         ####
-        feedback.pushInfo(self.tr('Create script 01_before.sql'))
+        feedback.pushInfo(self.tr('CREATE SCRIPT 01_before.sql'))
         sql = 'BEGIN;'
 
         # Drop existing schemas
@@ -187,108 +233,28 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         # write content into temp file
         with open(sql_files['01_before.sql'], 'w') as f:
             f.write(sql)
-
-
-        # Add missing UID columns into central server tables
-        # only for given list of schemas
-        ####
-        schemas = [
-            "'{0}'".format(a.strip())
-            for a in parameters[self.SCHEMAS].split(',')
-            if a.strip() not in ('public', 'lizsync', 'audit')
-        ]
-        schemas_sql =  ', '.join(schemas)
-        sql = '''
-            SELECT table_schema, table_name,
-            lizsync.add_uid_columns(table_schema, table_name)
-            FROM information_schema.tables
-            WHERE table_schema IN ( {0} )
-            AND table_type = 'BASE TABLE'
-            ORDER BY table_schema, table_name
-        '''.format(
-            schemas_sql
-        )
-        [header, data, rowCount, ok, error_message] = fetchDataFromSqlQuery(
-            connection_name,
-            sql
-        )
-        if ok:
-            status = 1
-            names = []
-            for a in data:
-                if a[2]:
-                    names.append(
-                        '{0}.{1}'.format(a[0], a[1])
-                    )
-            if names:
-                msg = self.tr('UID columns have been successfully added in the following tables:')
-                feedback.pushInfo(msg)
-                for n in names:
-                    feedback.pushInfo('* ' + n)
-                msg+= ', '.join(names)
-            else:
-                msg = self.tr('No UID columns have been added.')
-                feedback.pushInfo(msg)
+            feedback.pushInfo(self.tr('File 01_before.sql created'))
 
         # 2/ 02_data.sql
         ####
-        feedback.pushInfo(self.tr('Create script 02_data.sql'))
-        # Create pg_dump command
-        [uri, error_message] = getUriFromConnectionName(connection_name)
-        if not uri:
-            raise Exception(self.tr('Error getting database connection information'))
-        if uri.service():
-            cmdo = [
-                'service={0}'.format(uri.service())
-            ]
-        else:
-            cmdo = [
-                '-h {0}'.format(uri.host()),
-                '-p {0}'.format(uri.port()),
-                '-d {0}'.format(uri.database()),
-                '-U {0}'.format(uri.username()),
-                '-W'
-            ]
-
-        cmd = [
-            'pg_dump'
-        ] + cmdo + [
-            '--no-acl',
-            '--no-owner',
-            '-Fp',
-            '-f {0}'.format(sql_files['02_data.sql'])
-        ]
-        # Add given schemas
-        for s in schemas:
-            cmd.append('-n {0}'.format(s))
-
-        # Run command
-        try:
-            feedback.pushInfo('PG_DUMP = %s' % ' '.join(cmd) )
-
-            # Add password if needed
-            myenv = { **os.environ }
-            if not uri.service():
-                myenv = {**{'PGPASSWORD': uri.password()}, **os.environ }
-
-            subprocess.run(
-                " ".join(cmd),
-                shell=True,
-                env=myenv
-            )
-
-        except:
-            raise Exception(self.tr('Error dumping database'))
-        finally:
-            feedback.pushInfo(self.tr('Database has been dumped'))
-
+        feedback.pushInfo(self.tr('CREATE SCRIPT 02_data.sql'))
+        pstatus, pmessages = pg_dump(
+            connection_name_central,
+            sql_files['02_data.sql'],
+            schemas,
+            []
+        )
+        for pmessage in pmessages:
+            feedback.pushInfo(pmessage)
+        if not pstatus:
+            raise Exception(' '.join(pmessages))
 
         # 3/ 03_after.sql
         ####
-        feedback.pushInfo(self.tr('Create script 03_after.sql'))
+        feedback.pushInfo(self.tr('CREATE SCRIPT 03_after.sql'))
         sql = ''
 
-        # 6/ Add audit trigger in all table in given schemas
+        # Add audit trigger in all table in given schemas
         schemas = [
             "'{0}'".format(a.strip())
             for a in parameters[self.SCHEMAS].split(',')
@@ -296,29 +262,39 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         ]
         schemas_sql = ', '.join(schemas)
         sql+= '''
-            SELECT count(*) AS nb
-            FROM (
-                SELECT audit.audit_table((quote_ident(table_schema) || '.' || quote_ident(table_name))::text)
-                FROM information_schema.tables
-                WHERE table_schema IN ( {0} )
-                AND table_type = 'BASE TABLE'
-                AND (quote_ident(table_schema) || '.' || quote_ident(table_name))::text
-                    NOT IN (
-                        SELECT (tgrelid::regclass)::text
-                        FROM pg_trigger
-                        WHERE tgname LIKE 'audit_trigger_%'
-                    )
-            ) foo;
+            SELECT audit.audit_table((quote_ident(table_schema) || '.' || quote_ident(table_name))::text)
+            FROM information_schema.tables
+            WHERE table_schema IN ( {0} )
+            AND table_type = 'BASE TABLE'
+            ;
         '''.format(
             schemas_sql
         )
+
         # write content into temp file
         with open(sql_files['03_after.sql'], 'w') as f:
             f.write(sql)
+            feedback.pushInfo(self.tr('File 03_after.sql created'))
 
+        # 4/ 04_lizsync.sql
+        # Add lizsync schema structure
+        # We get it from central database to be sure everything will be compatible
+        feedback.pushInfo(self.tr('CREATE SCRIPT 04_lizsync.sql'))
+        pstatus, pmessages = pg_dump(
+            connection_name_central,
+            sql_files['04_lizsync.sql'],
+            ['lizsync'],
+            ['--schema-only']
+        )
+        for pmessage in pmessages:
+            feedback.pushInfo(pmessage)
+        if not pstatus:
+            raise Exception(' '.join(pmessages))
 
-        # 4/ Add schemas into file
+        # 5/ sync_schemas.txt
+        # Add schemas into file
         ####
+        feedback.pushInfo(self.tr('ADD SCHEMAS TO FILE sync_schemas.txt'))
         schemas = [
             "{0}".format(a.strip())
             for a in parameters[self.SCHEMAS].split(',')
@@ -327,11 +303,14 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         schema_list =  ','.join(schemas)
         with open(sql_files['sync_schemas.txt'], 'w') as f:
             f.write(schema_list)
+            feedback.pushInfo(self.tr('File sync_schemas.txt created'))
 
 
-        # 5/ Add new sync history item in the central database
+        # 6/ sync_id.txt
+        # Add new sync history item in the central database
         # and get sync_id
         ####
+        feedback.pushInfo(self.tr('ADD NEW SYNC HISTORY ITEM IN CENTRAL DATABASE'))
         sql = '''
             INSERT INTO lizsync.history
             (
@@ -347,8 +326,8 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
             )
             RETURNING sync_id;
         '''
-        [header, data, rowCount, ok, error_message] = fetchDataFromSqlQuery(
-            connection_name,
+        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            connection_name_central,
             sql
         )
         if ok:
@@ -357,18 +336,22 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
             for a in data:
                 sync_id = a[0]
             if sync_id:
-                msg = self.tr('New synchronization item has been added in the central database')
+                msg = self.tr('New synchronization history item has been added in the central database')
                 msg+= ' : syncid = {0}'.format(sync_id)
                 feedback.pushInfo(msg)
                 with open(sql_files['sync_id.txt'], 'w') as f:
                     f.write(sync_id)
+                    feedback.pushInfo(self.tr('File sync_id.txt created'))
             else:
                 msg = self.tr('No synchronization item could be added !')
                 feedback.pushInfo(msg)
+                feedback.pushInfo(error_message)
+                raise Exception(msg)
         else:
             msg = self.tr('No synchronization item could be added !')
             msg+= ' ' + error_message
-            feedback.pushInfo(msg)
+            # feedback.pushInfo(msg)
+            raise Exception(msg)
 
         # Create ZIP archive
         try:
@@ -394,8 +377,9 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
                 except:
                     status = 0
                     msg+= self.tr("Error while zipping file") + ': ' + fname
-                    break
+                    raise Exception(msg)
         msg = self.tr('Package has been successfully created !')
+        feedback.pushInfo(msg)
 
         return {
             self.OUTPUT_STATUS: status,

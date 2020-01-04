@@ -21,9 +21,11 @@ from qgis.core import (
     QgsProcessingException,
     QgsProcessingAlgorithm,
     QgsProcessingParameterString,
-    QgsProcessingOutputString
+    QgsProcessingOutputString,
+    QgsExpressionContextUtils
 )
 import processing
+from .tools import *
 
 class SynchronizeDatabase(QgsProcessingAlgorithm):
     """
@@ -33,38 +35,23 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
     # used when calling the algorithm from another algorithm, or when
     # calling from the QGIS console.
 
-    DBHOST = 'DBHOST'
+    CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
+    CONNECTION_NAME_CLONE = 'CONNECTION_NAME_CLONE'
+
+    OUTPUT_STATUS = 'OUTPUT_STATUS'
     OUTPUT_STRING = 'OUTPUT_STRING'
 
-    servers = {
-        'central': {
-            'host': 'qgisdb-valabre.lizmap.com', 'port': 5432, 'dbname': 'lizmap_valabre_geopoppy',
-            'user': 'geopoppy@valabre', 'password':'gfrkGd5UvrJbCxE'
-        },
-        'geopoppy': {
-            'host': '172.24.1.1', 'port': 5432, 'dbname': 'geopoppy',
-            'user': 'docker', 'password':'docker'
-        }
-    }
-
     def tr(self, string):
-        """
-        Returns a translatable string with the self.tr() function.
-        """
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self, config={}):
-        """ Virtual override
-
-            see https://qgis.org/api/classQgsProcessingAlgorithm.html
-        """
         return self.__class__()
 
     def __init__(self):
         super().__init__()
 
     def name(self):
-        return 'partial_sync'
+        return 'synchronize_database'
 
     def displayName(self):
         return self.tr('Two-way database synchronization')
@@ -81,13 +68,34 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
 
     def initAlgorithm(self, config=None):
         # INPUTS
-        self.addParameter(
-            QgsProcessingParameterString(
-                self.DBHOST, 'Database host',
-                defaultValue='qgisdb-valabre.lizmap.com',
-                optional=False
-            )
+        connection_name_central = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
+        db_param_a = QgsProcessingParameterString(
+            self.CONNECTION_NAME_CENTRAL,
+            self.tr('PostgreSQL connection to the CENTRAL database'),
+            defaultValue=connection_name_central,
+            optional=False
         )
+        db_param_a.setMetadata({
+            'widget_wrapper': {
+                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
+            }
+        })
+        self.addParameter(db_param_a)
+
+        # Clone database connection parameters
+        connection_name_clone = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_clone')
+        db_param_b = QgsProcessingParameterString(
+            self.CONNECTION_NAME_CLONE,
+            self.tr('PostgreSQL connection to the CLONE database'),
+            defaultValue=connection_name_clone,
+            optional=False
+        )
+        db_param_b.setMetadata({
+            'widget_wrapper': {
+                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
+            }
+        })
+        self.addParameter(db_param_b)
 
         # OUTPUTS
         # Add output for message
@@ -109,26 +117,11 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         except requests.ConnectionError:
             return False
 
-    def run_sql(self, sql, servername, parameters, context, feedback):
-        profil = self.servers[servername]
-        if servername == 'central':
-            dbhost = parameters[self.DBHOST]
-        else:
-            dbhost = profil['host']
-        exec_result = processing.run("script:geopoppy_execute_sql_on_database", {
-            'DBHOST': dbhost,
-            'DBPORT': profil['port'],
-            'DBNAME': profil['dbname'],
-            'DBUSER': profil['user'],
-            'DBPASS': profil['password'],
-            'INPUT_SQL': sql
-        }, context=context, feedback=feedback)
-        return exec_result
-
     def processAlgorithm(self, parameters, context, feedback):
 
         uid_field = 'uid'
-
+        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+        connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
         if not self.check_internet():
             feedback.pushInfo(self.tr('No internet connection'))
             raise Exception(self.tr('No internet connection'))
@@ -140,115 +133,144 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         total = 100.0 / 2
 
         central_id = None
-        geopoppy_id = None
+        clone_id = None
 
-        # Get central ID
-        sql = 'SELECT server_id FROM sync.server_metadata LIMIT 1;'
-        feedback.pushInfo(sql)
-        get_sql = self.run_sql(sql, 'central', parameters, context, feedback)
-        for feature in get_sql['OUTPUT_LAYER'].getFeatures():
-            central_id = feature['server_id']
-            feedback.pushInfo('* server id = %s' % central_id)
+        # Get central database server id
+        sql = '''
+            SELECT
+                server_id
+            FROM lizsync.server_metadata
+            LIMIT 1;
+        '''
+        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            connection_name_central,
+            sql
+        )
+        if not ok:
+            feedback.pushInfo(sql)
+            raise Exception(error_message)
+        for a in data:
+            central_id = a[0]
+            feedback.pushInfo(self.tr('Server id') +' = %s' % central_id)
 
-        # Get geopoppy ID
-        sql = 'SELECT server_id FROM sync.server_metadata LIMIT 1;'
-        feedback.pushInfo(sql)
-        get_sql = self.run_sql(sql, 'geopoppy', parameters, context, feedback)
-        for feature in get_sql['OUTPUT_LAYER'].getFeatures():
-            geopoppy_id = feature['server_id']
-            feedback.pushInfo('* geopoppy id = %s' % geopoppy_id)
+        # Get clone database server id
+        sql = '''
+            SELECT
+                server_id
+            FROM lizsync.server_metadata
+            LIMIT 1;
+        '''
+        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            connection_name_clone,
+            sql
+        )
+        if not ok:
+            feedback.pushInfo(sql)
+            raise Exception(error_message)
+        for a in data:
+            clone_id = a[0]
+            feedback.pushInfo(self.tr('Clone id') + ' = %s' % clone_id)
 
-        # CENTRAL -> GEOPOPPY
-        feedback.pushInfo('****** CENTRAL TO GEOPOPPY *******')
-        feedback.pushInfo('*************')
+
+        # CENTRAL -> CLONE
+        feedback.pushInfo('****** CENTRAL TO CLONE *******')
 
         # Get last synchro
         sql = '''
-        SELECT max_action_tstamp_tx::text AS max_action_tstamp_tx,
-        max_event_id
-        FROM sync.history
-        WHERE True
-        AND server_from = '{0}'
-        AND '{1}' = ANY (server_to)
-        AND sync_status = 'done'
-        ORDER BY sync_time DESC
-        LIMIT 1
+            SELECT
+                max_action_tstamp_tx::text AS max_action_tstamp_tx,
+                max_event_id
+            FROM lizsync.history
+            WHERE True
+            AND server_from = '{0}'
+            AND '{1}' = ANY (server_to)
+            AND sync_status = 'done'
+            ORDER BY sync_time DESC
+            LIMIT 1
         '''.format(
             central_id,
-            geopoppy_id
+            clone_id
         )
-        feedback.pushInfo(sql)
-        get_sql = self.run_sql(sql, 'central', parameters, context, feedback)
         last_sync = None
-        for feature in get_sql['OUTPUT_LAYER'].getFeatures():
+        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            connection_name_central,
+            sql
+        )
+        if not ok:
+            feedback.pushInfo(sql)
+            raise Exception(error_message)
+        for a in data:
             last_sync = {
-                'max_event_id': feature['max_event_id'],
-                'max_action_tstamp_tx': feature['max_action_tstamp_tx']
+                'max_action_tstamp_tx': a[0],
+                'max_event_id': a[1]
             }
-            feedback.pushInfo('* last sync = %s' % last_sync)
 
         # Get audit log since last sync
         # We also get the SQL to replay via the get_event_sql function
         sql = '''
-        SELECT event_id, action_tstamp_tx::text AS action_tstamp_tx,
-        sync.get_event_sql(event_id, '{0}') AS action
-        FROM audit.logged_actions,
-        (
-            SELECT sync_schemas
-            FROM sync.synchronized_schemas
-            WHERE server_id = '{1}'
-            LIMIT 1
-        ) AS f
+            SELECT
+                event_id,
+                action_tstamp_tx::text AS action_tstamp_tx,
+                lizsync.get_event_sql(event_id, '{0}') AS action
+            FROM audit.logged_actions,
+            (
+                SELECT sync_schemas
+                FROM lizsync.synchronized_schemas
+                WHERE server_id = '{1}'
+                LIMIT 1
+            ) AS f
 
-        WHERE True
+            WHERE True
 
-        -- modifications ne proviennent pas du GeoPoppy
-        -- UID_GeoPoppy_1
-        AND (sync_data->>'origin' != '{1}' OR sync_data->>'origin' IS NULL)
+            -- modifications do not come from clone database
+            AND (sync_data->>'origin' != '{1}' OR sync_data->>'origin' IS NULL)
 
-        -- modifications n'ont pas déjà été rejouées sur le GeoPoppy
-        -- UID_GeoPoppy_1
-        AND (sync_data->'replayed_by' ? '{1}' OR sync_data->'replayed_by' = jsonb_build_object() )
+            -- modifications have not yet been replayed in the clone database
+            AND (sync_data->'replayed_by' ? '{1}' OR sync_data->'replayed_by' = jsonb_build_object() )
 
-        -- modifications sont situées après la dernière synchronisation
-        -- MAX_ACTION_TSTAMP_TX Par ex: 2019-04-20 12:00:00+02
-        AND action_tstamp_tx > '{2}'
+            -- modifications sont situées après la dernière synchronisation
+            -- MAX_ACTION_TSTAMP_TX Par ex: 2019-04-20 12:00:00+02
+            AND action_tstamp_tx > '{2}'
 
-        -- et pour lesquelles l'ID est supérieur
-        -- MAX_EVENT_ID
-        AND event_id > {3}
+            -- et pour lesquelles l'ID est supérieur
+            -- MAX_EVENT_ID
+            AND event_id > {3}
 
-        -- et pour les schémas listés
-        AND sync_schemas ? schema_name
+            -- et pour les schémas listés
+            AND sync_schemas ? schema_name
 
-        ORDER BY event_id;
+            ORDER BY event_id;
         '''.format(
             uid_field,
-            geopoppy_id,
+            clone_id,
             last_sync['max_action_tstamp_tx'],
             last_sync['max_event_id']
         )
-        feedback.pushInfo(sql)
         ids = []
         max_action_tstamp_tx = None
         actions = []
-        get_sql = self.run_sql(sql, 'central', parameters, context, feedback)
-        if 'OUTPUT_LAYER' in get_sql:
-            for feature in get_sql['OUTPUT_LAYER'].getFeatures():
-                ids.append(int(feature['event_id']))
-                actions.append(feature['action'])
-                max_action_tstamp_tx = feature['action_tstamp_tx']
+        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            connection_name_central,
+            sql
+        )
+        if not ok:
+            feedback.pushInfo(sql)
+            raise Exception(error_message)
+        for a in data:
+            ids.append(int(a[0]))
+            max_action_tstamp_tx = a[1]
+            actions.append(a[2])
+        if rowCount > 0:
+            feedback.pushInfo(
+                self.tr('Number of features to synchronize') + ' = {0}'.format(rowCount)
+            )
+            # Calculate min and max event ids
             min_event_id = min(ids)
             max_event_id = max(ids)
-            feedback.pushInfo(
-                '* min_event_id = {0}, max_event_id = {1}, max_action_tstamp_tx = {2}'.format(
-                    min_event_id, max_event_id, max_action_tstamp_tx
-               )
-            )
 
             # Insert a new synchronization item in central db
             sql = '''
-                INSERT INTO sync.history (
+                INSERT INTO lizsync.history (
                     server_from, server_to,
                     min_event_id, max_event_id, max_action_tstamp_tx,
                     sync_type, sync_status
@@ -257,152 +279,218 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                     '{0}', ARRAY['{1}'],
                     {2}, {3}, '{4}',
                     'partial', 'pending'
-                ) RETURNING sync_id
+                )
+                RETURNING
+                    sync_id
             '''.format(
-                central_id, geopoppy_id,
+                central_id, clone_id,
                 min_event_id, max_event_id, max_action_tstamp_tx
             )
-            feedback.pushInfo(sql)
-            get_sql = self.run_sql(sql, 'central', parameters, context, feedback)
-            sync_id = None
-            for feature in get_sql['OUTPUT_LAYER'].getFeatures():
-                sync_id = feature['sync_id']
+
+            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+                connection_name_central,
+                sql
+            )
+            if not ok:
+                feedback.pushInfo(sql)
+                raise Exception(error_message)
+            for a in data:
+                sync_id = a[0]
                 feedback.pushInfo(
-                    '* new sync item = {0}'.format(sync_id)
+                    'New history item has been created in the central database'
                 )
 
-            # Replay SQL queries in Geopoppy db
+            # Replay SQL queries in clone db
             # We disable triggers to avoid adding more rows to the local audit logged_actions table
             sql = '''
                 SET session_replication_role = replica;
                 {0};
                 SET session_replication_role = DEFAULT;
             '''.format( ';'.join(actions) )
-            feedback.pushInfo(sql)
-            get_sql = self.run_sql(sql, 'geopoppy', parameters, context, feedback)
+            # feedback.pushInfo(sql)
+            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+                connection_name_clone,
+                sql
+            )
+            if not ok:
+                feedback.pushInfo(sql)
+                raise Exception(error_message)
+            feedback.pushInfo(
+                self.tr('SQL queries have been replayed from the central to the clone database')
+            )
 
             # Modify central server audit logged actions
             sql = '''
                 UPDATE audit.logged_actions
                 SET sync_data = jsonb_set(
                     sync_data,
-                    '{replayed_by}',
+                    '{{"replayed_by"}}',
                     sync_data->'replayed_by' || jsonb_build_object('{0}', '{1}'),
                     true
                 )
                 WHERE event_id IN ({2})
             '''.format(
-                geopoppy_id,
+                clone_id,
                 sync_id,
-                ', '.join('%s' % ids)
+                ', '.join([str(i) for i in ids])
             )
-            feedback.pushInfo(sql)
-            get_sql = self.run_sql(sql, 'central', parameters, context, feedback)
+            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+                connection_name_central,
+                sql
+            )
+            if not ok:
+                feedback.pushInfo(sql)
+                raise Exception(error_message)
+            feedback.pushInfo(
+                self.tr('Logged actions sync_data has been updated in the central database with the clone id')
+            )
 
             # Modify central server synchronization item
             sql = '''
-                UPDATE sync.history
+                UPDATE lizsync.history
                 SET (sync_status) = ('done')
                 WHERE True
                 AND sync_id = '{0}'
-            '''.format( sync_id )
-            feedback.pushInfo(sql)
-            get_sql = self.run_sql(sql, 'central', parameters, context, feedback)
+            '''.format(
+                sync_id
+            )
+            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+                connection_name_central,
+                sql
+            )
+            if not ok:
+                feedback.pushInfo(sql)
+                raise Exception(error_message)
+            feedback.pushInfo(
+                self.tr('History sync_status has been updated to "done" in the central database')
+            )
 
         else:
             # No data to sync
-            feedback.pushInfo('No data to synchronize from the central server')
+            feedback.pushInfo(
+                self.tr('No data to synchronize from the central database')
+            )
+
         feedback.setProgress(int(1 * total))
 
 
+        # CLONE -> CENTRAL
+        feedback.pushInfo('****** CLONE TO CENTRAL *******')
 
-        # GEOPOPPY -> CENTRAL
-        feedback.pushInfo('****** GEOPOPPY TO CENTRAL *******')
-        feedback.pushInfo('*************')
-
-        # Get all geopoppy audit log
-        # no filter by date because Geopoppy date cannot be trusted
+        # Get all clone audit log
+        # no filter by date because clone date cannot be trusted
         # we choose to delete all audit logged_actions when sync is done
         # to start fresh
         sql = '''
-        SELECT event_id, action_tstamp_tx::text AS action_tstamp_tx,
-        sync.get_event_sql(event_id, '{0}') AS action
-        FROM audit.logged_actions
-        WHERE True
-        ORDER BY event_id;
+            SELECT
+                lizsync.get_event_sql(event_id, '{0}') AS action
+            FROM audit.logged_actions
+            WHERE True
+            ORDER BY event_id;
         '''.format(
             uid_field
         )
-        feedback.pushInfo(sql)
         actions = []
-        nb=0
-        get_sql = self.run_sql(sql, 'geopoppy', parameters, context, feedback)
-        if 'OUTPUT_LAYER' in get_sql:
-            for feature in get_sql['OUTPUT_LAYER'].getFeatures():
-                actions.append(feature['action'])
-                nb+=1
+        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            connection_name_clone,
+            sql
+        )
+        if not ok:
+            feedback.pushInfo(sql)
+            raise Exception(error_message)
+        if rowCount > 0:
             feedback.pushInfo(
-                '{} data to synchronize'.format(nb)
+                self.tr('Number of features to synchronize') + ' = {0}'.format(rowCount)
             )
+            for a in data:
+                actions.append(a[0])
 
             # Insert a new synchronization item in central db
             sql = '''
-                INSERT INTO sync.history (
-                    server_from, server_to,
-                    min_event_id, max_event_id, max_action_tstamp_tx,
-                    sync_type, sync_status
-                )
-                VALUES (
-                    '{0}', ARRAY['{1}'],
-                    NULL, NULL, NULL,
-                    'partial', 'pending'
-                ) RETURNING sync_id
+            INSERT INTO lizsync.history (
+                server_from, server_to,
+                min_event_id, max_event_id, max_action_tstamp_tx,
+                sync_type, sync_status
+            )
+            VALUES (
+                '{0}', ARRAY['{1}'],
+                NULL, NULL, NULL,
+                'partial', 'pending'
+            )
+            RETURNING
+                sync_id
             '''.format(
-                geopoppy_id,
+                clone_id,
                 central_id
             )
-            feedback.pushInfo(sql)
-            get_sql = self.run_sql(sql, 'central', parameters, context, feedback)
             sync_id = None
-            for feature in get_sql['OUTPUT_LAYER'].getFeatures():
-                sync_id = feature['sync_id']
+            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+                connection_name_central,
+                sql
+            )
+            if not ok:
+                feedback.pushInfo(sql)
+                raise Exception(error_message)
+            for a in data:
+                sync_id = a[0]
                 feedback.pushInfo(
-                    '* new sync item = {0}'.format(sync_id)
+                    self.tr('New history item has been created in the central database')
                 )
 
             # Replay SQL queries to central server db
             # The session variables are used by the audit function
             # to fill the sync_data field
             sql = '''
-            SET SESSION "sync.server_from" = '{0}';
-            SET SESSION "sync.server_to" = '{1}';
-            SET SESSION "sync.sync_id" = '{2}';
+            SET SESSION "lizsync.server_from" = '{0}';
+            SET SESSION "lizsync.server_to" = '{1}';
+            SET SESSION "lizsync.sync_id" = '{2}';
             {3}
             '''.format(
-                geopoppy_id,
+                clone_id,
                 central_id,
                 sync_id,
                 ';'.join(actions)
             )
-            feedback.pushInfo(sql)
-            get_sql = self.run_sql(sql, 'central', parameters, context, feedback)
+            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+                connection_name_central,
+                sql
+            )
+            if not ok:
+                feedback.pushInfo(sql)
+                raise Exception(error_message)
 
-            # Delete all data from Geopoppy audit logged_actions
+            # Delete all data from clone audit logged_actions
             sql = '''
-                TRUNCATE audit.logged_actions RESTART IDENTITY;
+            TRUNCATE audit.logged_actions
+            RESTART IDENTITY;
             '''
-            feedback.pushInfo(sql)
-            get_sql = self.run_sql(sql, 'geopoppy', parameters, context, feedback)
+            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+                connection_name_clone,
+                sql
+            )
+            if not ok:
+                feedback.pushInfo(sql)
+                raise Exception(error_message)
 
             # Modify central server synchronization item
             sql = '''
-                UPDATE sync.history
+                UPDATE lizsync.history
                 SET (sync_status) = ('done')
                 WHERE True
                 AND sync_id = '{0}'
-            '''.format( sync_id )
-            feedback.pushInfo(sql)
-            get_sql = self.run_sql(sql, 'central', parameters, context, feedback)
+            '''.format(
+                sync_id
+            )
+            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+                connection_name_central,
+                sql
+            )
+            if not ok:
+                feedback.pushInfo(sql)
+                raise Exception(error_message)
+        else:
+            # No data to sync
+            feedback.pushInfo('No data to synchronize from the clone database')
 
 
         feedback.setProgress(int(2 * total))
