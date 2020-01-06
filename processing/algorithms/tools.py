@@ -38,7 +38,7 @@ def getUriFromConnectionName(connection_name):
         error_message = e.msg
     except:
         status = False
-        error_message = 'Cannot connect to database with %s' % connection_name
+        error_message = tr('Cannot connect to database with') + ' %s' % connection_name
 
     if not connection:
         return status, uri, error_message
@@ -46,7 +46,7 @@ def getUriFromConnectionName(connection_name):
     db = dbpluginclass.database()
     if not db:
         status = False
-        error_message = 'Unable to get database from connection'
+        error_message = tr('Unable to get database from connection')
         return status, uri, error_message
 
     uri = db.uri()
@@ -64,6 +64,7 @@ def fetchDataFromSqlQuery(connection_name, sql):
 
     # Get URI
     status, uri, error_message = getUriFromConnectionName(connection_name)
+
     if not uri:
         ok = False
         return header, data, rowCount, ok, error_message
