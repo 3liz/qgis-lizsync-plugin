@@ -1,5 +1,5 @@
-CENTRAL=lizsync_central
-CLONE=lizsync_clone_a
+CENTRAL=$1
+CLONE=$2
 CENTRAL_FILE="/tmp/$CENTRAL.sql"
 CLONE_FILE="/tmp/$CLONE.sql"
 SCHEMA="test"

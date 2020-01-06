@@ -226,7 +226,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             AND (sync_data->>'origin' != '{1}' OR sync_data->>'origin' IS NULL)
 
             -- modifications have not yet been replayed in the clone database
-            AND (sync_data->'replayed_by' ? '{1}' OR sync_data->'replayed_by' = jsonb_build_object() )
+            AND (NOT (sync_data->'replayed_by' ? '{1}') OR sync_data->'replayed_by' = jsonb_build_object() )
 
             -- modifications sont situées après la dernière synchronisation
             -- MAX_ACTION_TSTAMP_TX Par ex: 2019-04-20 12:00:00+02
