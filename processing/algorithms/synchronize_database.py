@@ -45,7 +45,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self, config={}):
-        return self.__class__()
+        return SynchronizeDatabase()
 
     def __init__(self):
         super().__init__()
@@ -57,7 +57,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         return self.tr('Two-way database synchronization')
 
     def group(self):
-        return self.tr('Synchronization')
+        return self.tr('03 Synchronize data and files')
 
     def groupId(self):
         return 'lizsync_sync'

@@ -60,16 +60,16 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
         return self.tr('Initialize the central database')
 
     def group(self):
-        return self.tr('Structure')
+        return self.tr('01 Installation')
 
     def groupId(self):
-        return 'lizsync_structure'
+        return 'lizsync_installation'
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return self.__class__()
+        return InitializeCentralDatabase()
 
     def initAlgorithm(self, config):
         """

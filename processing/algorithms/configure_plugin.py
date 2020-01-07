@@ -56,16 +56,16 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         return self.tr('Configure Lizsync plugin')
 
     def group(self):
-        return self.tr('Configuration')
+        return self.tr('01 Installation')
 
     def groupId(self):
-        return 'lizsync_configuration'
+        return 'lizsync_installation'
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return self.__class__()
+        return ConfigurePlugin()
 
     def initAlgorithm(self, config):
         """

@@ -52,16 +52,16 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
         return self.tr('Upgrade database structure')
 
     def group(self):
-        return self.tr('Structure')
+        return self.tr('01 Installation')
 
     def groupId(self):
-        return 'lizsync_structure'
+        return 'lizsync_installation'
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return self.__class__()
+        return UpgradeDatabaseStructure()
 
     def initAlgorithm(self, config):
         """

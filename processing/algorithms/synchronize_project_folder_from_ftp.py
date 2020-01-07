@@ -66,7 +66,7 @@ class SynchronizeProjectFolderFromFtp(QgsProcessingAlgorithm):
         return self.tr('Synchronize project and data from FTP')
 
     def group(self):
-        return self.tr('Synchronization')
+        return self.tr('03 Synchronize data and files')
 
     def groupId(self):
         return 'lizsync_sync'

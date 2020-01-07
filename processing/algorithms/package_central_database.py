@@ -56,7 +56,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         return self.tr('Create a package from central database')
 
     def group(self):
-        return self.tr('Package and deploy')
+        return self.tr('02 Package and deploy database data')
 
     def groupId(self):
         return 'lizsync_package'

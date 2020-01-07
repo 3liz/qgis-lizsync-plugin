@@ -65,7 +65,7 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         return self.tr('Synchronize local media subfolder to central FTP server')
 
     def group(self):
-        return self.tr('Synchronization')
+        return self.tr('03 Synchronize data and files')
 
     def groupId(self):
         return 'lizsync_sync'

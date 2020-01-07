@@ -72,7 +72,7 @@ class GetDataAsLayer(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return self.__class__()
+        return GetDataAsLayer()
 
     def initAlgorithm(self, config):
         """

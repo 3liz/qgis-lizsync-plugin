@@ -54,16 +54,16 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         return self.tr('Create database structure')
 
     def group(self):
-        return self.tr('Structure')
+        return self.tr('01 Installation')
 
     def groupId(self):
-        return 'lizsync_structure'
+        return 'lizsync_installation'
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return self.__class__()
+        return CreateDatabaseStructure()
 
     def initAlgorithm(self, config):
         """

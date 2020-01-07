@@ -56,7 +56,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         return self.tr('Deploy database package')
 
     def group(self):
-        return self.tr('Package and deploy')
+        return self.tr('02 Package and deploy database data')
 
     def groupId(self):
         return 'lizsync_package'

@@ -68,7 +68,7 @@ class ExecuteSql(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return self.__class__()
+        return ExecuteSql()
 
     def initAlgorithm(self, config):
         """

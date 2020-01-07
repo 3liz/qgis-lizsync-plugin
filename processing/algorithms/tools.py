@@ -144,6 +144,9 @@ def run_command(cmd, feedback):
     '''
     Run any command using subprocess
     '''
+    import re
+    stop_words = ['warning']
+    pattern = re.compile('|'.join(r'\b{}\b'.format(word) for word in stop_words), re.IGNORECASE)
     process = subprocess.Popen(
         " ".join(cmd),
         shell=True,
@@ -152,10 +155,12 @@ def run_command(cmd, feedback):
     )
     for line in process.stdout:
         output = "{}".format(line.rstrip().decode("utf-8"))
+        if not pattern.search(output):
+            print(output)
         if output == '' and process.poll() is not None:
             break
         if output:
-            feedback.pushInfo( output )
+            feedback.pushInfo(output)
     rc = process.poll()
     return rc
 
@@ -285,39 +290,37 @@ def check_lizsync_installation_status(connection_name, test_list=['structure', '
     return global_status, tests
 
 def ftp_sync(ftphost, ftpport, ftpuser, sourcedir, targetdir, excludedirs, parameters, context, feedback):
+    try:
+        cmd = []
+        cmd.append('lftp')
+        cmd.append('ftp://{0}@{1}'.format(ftpuser, ftphost))
+        cmd.append('-e')
+        cmd.append('"')
+        cmd.append('set ftp:ssl-allow no; set ssl:verify-certificate no; ')
+        cmd.append('mirror')
+        cmd.append('--verbose')
+        cmd.append('--use-cache')
+        # cmd.append('-e') # pour supprimer tout ce qui n'est pas sur le serveur
+        for d in excludedirs.split(','):
+            ed = d.strip().strip('/') + '/'
+            if ed != '/':
+                cmd.append('-x %s' % ed)
+        cmd.append('--ignore-time')
+        cmd.append('{0}'.format(sourcedir))
+        cmd.append('{0}'.format(targetdir))
+        cmd.append('; quit"')
+        feedback.pushInfo('LFTP = %s' % ' '.join(cmd) )
 
-  try:
+        # myenv = {**{'MYVAR': myvar}, **os.environ }
+        run_command(cmd, feedback)
 
-      cmd = []
-      cmd.append('lftp')
-      cmd.append('ftp://{0}@{1}'.format(ftpuser, ftphost))
-      cmd.append('-e')
-      cmd.append('"')
-      cmd.append('set ftp:ssl-allow no; set ssl:verify-certificate no; ')
-      cmd.append('mirror')
-      cmd.append('--verbose')
-      cmd.append('--use-cache')
-      # cmd.append('-e') # pour supprimer tout ce qui n'est pas sur le serveur
-      for d in excludedirs.split(','):
-          ed = d.strip().strip('/') + '/'
-          if ed != '/':
-              cmd.append('-x %s' % ed)
-      cmd.append('--ignore-time')
-      cmd.append('{0}'.format(sourcedir))
-      cmd.append('{0}'.format(targetdir))
-      cmd.append('; quit"')
-      feedback.pushInfo('LFTP = %s' % ' '.join(cmd) )
+    except:
+        feedback.pushInfo(tr('Error during FTP sync'))
+        raise Exception(tr('Error during FTP sync'))
+    finally:
+        feedback.pushInfo(tr('FTP sync done'))
 
-      # myenv = {**{'MYVAR': myvar}, **os.environ }
-      run_command(cmd, feedback)
-
-  except:
-      feedback.pushInfo(tr('Error during FTP sync'))
-      raise Exception(tr('Error during FTP sync'))
-  finally:
-      feedback.pushInfo(tr('FTP sync done'))
-
-  return True
+    return True
 
 
 
