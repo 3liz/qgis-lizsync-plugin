@@ -71,7 +71,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         connection_name_central = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
         db_param_a = QgsProcessingParameterString(
             self.CONNECTION_NAME_CENTRAL,
-            self.tr('PostgreSQL connection to the CENTRAL database'),
+            self.tr('PostgreSQL connection to the central database'),
             defaultValue=connection_name_central,
             optional=False
         )
@@ -86,7 +86,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         connection_name_clone = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_clone')
         db_param_b = QgsProcessingParameterString(
             self.CONNECTION_NAME_CLONE,
-            self.tr('PostgreSQL connection to the CLONE database'),
+            self.tr('PostgreSQL connection to the clone database'),
             defaultValue=connection_name_clone,
             optional=False
         )
@@ -105,24 +105,12 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             )
         )
 
-
-    def check_internet(self):
-        # return True
-        import requests
-        url='https://www.google.com/'
-        timeout=5
-        try:
-            _ = requests.get(url, timeout=timeout)
-            return True
-        except requests.ConnectionError:
-            return False
-
     def processAlgorithm(self, parameters, context, feedback):
 
         uid_field = 'uid'
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
-        if not self.check_internet():
+        if not check_internet():
             feedback.pushInfo(self.tr('No internet connection'))
             raise Exception(self.tr('No internet connection'))
 

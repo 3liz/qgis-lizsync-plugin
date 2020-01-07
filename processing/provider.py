@@ -28,7 +28,7 @@ from .algorithms.get_data_as_layer import GetDataAsLayer
 from .algorithms.initialize_central_database import InitializeCentralDatabase
 from .algorithms.package_central_database import PackageCentralDatabase
 from .algorithms.deploy_database_server_package import DeployDatabaseServerPackage
-from .algorithms.send_media_to_ftp import SendMediaToFtp
+from .algorithms.synchronize_media_subfolder_to_ftp import SynchronizeMediaSubfolderToFtp
 from .algorithms.synchronize_database import SynchronizeDatabase
 from .algorithms.synchronize_project_folder_from_ftp import SynchronizeProjectFolderFromFtp
 
@@ -53,7 +53,7 @@ class LizsyncProvider(QgsProcessingProvider):
         self.addAlgorithm(InitializeCentralDatabase())
         self.addAlgorithm(PackageCentralDatabase())
         self.addAlgorithm(DeployDatabaseServerPackage())
-        self.addAlgorithm(SendMediaToFtp())
+        self.addAlgorithm(SynchronizeMediaSubfolderToFtp())
         self.addAlgorithm(SynchronizeDatabase())
         self.addAlgorithm(SynchronizeProjectFolderFromFtp())
 

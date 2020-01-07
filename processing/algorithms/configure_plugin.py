@@ -41,6 +41,10 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
 
     CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     CONNECTION_NAME_CLONE = 'CONNECTION_NAME_CLONE'
+    LOCAL_QGIS_PROJECT_FOLDER = 'LOCAL_QGIS_PROJECT_FOLDER'
+    FTP_HOST = 'FTP_HOST'
+    FTP_LOGIN = 'FTP_LOGIN'
+    FTP_REMOTE_DIR = 'FTP_REMOTE_DIR'
 
     OUTPUT_STATUS = 'OUTPUT_STATUS'
     OUTPUT_STRING = 'OUTPUT_STRING'
@@ -100,6 +104,43 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         })
         self.addParameter(db_param_b)
 
+        local_qgis_project_folder = QgsExpressionContextUtils.globalScope().variable('lizsync_local_qgis_project_folder')
+        self.addParameter(
+            QgsProcessingParameterString(
+                self.LOCAL_QGIS_PROJECT_FOLDER,
+                self.tr('Local QGIS project folder'),
+                defaultValue=local_qgis_project_folder,
+                optional=False
+            )
+        )
+        ftp_host = QgsExpressionContextUtils.globalScope().variable('lizsync_ftp_host')
+        self.addParameter(
+            QgsProcessingParameterString(
+                self.FTP_HOST,
+                self.tr('FTP Server host'),
+                defaultValue=ftp_host,
+                optional=False
+            )
+        )
+        ftp_login = QgsExpressionContextUtils.globalScope().variable('lizsync_ftp_login')
+        self.addParameter(
+            QgsProcessingParameterString(
+                self.FTP_LOGIN,
+                self.tr('FTP Server login'),
+                defaultValue=ftp_login,
+                optional=False
+            )
+        )
+        ftp_remote_dir = QgsExpressionContextUtils.globalScope().variable('lizsync_ftp_remote_dir')
+        self.addParameter(
+            QgsProcessingParameterString(
+                self.FTP_REMOTE_DIR,
+                self.tr('FTP Server remote directory'),
+                defaultValue=ftp_remote_dir,
+                optional=False
+            )
+        )
+
         # OUTPUTS
         # Add output for status (integer)
         self.addOutput(
@@ -122,12 +163,29 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         """
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
+        lizsync_local_qgis_project_folder = parameters[self.LOCAL_QGIS_PROJECT_FOLDER]
+        lizsync_ftp_host = parameters[self.FTP_HOST]
+        lizsync_ftp_login = parameters[self.FTP_LOGIN]
+        lizsync_ftp_remote_dir = parameters[self.FTP_REMOTE_DIR]
 
         # Set global variable
         QgsExpressionContextUtils.setGlobalVariable('lizsync_connection_name_central', connection_name_central)
-        feedback.pushInfo(self.tr('PostgreSQL connection to CENTRAL database') + ' = ' + connection_name_central)
+        feedback.pushInfo(self.tr('PostgreSQL connection to central database') + ' = ' + connection_name_central)
+
         QgsExpressionContextUtils.setGlobalVariable('lizsync_connection_name_clone', connection_name_clone)
-        feedback.pushInfo(self.tr('PostgreSQL connection to CLONE database') + ' = ' + connection_name_clone)
+        feedback.pushInfo(self.tr('PostgreSQL connection to local clone database') + ' = ' + connection_name_clone)
+
+        QgsExpressionContextUtils.setGlobalVariable('lizsync_local_qgis_project_folder', lizsync_local_qgis_project_folder)
+        feedback.pushInfo(self.tr('Local QGIS project folder') + ' = ' + lizsync_local_qgis_project_folder)
+
+        QgsExpressionContextUtils.setGlobalVariable('lizsync_ftp_host', lizsync_ftp_host)
+        feedback.pushInfo(self.tr('FTP Server host') + ' = ' + lizsync_ftp_host)
+
+        QgsExpressionContextUtils.setGlobalVariable('lizsync_ftp_login', lizsync_ftp_login)
+        feedback.pushInfo(self.tr('FTP Server login') + ' = ' + lizsync_ftp_login)
+
+        QgsExpressionContextUtils.setGlobalVariable('lizsync_ftp_remote_dir', lizsync_ftp_remote_dir)
+        feedback.pushInfo(self.tr('FTP Server remote directory') + ' = ' + lizsync_ftp_remote_dir)
 
         msg = self.tr('Configuration has been saved')
         feedback.pushInfo(msg)

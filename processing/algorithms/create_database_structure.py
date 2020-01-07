@@ -74,7 +74,7 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         connection_name_central = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
         db_param_a = QgsProcessingParameterString(
             self.CONNECTION_NAME_CENTRAL,
-            self.tr('PostgreSQL connection to the CENTRAL database'),
+            self.tr('PostgreSQL connection to the central database'),
             defaultValue=connection_name_central,
             optional=False
         )

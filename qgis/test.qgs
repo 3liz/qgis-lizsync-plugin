@@ -18,9 +18,9 @@
   </projectCrs>
   <layer-tree-group>
     <customproperties></customproperties>
-    <layer-tree-group checked="Qt::Checked" expanded="1" mutually-exclusive="1" mutually-exclusive-child="1" name="CLONES">
+    <layer-tree-group checked="Qt::Checked" expanded="1" mutually-exclusive="1" mutually-exclusive-child="0" name="CLONES">
       <customproperties></customproperties>
-      <layer-tree-group checked="Qt::Unchecked" expanded="1" name="CLONE B">
+      <layer-tree-group checked="Qt::Checked" expanded="1" name="CLONE B">
         <customproperties></customproperties>
         <layer-tree-layer checked="Qt::Checked" expanded="1" id="pluviometers_9ee4bba7_2cbc_4efc_b901_2a16ff2ceaa1" name="pluviometers" providerKey="postgres" source="service='lizsync_clone_b' sslmode=disable key='ogc_fid' srid=2154 type=Point checkPrimaryKeyUnicity='1' table=&quot;test&quot;.&quot;pluviometers&quot; (geom) sql=">
           <customproperties>
@@ -38,7 +38,7 @@
           </customproperties>
         </layer-tree-layer>
       </layer-tree-group>
-      <layer-tree-group checked="Qt::Checked" expanded="1" name="CLONE_A">
+      <layer-tree-group checked="Qt::Unchecked" expanded="1" name="CLONE_A">
         <customproperties></customproperties>
         <layer-tree-layer checked="Qt::Checked" expanded="1" id="pluviometers_ff6b199f_9ee7_4e47_8944_5d710c39931e" name="pluviometers" providerKey="postgres" source="service='lizsync_clone_a' sslmode=disable key='ogc_fid' srid=2154 type=Point checkPrimaryKeyUnicity='1' table=&quot;test&quot;.&quot;pluviometers&quot; (geom) sql=">
           <customproperties>
@@ -207,37 +207,37 @@
   <projectModels></projectModels>
   <legend updateDrawingOrder="true">
     <legendgroup checked="Qt::Checked" name="CLONES" open="true">
-      <legendgroup checked="Qt::Unchecked" name="CLONE B" open="true">
+      <legendgroup checked="Qt::Checked" name="CLONE B" open="true">
         <legendlayer checked="Qt::Checked" drawingOrder="-1" name="pluviometers" open="true" showFeatureCount="1">
           <filegroup hidden="false" open="true">
-            <legendlayerfile isInOverview="0" layerid="pluviometers_9ee4bba7_2cbc_4efc_b901_2a16ff2ceaa1" visible="0"></legendlayerfile>
+            <legendlayerfile isInOverview="0" layerid="pluviometers_9ee4bba7_2cbc_4efc_b901_2a16ff2ceaa1" visible="1"></legendlayerfile>
           </filegroup>
         </legendlayer>
         <legendlayer checked="Qt::Checked" drawingOrder="-1" name="montpellier_districts" open="true" showFeatureCount="1">
           <filegroup hidden="false" open="true">
-            <legendlayerfile isInOverview="0" layerid="montpellier_districts_07ce35b4_1b93_4e7c_93b9_76ff61d0f9ac" visible="0"></legendlayerfile>
+            <legendlayerfile isInOverview="0" layerid="montpellier_districts_07ce35b4_1b93_4e7c_93b9_76ff61d0f9ac" visible="1"></legendlayerfile>
           </filegroup>
         </legendlayer>
         <legendlayer checked="Qt::Checked" drawingOrder="-1" name="montpellier_sub_districts" open="true" showFeatureCount="1">
           <filegroup hidden="false" open="true">
-            <legendlayerfile isInOverview="0" layerid="montpellier_sub_districts_6652ca70_35ce_4809_a351_0754e70730ca" visible="0"></legendlayerfile>
+            <legendlayerfile isInOverview="0" layerid="montpellier_sub_districts_6652ca70_35ce_4809_a351_0754e70730ca" visible="1"></legendlayerfile>
           </filegroup>
         </legendlayer>
       </legendgroup>
-      <legendgroup checked="Qt::Checked" name="CLONE_A" open="true">
+      <legendgroup checked="Qt::Unchecked" name="CLONE_A" open="true">
         <legendlayer checked="Qt::Checked" drawingOrder="-1" name="pluviometers" open="true" showFeatureCount="1">
           <filegroup hidden="false" open="true">
-            <legendlayerfile isInOverview="0" layerid="pluviometers_ff6b199f_9ee7_4e47_8944_5d710c39931e" visible="1"></legendlayerfile>
+            <legendlayerfile isInOverview="0" layerid="pluviometers_ff6b199f_9ee7_4e47_8944_5d710c39931e" visible="0"></legendlayerfile>
           </filegroup>
         </legendlayer>
         <legendlayer checked="Qt::Checked" drawingOrder="-1" name="montpellier_districts" open="true" showFeatureCount="1">
           <filegroup hidden="false" open="true">
-            <legendlayerfile isInOverview="0" layerid="montpellier_districts_174a4fd0_a84b_4c6a_bf75_6605dedb5924" visible="1"></legendlayerfile>
+            <legendlayerfile isInOverview="0" layerid="montpellier_districts_174a4fd0_a84b_4c6a_bf75_6605dedb5924" visible="0"></legendlayerfile>
           </filegroup>
         </legendlayer>
         <legendlayer checked="Qt::Checked" drawingOrder="-1" name="montpellier_sub_districts" open="true" showFeatureCount="1">
           <filegroup hidden="false" open="true">
-            <legendlayerfile isInOverview="0" layerid="montpellier_sub_districts_95ad9893_bd99_4a6f_9f67_f43a14f11ccc" visible="1"></legendlayerfile>
+            <legendlayerfile isInOverview="0" layerid="montpellier_sub_districts_95ad9893_bd99_4a6f_9f67_f43a14f11ccc" visible="0"></legendlayerfile>
           </filegroup>
         </legendlayer>
       </legendgroup>
@@ -2515,19 +2515,23 @@ def my_form_open(dialog, layer, feature):
     <layer id="montpellier_districts_07ce35b4_1b93_4e7c_93b9_76ff61d0f9ac"></layer>
   </layerorder>
   <properties>
-    <SpatialRefSys>
-      <ProjectionsEnabled type="int">1</ProjectionsEnabled>
-    </SpatialRefSys>
-    <Legend>
-      <filterByMap type="bool">false</filterByMap>
-    </Legend>
-    <Paths>
-      <Absolute type="bool">false</Absolute>
-    </Paths>
     <PositionPrecision>
+      <DegreeFormat type="QString">MU</DegreeFormat>
       <Automatic type="bool">true</Automatic>
       <DecimalPlaces type="int">2</DecimalPlaces>
     </PositionPrecision>
+    <WMSContactOrganization type="QString"></WMSContactOrganization>
+    <WCSUrl type="QString"></WCSUrl>
+    <WFSUrl type="QString"></WFSUrl>
+    <WMSUseLayerIDs type="bool">false</WMSUseLayerIDs>
+    <WMTSUrl type="QString"></WMTSUrl>
+    <WMSServiceCapabilities type="bool">false</WMSServiceCapabilities>
+    <Legend>
+      <filterByMap type="bool">false</filterByMap>
+    </Legend>
+    <WMSKeywordList type="QStringList">
+      <value></value>
+    </WMSKeywordList>
     <Gui>
       <SelectionColorBluePart type="int">0</SelectionColorBluePart>
       <SelectionColorGreenPart type="int">255</SelectionColorGreenPart>
@@ -2537,13 +2541,7 @@ def my_form_open(dialog, layer, feature):
       <CanvasColorRedPart type="int">255</CanvasColorRedPart>
       <SelectionColorAlphaPart type="int">255</SelectionColorAlphaPart>
     </Gui>
-    <Measure>
-      <Ellipsoid type="QString">GRS80</Ellipsoid>
-    </Measure>
-    <Measurement>
-      <AreaUnits type="QString">m2</AreaUnits>
-      <DistanceUnits type="QString">meters</DistanceUnits>
-    </Measurement>
+    <WCSLayers type="QStringList"></WCSLayers>
     <PAL>
       <CandidatesPolygon type="int">30</CandidatesPolygon>
       <DrawRectOnly type="bool">false</DrawRectOnly>
@@ -2555,6 +2553,77 @@ def my_form_open(dialog, layer, feature):
       <CandidatesPoint type="int">16</CandidatesPoint>
       <ShowingPartialsLabels type="bool">true</ShowingPartialsLabels>
     </PAL>
+    <Variables>
+      <variableValues type="QStringList">
+        <value>/qgis/dfci_herault/</value>
+      </variableValues>
+      <variableNames type="QStringList">
+        <value>ftp_remote_dir</value>
+      </variableNames>
+    </Variables>
+    <WMSAccessConstraints type="QString">None</WMSAccessConstraints>
+    <WMSImageQuality type="int">90</WMSImageQuality>
+    <WMSOnlineResource type="QString"></WMSOnlineResource>
+    <WMSServiceAbstract type="QString"></WMSServiceAbstract>
+    <WMSSegmentizeFeatureInfoGeometry type="bool">false</WMSSegmentizeFeatureInfoGeometry>
+    <WMSRootName type="QString"></WMSRootName>
+    <WMTSLayers>
+      <Group type="QStringList"></Group>
+      <Layer type="QStringList"></Layer>
+      <Project type="bool">false</Project>
+    </WMTSLayers>
+    <DefaultStyles>
+      <RandomColors type="bool">true</RandomColors>
+      <Marker type="QString"></Marker>
+      <Fill type="QString"></Fill>
+      <Opacity type="double">1</Opacity>
+      <Line type="QString"></Line>
+      <ColorRamp type="QString"></ColorRamp>
+    </DefaultStyles>
+    <WMSContactPosition type="QString"></WMSContactPosition>
+    <Paths>
+      <Absolute type="bool">false</Absolute>
+    </Paths>
+    <WMSUrl type="QString"></WMSUrl>
+    <WMSPrecision type="QString">8</WMSPrecision>
+    <WMSAddWktGeometry type="bool">false</WMSAddWktGeometry>
+    <SpatialRefSys>
+      <ProjectionsEnabled type="int">1</ProjectionsEnabled>
+    </SpatialRefSys>
+    <WMSContactPerson type="QString"></WMSContactPerson>
+    <WMSContactPhone type="QString"></WMSContactPhone>
+    <WMSFees type="QString">conditions unknown</WMSFees>
+    <Macros>
+      <pythonCode type="QString"></pythonCode>
+    </Macros>
+    <WMTSMinScale type="int">5000</WMTSMinScale>
+    <WMSContactMail type="QString"></WMSContactMail>
+    <WMSRequestDefinedDataSources type="bool">false</WMSRequestDefinedDataSources>
+    <WMSServiceTitle type="QString"></WMSServiceTitle>
+    <Measurement>
+      <AreaUnits type="QString">m2</AreaUnits>
+      <DistanceUnits type="QString">meters</DistanceUnits>
+    </Measurement>
+    <WFSTLayers>
+      <Delete type="QStringList"></Delete>
+      <Insert type="QStringList"></Insert>
+      <Update type="QStringList"></Update>
+    </WFSTLayers>
+    <Measure>
+      <Ellipsoid type="QString">GRS80</Ellipsoid>
+    </Measure>
+    <WMSDefaultMapUnitsPerMm type="double">1</WMSDefaultMapUnitsPerMm>
+    <WFSLayers type="QStringList"></WFSLayers>
+    <WMTSJpegLayers>
+      <Group type="QStringList"></Group>
+      <Layer type="QStringList"></Layer>
+      <Project type="bool">false</Project>
+    </WMTSJpegLayers>
+    <WMTSPngLayers>
+      <Group type="QStringList"></Group>
+      <Layer type="QStringList"></Layer>
+      <Project type="bool">false</Project>
+    </WMTSPngLayers>
   </properties>
   <visibility-presets></visibility-presets>
   <transformContext></transformContext>
@@ -2565,6 +2634,15 @@ def my_form_open(dialog, layer, feature):
     <type></type>
     <title></title>
     <abstract></abstract>
+    <contact>
+      <name></name>
+      <organization></organization>
+      <position></position>
+      <voice></voice>
+      <fax></fax>
+      <email></email>
+      <role></role>
+    </contact>
     <links></links>
     <author>mdouchin</author>
     <creation>2020-01-03T09:39:29</creation>

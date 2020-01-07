@@ -22,6 +22,17 @@ import os, subprocess
 def tr(string):
     return QCoreApplication.translate('Processing', string)
 
+def check_internet():
+    # return True
+    import requests
+    url='https://www.google.com/'
+    timeout=5
+    try:
+        _ = requests.get(url, timeout=timeout)
+        return True
+    except requests.ConnectionError:
+        return False
+
 def getUriFromConnectionName(connection_name):
 
     # Create plugin class and try to connect
@@ -33,7 +44,6 @@ def getUriFromConnectionName(connection_name):
         dbpluginclass = createDbPlugin( 'postgis', connection_name )
         connection = dbpluginclass.connect()
     except BaseError as e:
-        #DlgDbError.showError(e, self.dialog)
         status = False
         error_message = e.msg
     except:
@@ -274,6 +284,43 @@ def check_lizsync_installation_status(connection_name, test_list=['structure', '
 
     return global_status, tests
 
+def ftp_sync(ftphost, ftpport, ftpuser, sourcedir, targetdir, excludedirs, parameters, context, feedback):
+
+  try:
+
+      cmd = []
+      cmd.append('lftp')
+      cmd.append('ftp://{0}@{1}'.format(ftpuser, ftphost))
+      cmd.append('-e')
+      cmd.append('"')
+      cmd.append('set ftp:ssl-allow no; set ssl:verify-certificate no; ')
+      cmd.append('mirror')
+      cmd.append('--verbose')
+      cmd.append('--use-cache')
+      # cmd.append('-e') # pour supprimer tout ce qui n'est pas sur le serveur
+      for d in excludedirs.split(','):
+          ed = d.strip().strip('/') + '/'
+          if ed != '/':
+              cmd.append('-x %s' % ed)
+      cmd.append('--ignore-time')
+      cmd.append('{0}'.format(sourcedir))
+      cmd.append('{0}'.format(targetdir))
+      cmd.append('; quit"')
+      feedback.pushInfo('LFTP = %s' % ' '.join(cmd) )
+
+      # myenv = {**{'MYVAR': myvar}, **os.environ }
+      run_command(cmd, feedback)
+
+  except:
+      feedback.pushInfo(tr('Error during FTP sync'))
+      raise Exception(tr('Error during FTP sync'))
+  finally:
+      feedback.pushInfo(tr('FTP sync done'))
+
+  return True
+
+
+
 def pg_dump(connection_name, output_file_name, schemas, additionnal_parameters=[]):
 
     messages = []
@@ -334,3 +381,5 @@ def pg_dump(connection_name, output_file_name, schemas, additionnal_parameters=[
         messages.append(tr('Error dumping database') + ' into {0}'.format(output_file_name))
 
     return status, messages
+
+
