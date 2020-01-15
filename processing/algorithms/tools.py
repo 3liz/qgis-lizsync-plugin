@@ -22,6 +22,24 @@ import os, subprocess
 def tr(string):
     return QCoreApplication.translate('Processing', string)
 
+def getShortHelpString(alg_file_basename):
+    '''
+    Read help file for given alg id
+    And return short help string
+    '''
+    help = ''
+    path = os.path.dirname(__file__)
+
+    help_file = os.path.join(
+        path,
+        'help',
+        alg_file_basename.replace('.py', '.txt')
+    )
+    if os.path.exists(help_file):
+        with open(help_file) as f:
+            help = f.read()
+    return help
+
 def check_internet():
     # return True
     import requests

@@ -57,6 +57,9 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
     def groupId(self):
         return 'lizsync_installation'
 
+    def shortHelpString(self):
+        return getShortHelpString(os.path.basename(__file__))
+
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 

@@ -63,8 +63,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         return 'lizsync_sync'
 
     def shortHelpString(self):
-        #return self.tr("")
-        return self.displayName()
+        return getShortHelpString(os.path.basename(__file__))
 
     def initAlgorithm(self, config=None):
         # INPUTS
