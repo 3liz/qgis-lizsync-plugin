@@ -51,7 +51,7 @@ def check_internet():
     except requests.ConnectionError:
         return False
 
-def getUriFromConnectionName(connection_name):
+def getUriFromConnectionName(connection_name, must_connect=True):
 
     # Create plugin class and try to connect
     status = True
@@ -68,7 +68,7 @@ def getUriFromConnectionName(connection_name):
         status = False
         error_message = tr('Cannot connect to database with') + ' %s' % connection_name
 
-    if not connection:
+    if not connection and must_connect:
         return status, uri, error_message
 
     db = dbpluginclass.database()
@@ -307,16 +307,19 @@ def check_lizsync_installation_status(connection_name, test_list=['structure', '
 
     return global_status, tests
 
-def ftp_sync(ftphost, ftpport, ftpuser, sourcedir, targetdir, excludedirs, parameters, context, feedback):
+def ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, excludedirs, parameters, context, feedback):
     try:
         cmd = []
         cmd.append('lftp')
-        cmd.append('ftp://{0}@{1}'.format(ftpuser, ftphost))
+        cmd.append('ftp://{0}@{1}:{2}'.format(ftpuser, ftphost, ftpport))
         cmd.append('-e')
         cmd.append('"')
         cmd.append('set ftp:ssl-allow no; set ssl:verify-certificate no; ')
         cmd.append('mirror')
+        if direction == 'to':
+            cmd.append('-R')
         cmd.append('--verbose')
+        cmd.append('--continue')
         cmd.append('--use-cache')
         # cmd.append('-e') # pour supprimer tout ce qui n'est pas sur le serveur
         for d in excludedirs.split(','):
@@ -324,8 +327,8 @@ def ftp_sync(ftphost, ftpport, ftpuser, sourcedir, targetdir, excludedirs, param
             if ed != '/':
                 cmd.append('-x %s' % ed)
         cmd.append('--ignore-time')
-        cmd.append('{0}'.format(sourcedir))
-        cmd.append('{0}'.format(targetdir))
+        cmd.append('{0}'.format(localdir))
+        cmd.append('{0}'.format(ftpdir))
         cmd.append('; quit"')
         feedback.pushInfo('LFTP = %s' % ' '.join(cmd) )
 
@@ -404,3 +407,80 @@ def pg_dump(connection_name, output_file_name, schemas, additionnal_parameters=[
     return status, messages
 
 
+def setQgisProjectOffline(qgis_directory, connection_name_central, connection_name_clone, feedback):
+    import re
+
+    # Get uri from connection names
+    status_central, uri_central, error_message_central = getUriFromConnectionName(connection_name_central)
+    status_clone, uri_clone, error_message_clone = getUriFromConnectionName(connection_name_clone)
+    if not status_central:
+        raise Exception(error_message_central)
+    if not status_clone:
+        raise Exception(error_message_clone)
+
+    uris = {
+        'central': {'uri': uri_central},
+        'clone'  : {'uri': uri_clone}
+    }
+    for a in ('central', 'clone'):
+        uri = uris[a]['uri']
+        if uri.service():
+            uris[a]['info'] = {
+                'service': uri.service(),
+                'string': "service='%s'" % uri.service()
+            }
+        else:
+            uris[a]['info'] = {
+                'host': uri.host(),
+                'port': uri.port(),
+                'dbname': uri.database(),
+                'user': uri.username(),
+                'password': uri.password(),
+                'string': "dbname='{}' host={} port={} user='{}' password='{}'".format(
+                    uri.database(),
+                    uri.host(),
+                    uri.port(),
+                    uri.username(),
+                    uri.password()
+                )
+            }
+
+    for file in os.listdir(qgis_directory):
+        if file.endswith(".qgs"):
+            qf = os.path.join(qgis_directory, file)
+            feedback.pushInfo(tr('Process QGIS project file') + ' %s' % qf)
+            output = open(qf + 'new', 'w')
+            with open(qf) as input:
+                regex = re.compile(r"user='[A_Za-z_@]+'", re.IGNORECASE)
+                for s in input:
+                    l = s
+                    # Do nothing if no PostgreSQL data
+                    if not 'table=' in l:
+                        output.write(l)
+                        continue
+                    if 'dbname' not in l and 'service' not in l:
+                        output.write(l)
+                        continue
+                    # Loop through connection parameters and replace
+                    items = ('service', 'dbname', 'host', 'port', 'user', 'password')
+                    for k in items:
+                        if k in uris['central']['info'] and k in uris['clone']['info']:
+                            stext = str(uris['central']['info'][k])
+                            rtext = str(uris['clone']['info'][k])
+                            if stext in l:
+                                l = l.replace(stext, rtext)
+                    # to improve
+                    # alway replace user by clone local user
+                    # needed if there are multiple user stored in the qgis project for the same server
+                    # because one of them can be different from the central connection name user
+                    if "user=" in l and 'user' in uris['clone']['info']:
+                        rtext = "user='%s'" % uris['clone']['info']['user']
+                        l = regex.sub(
+                            rtext,
+                            l
+                        )
+                    output.write(l)
+                output.close()
+            os.remove(qf)
+            os.rename(qf + 'new', qf)
+            feedback.pushInfo(tr('Project modified'))

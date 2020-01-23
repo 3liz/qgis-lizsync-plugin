@@ -25,7 +25,6 @@ from qgis.core import (
     QgsProcessingParameterFile,
     QgsProcessingOutputString,
     QgsProcessingOutputNumber,
-    QgsProcessingParameterDefinition,
     QgsExpressionContextUtils
 )
 
@@ -34,36 +33,40 @@ from pathlib import Path
 import processing
 from datetime import date, datetime
 from ftplib import FTP
-from .tools import *
 import netrc
+import re
+from .tools import *
 
-class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
+class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
     """
-    Synchronize local media/upload data to remote FTP
+    Synchronize local data from remote FTP
     via LFTP
     """
 
     # Constants used to refer to parameters and outputs. They will be
     # used when calling the algorithm from another algorithm, or when
     # calling from the QGIS console.
-    INPUT_SYNC_DATE = 'INPUT_SYNC_DAT'
+
+    CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     LOCAL_QGIS_PROJECT_FOLDER = 'LOCAL_QGIS_PROJECT_FOLDER'
-    CENTRAL_FTP_HOST = 'CENTRAL_FTP_HOST'
-    CENTRAL_FTP_PORT = 'CENTRAL_FTP_PORT'
-    CENTRAL_FTP_LOGIN = 'CENTRAL_FTP_LOGIN'
-    CENTRAL_FTP_REMOTE_DIR = 'CENTRAL_FTP_REMOTE_DIR'
+
+    CONNECTION_NAME_CLONE = 'CONNECTION_NAME_CLONE'
+    CLONE_FTP_HOST = 'CLONE_FTP_HOST'
+    CLONE_FTP_PORT = 'CLONE_FTP_PORT'
+    CLONE_FTP_LOGIN = 'CLONE_FTP_LOGIN'
+    CLONE_FTP_REMOTE_DIR = 'CLONE_FTP_REMOTE_DIR'
+    CLONE_QGIS_PROJECT_FOLDER = 'CLONE_QGIS_PROJECT_FOLDER'
+
+    FTP_EXCLUDE_REMOTE_SUBDIRS = 'FTP_EXCLUDE_REMOTE_SUBDIRS'
 
     OUTPUT_STATUS = 'OUTPUT_STATUS'
     OUTPUT_STRING = 'OUTPUT_STRING'
 
-    ftphost = 'ftp-valabre.lizmap.com'
-
-
     def name(self):
-        return 'synchronize_media_subfolder_to_ftp'
+        return 'send_projects_and_files_to_clone_ftp'
 
     def displayName(self):
-        return self.tr('Synchronize local media subfolder to central FTP server')
+        return self.tr('Send local projects and files to clone FTP server')
 
     def group(self):
         return self.tr('03 Synchronize data and files')
@@ -78,7 +81,7 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return SynchronizeMediaSubfolderToFtp()
+        return SendProjectsAndFilesToCloneFtp()
 
     def initAlgorithm(self, config):
         """
@@ -86,59 +89,91 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         with some other properties.
         """
         # INPUTS
-        p = QgsProcessingParameterString(
-            self.INPUT_SYNC_DATE, 'Synchronization time',
-            defaultValue=datetime.now().isoformat(),
+        connection_name_central = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
+        db_param_a = QgsProcessingParameterString(
+            self.CONNECTION_NAME_CENTRAL,
+            self.tr('PostgreSQL connection to the central database'),
+            defaultValue=connection_name_central,
             optional=False
         )
-        p.setFlags(QgsProcessingParameterDefinition.FlagHidden)
-        self.addParameter(p)
+        db_param_a.setMetadata({
+            'widget_wrapper': {
+                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
+            }
+        })
+        self.addParameter(db_param_a)
+
+        # Clone database connection parameters
+        connection_name_clone = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_clone')
+        db_param_b = QgsProcessingParameterString(
+            self.CONNECTION_NAME_CLONE,
+            self.tr('PostgreSQL connection to the local database'),
+            defaultValue=connection_name_clone,
+            optional=False
+        )
+        db_param_b.setMetadata({
+            'widget_wrapper': {
+                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
+            }
+        })
+        self.addParameter(db_param_b)
 
         local_qgis_project_folder = QgsExpressionContextUtils.globalScope().variable('lizsync_local_qgis_project_folder')
         self.addParameter(
             QgsProcessingParameterString(
                 self.LOCAL_QGIS_PROJECT_FOLDER,
-                self.tr('Local QGIS project folder'),
+                self.tr('Local desktop QGIS project folder'),
                 defaultValue=local_qgis_project_folder,
                 optional=False
             )
         )
-        central_ftp_host = QgsExpressionContextUtils.globalScope().variable('lizsync_central_ftp_host')
+
+        clone_ftp_host = QgsExpressionContextUtils.globalScope().variable('lizsync_clone_ftp_host')
         self.addParameter(
             QgsProcessingParameterString(
-                self.CENTRAL_FTP_HOST,
-                self.tr('Central FTP Server host'),
-                defaultValue=central_ftp_host,
+                self.CLONE_FTP_HOST,
+                self.tr('Clone FTP Server host'),
+                defaultValue=clone_ftp_host,
                 optional=False
             )
         )
-        central_ftp_port = QgsExpressionContextUtils.globalScope().variable('lizsync_central_ftp_port')
+        clone_ftp_port = QgsExpressionContextUtils.globalScope().variable('lizsync_clone_ftp_port')
         self.addParameter(
             QgsProcessingParameterNumber(
-                self.CENTRAL_FTP_PORT,
-                self.tr('Central FTP Server port'),
-                defaultValue=central_ftp_port,
+                self.CLONE_FTP_PORT,
+                self.tr('Clone FTP Server port'),
+                defaultValue=clone_ftp_port,
                 optional=False
             )
         )
-        central_ftp_login = QgsExpressionContextUtils.globalScope().variable('lizsync_central_ftp_login')
+        clone_ftp_login = QgsExpressionContextUtils.globalScope().variable('lizsync_clone_ftp_login')
         self.addParameter(
             QgsProcessingParameterString(
-                self.CENTRAL_FTP_LOGIN,
-                self.tr('Central FTP Server login'),
-                defaultValue=central_ftp_login,
+                self.CLONE_FTP_LOGIN,
+                self.tr('Clone FTP Server login'),
+                defaultValue=clone_ftp_login,
                 optional=False
             )
         )
-        central_ftp_remote_dir = QgsExpressionContextUtils.globalScope().variable('lizsync_central_ftp_remote_dir')
+        clone_ftp_remote_dir = QgsExpressionContextUtils.globalScope().variable('lizsync_clone_ftp_remote_dir')
         self.addParameter(
             QgsProcessingParameterString(
-                self.CENTRAL_FTP_REMOTE_DIR,
-                self.tr('Central FTP Server remote directory'),
-                defaultValue=central_ftp_remote_dir,
+                self.CLONE_FTP_REMOTE_DIR,
+                self.tr('Clone FTP Server remote directory'),
+                defaultValue=clone_ftp_remote_dir,
                 optional=False
             )
         )
+
+        self.addParameter(
+            QgsProcessingParameterString(
+                self.FTP_EXCLUDE_REMOTE_SUBDIRS,
+                self.tr('List of sub-directory to exclude from synchro, separated by commas.'),
+                defaultValue='data',
+                optional=True
+            )
+        )
+
 
         # OUTPUTS
         # Add output for message
@@ -153,30 +188,32 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
             )
         )
 
+
     def processAlgorithm(self, parameters, context, feedback):
         """
         Here is where the processing itself takes place.
         """
 
         # Check internet
-        feedback.pushInfo(self.tr('Check internet connection'))
+        feedback.pushInfo(self.tr('CHECK INTERNET CONNECTION'))
         if not check_internet():
-            feedback.pushInfo(self.tr('No internet connection'))
-            raise Exception(self.tr('No internet connection'))
+            m = self.tr('No internet connection')
+            feedback.pushInfo(m)
+            raise Exception(m)
 
         # Parameters
-        ftphost = parameters[self.CENTRAL_FTP_HOST]
-        ftplogin = parameters[self.CENTRAL_FTP_LOGIN]
-        ftpport = parameters[self.CENTRAL_FTP_PORT]
+        ftphost = parameters[self.CLONE_FTP_HOST]
+        ftpport = parameters[self.CLONE_FTP_PORT]
+        ftplogin = parameters[self.CLONE_FTP_LOGIN]
         ftppass = ''
-        ftpdir = parameters[self.CENTRAL_FTP_REMOTE_DIR]
         localdir = parameters[self.LOCAL_QGIS_PROJECT_FOLDER]
+        ftpdir = parameters[self.CLONE_FTP_REMOTE_DIR]
 
         # Check FTP password
         try:
             auth = netrc.netrc().authenticators(ftphost)
             if auth is not None:
-                ftpuser, account, ftppass = auth
+                ftplogin, account, ftppass = auth
         except (netrc.NetrcParseError, IOError):
             raise Exception(self.tr('Could not retrieve password from ~/.netrc file'))
         if not ftppass:
@@ -208,26 +245,19 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
             feedback.pushInfo(m)
             raise Exception(m)
 
-        # Check if media/upload exists locally
-        feedback.pushInfo(self.tr('START FTP DIRECTORY SYNCHRONIZATION TO SERVER') + ' %s' % ftpdir )
-        localdir = localdir + '/media/upload'
-        ftpdir = ftpdir + '/media/upload'
+        # Run FTP sync
         feedback.pushInfo(self.tr('Local directory') + ' %s' % localdir)
-        feedback.pushInfo(self.tr('FTP remote directory') + ' %s' % ftpdir)
-        if os.path.isdir(localdir):
-            # Run FTP sync
-            direction = 'to'
-            ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, '', parameters, context, feedback)
-            msg = self.tr("Synchronization successfull")
-        else:
-            m = self.tr('Local directory does not exists. No synchronization needed.')
-            feedback.pushInfo(m)
-            msg = m
+        feedback.pushInfo(self.tr('FTP directory') + ' %s' % ftpdir)
+        direction = 'to' # we send data TO FTP
+        excludedirs = parameters[self.FTP_EXCLUDE_REMOTE_SUBDIRS].strip()
+        ftp_sync(ftphost, ftpport, ftplogin, localdir, ftpdir, direction, excludedirs, parameters, context, feedback)
+
 
         status = 1
-        msg = 'Synchro'
+        msg = self.tr("Synchronization successfull")
         out = {
             self.OUTPUT_STATUS: status,
             self.OUTPUT_STRING: msg
         }
         return out
+

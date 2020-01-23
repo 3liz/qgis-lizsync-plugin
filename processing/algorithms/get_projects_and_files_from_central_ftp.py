@@ -37,7 +37,7 @@ import netrc
 import re
 from .tools import *
 
-class SynchronizeProjectFolderFromFtp(QgsProcessingAlgorithm):
+class GetProjectsAndFilesFromCentralFtp(QgsProcessingAlgorithm):
     """
     Synchronize local data from remote FTP
     via LFTP
@@ -48,22 +48,25 @@ class SynchronizeProjectFolderFromFtp(QgsProcessingAlgorithm):
     # calling from the QGIS console.
 
     CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
-    CONNECTION_NAME_CLONE = 'CONNECTION_NAME_CLONE'
-
+    CENTRAL_FTP_HOST = 'CENTRAL_FTP_HOST'
+    CENTRAL_FTP_PORT = 'CENTRAL_FTP_PORT'
+    CENTRAL_FTP_LOGIN = 'CENTRAL_FTP_LOGIN'
+    CENTRAL_FTP_REMOTE_DIR = 'CENTRAL_FTP_REMOTE_DIR'
     LOCAL_QGIS_PROJECT_FOLDER = 'LOCAL_QGIS_PROJECT_FOLDER'
-    FTP_HOST = 'FTP_HOST'
-    FTP_LOGIN = 'FTP_LOGIN'
-    FTP_REMOTE_DIR = 'FTP_REMOTE_DIR'
+
+    CONNECTION_NAME_CLONE = 'CONNECTION_NAME_CLONE'
+    CLONE_QGIS_PROJECT_FOLDER = 'CLONE_QGIS_PROJECT_FOLDER'
+
     FTP_EXCLUDE_REMOTE_SUBDIRS = 'FTP_EXCLUDE_REMOTE_SUBDIRS'
 
     OUTPUT_STATUS = 'OUTPUT_STATUS'
     OUTPUT_STRING = 'OUTPUT_STRING'
 
     def name(self):
-        return 'synchronize_project_folder_from_ftp'
+        return 'get_projects_and_files_from_central_ftp'
 
     def displayName(self):
-        return self.tr('Synchronize project and data from FTP')
+        return self.tr('Get projects and files from central FTP server')
 
     def group(self):
         return self.tr('03 Synchronize data and files')
@@ -78,7 +81,7 @@ class SynchronizeProjectFolderFromFtp(QgsProcessingAlgorithm):
         return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
-        return SynchronizeProjectFolderFromFtp()
+        return GetProjectsAndFilesFromCentralFtp()
 
     def initAlgorithm(self, config):
         """
@@ -115,39 +118,39 @@ class SynchronizeProjectFolderFromFtp(QgsProcessingAlgorithm):
         })
         self.addParameter(db_param_b)
 
-        local_qgis_project_folder = QgsExpressionContextUtils.globalScope().variable('lizsync_local_qgis_project_folder')
+        central_ftp_host = QgsExpressionContextUtils.globalScope().variable('lizsync_central_ftp_host')
         self.addParameter(
             QgsProcessingParameterString(
-                self.LOCAL_QGIS_PROJECT_FOLDER,
-                self.tr('Local QGIS project folder'),
-                defaultValue=local_qgis_project_folder,
+                self.CENTRAL_FTP_HOST,
+                self.tr('Central FTP Server host'),
+                defaultValue=central_ftp_host,
                 optional=False
             )
         )
-        ftp_host = QgsExpressionContextUtils.globalScope().variable('lizsync_ftp_host')
+        central_ftp_port = QgsExpressionContextUtils.globalScope().variable('lizsync_central_ftp_port')
         self.addParameter(
-            QgsProcessingParameterString(
-                self.FTP_HOST,
-                self.tr('FTP Server host'),
-                defaultValue=ftp_host,
+            QgsProcessingParameterNumber(
+                self.CENTRAL_FTP_PORT,
+                self.tr('Central FTP Server port'),
+                defaultValue=central_ftp_port,
                 optional=False
             )
         )
-        ftp_login = QgsExpressionContextUtils.globalScope().variable('lizsync_ftp_login')
+        central_ftp_login = QgsExpressionContextUtils.globalScope().variable('lizsync_central_ftp_login')
         self.addParameter(
             QgsProcessingParameterString(
-                self.FTP_LOGIN,
-                self.tr('FTP Server login'),
-                defaultValue=ftp_login,
+                self.CENTRAL_FTP_LOGIN,
+                self.tr('Central FTP Server login'),
+                defaultValue=central_ftp_login,
                 optional=False
             )
         )
-        ftp_remote_dir = QgsExpressionContextUtils.globalScope().variable('lizsync_ftp_remote_dir')
+        central_ftp_remote_dir = QgsExpressionContextUtils.globalScope().variable('lizsync_central_ftp_remote_dir')
         self.addParameter(
             QgsProcessingParameterString(
-                self.FTP_REMOTE_DIR,
-                self.tr('FTP Server remote directory'),
-                defaultValue=ftp_remote_dir,
+                self.CENTRAL_FTP_REMOTE_DIR,
+                self.tr('Central FTP Server remote directory'),
+                defaultValue=central_ftp_remote_dir,
                 optional=False
             )
         )
@@ -155,8 +158,18 @@ class SynchronizeProjectFolderFromFtp(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.FTP_EXCLUDE_REMOTE_SUBDIRS,
-                self.tr('FTP list of sub-directory to exclude from synchro, separated by commas.'),
+                self.tr('List of sub-directory to exclude from synchro, separated by commas.'),
                 defaultValue='data',
+                optional=True
+            )
+        )
+
+        clone_qgis_project_folder = QgsExpressionContextUtils.globalScope().variable('lizsync_clone_qgis_project_folder')
+        self.addParameter(
+            QgsProcessingParameterString(
+                self.CLONE_QGIS_PROJECT_FOLDER,
+                self.tr('Clone QGIS project folder'),
+                defaultValue=clone_qgis_project_folder,
                 optional=False
             )
         )
@@ -174,65 +187,6 @@ class SynchronizeProjectFolderFromFtp(QgsProcessingAlgorithm):
             )
         )
 
-    def setQgisProjectOffline(self, dir, parameters, context, feedback):
-
-        # Get uri from connection names
-        central = parameters[self.CONNECTION_NAME_CENTRAL]
-        clone = parameters[self.CONNECTION_NAME_CLONE]
-        status_central, uri_central, error_message_central = getUriFromConnectionName(central)
-        status_clone, uri_clone, error_message_clone = getUriFromConnectionName(clone)
-
-        if not uri_central:
-            raise Exception(error_message_central)
-        if not uri_clone:
-            raise Exception(error_message_clone)
-
-        uris = {
-            'central': {'uri': uri_central},
-            'clone'  : {'uri': uri_clone}
-        }
-        for a in ('central', 'clone'):
-            if uri_central.service():
-                uris[a]['info'] = {'service': uri_central.service()}
-            else:
-                uris[a]['info'] = {
-                    'host': uri.host(),
-                    'port': uri.port(),
-                    'dbname': uri.database(),
-                    'user': uri.username()
-                }
-
-        for file in os.listdir(dir):
-            if file.endswith(".qgs"):
-                qf = os.path.join(dir, file)
-                feedback.pushInfo(self.tr('Process QGIS project file') + ' %s' % qf)
-                output = open(qf + 'new', 'w')
-                with open(qf) as input:
-                    regex = re.compile(r"user='[a-z]+@[a-z_]+'", re.IGNORECASE)
-                    for s in input:
-                        l = s
-                        # Do nothing if no PostgreSQL data
-                        if 'table=' in l and ('dbname' not in l or 'service' not in l):
-                            output.write(l)
-                            continue
-                        # Loop through connection parameters and replace
-                        items = uris['central']['info'].keys()
-                        for k in items:
-                            stext = str(uris['central']['info'][k])
-                            rtext = str(uris['clone']['info'][k])
-                            if stext in l:
-                                l = l.replace(stext, rtext)
-                        # to improve
-                        # alway replace user by clone local user
-                        # needed if there are multiple user stored in the qgis project for the same server
-                        # because one of them can be different from the central connection name user
-                        if "user=" in l:
-                            l = regex.sub("user='%s'" % uris['clone']['info'], l)
-                        output.write(l)
-                    output.close()
-                os.remove(qf)
-                os.rename(qf + 'new', qf)
-                feedback.pushInfo(self.tr('Project modified'))
 
     def processAlgorithm(self, parameters, context, feedback):
         """
@@ -247,12 +201,14 @@ class SynchronizeProjectFolderFromFtp(QgsProcessingAlgorithm):
             raise Exception(m)
 
         # Parameters
-        ftphost = parameters[self.FTP_HOST]
-        ftplogin = parameters[self.FTP_LOGIN]
-        ftpport = 21
+        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+        connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
+        ftphost = parameters[self.CENTRAL_FTP_HOST]
+        ftplogin = parameters[self.CENTRAL_FTP_LOGIN]
+        ftpport = parameters[self.CENTRAL_FTP_PORT]
         ftppass = ''
-        remotedir = parameters[self.FTP_REMOTE_DIR]
-        localdir = parameters[self.LOCAL_QGIS_PROJECT_FOLDER]
+        ftpdir = parameters[self.CENTRAL_FTP_REMOTE_DIR]
+        localdir = parameters[self.CLONE_QGIS_PROJECT_FOLDER]
 
         # Check FTP password
         try:
@@ -275,13 +231,13 @@ class SynchronizeProjectFolderFromFtp(QgsProcessingAlgorithm):
         else:
             m = self.tr('QGIS project local directory ok')
 
-        # Check if remotedir exists
-        feedback.pushInfo(self.tr('CHECK REMOTE DIRECTORY') + ' %s' % remotedir )
+        # Check if ftpdir exists
+        feedback.pushInfo(self.tr('CHECK REMOTE DIRECTORY') + ' %s' % ftpdir )
         ftp = FTP()
-        ftp.connect(ftphost, 21)
+        ftp.connect(ftphost, ftpport)
         ftp.login(ftplogin, ftppass)
         try:
-            ftp.cwd(remotedir)
+            ftp.cwd(ftpdir)
             #do the code for successfull cd
             self.tr('Remote directory exists in the central server')
         except Exception:
@@ -292,13 +248,15 @@ class SynchronizeProjectFolderFromFtp(QgsProcessingAlgorithm):
 
         # Run FTP sync
         feedback.pushInfo(self.tr('Local directory') + ' %s' % localdir)
-        feedback.pushInfo(self.tr('Remote directory') + ' %s' % remotedir)
+        feedback.pushInfo(self.tr('FTP directory') + ' %s' % ftpdir)
         excludedirs = parameters[self.FTP_EXCLUDE_REMOTE_SUBDIRS].strip()
-        ftp_sync(ftphost, ftpport, ftplogin, remotedir, localdir, excludedirs, parameters, context, feedback)
+        direction = 'from' # we get data FROM FTP
+        ftp_sync(ftphost, ftpport, ftplogin, ftpdir, localdir, direction, excludedirs, parameters, context, feedback)
 
         # Adapt QGIS project to Geopoppy
+        # Mainly change database connection parameters (central -> clone)
         feedback.pushInfo(self.tr('ADAPT QGIS PROJECTS FOR OFFLINE USE'))
-        self.setQgisProjectOffline(localdir, parameters, context, feedback)
+        setQgisProjectOffline(localdir, connection_name_central, connection_name_clone, feedback)
 
         status = 1
         msg = self.tr("Synchronization successfull")

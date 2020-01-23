@@ -28,9 +28,10 @@ from .algorithms.upgrade_database_structure import UpgradeDatabaseStructure
 from .algorithms.initialize_central_database import InitializeCentralDatabase
 from .algorithms.package_central_database import PackageCentralDatabase
 from .algorithms.deploy_database_server_package import DeployDatabaseServerPackage
-from .algorithms.synchronize_media_subfolder_to_ftp import SynchronizeMediaSubfolderToFtp
 from .algorithms.synchronize_database import SynchronizeDatabase
-from .algorithms.synchronize_project_folder_from_ftp import SynchronizeProjectFolderFromFtp
+from .algorithms.get_projects_and_files_from_central_ftp import GetProjectsAndFilesFromCentralFtp
+from .algorithms.send_projects_and_files_to_clone_ftp import SendProjectsAndFilesToCloneFtp
+from .algorithms.synchronize_media_subfolder_to_ftp import SynchronizeMediaSubfolderToFtp
 
 
 
@@ -53,9 +54,10 @@ class LizsyncProvider(QgsProcessingProvider):
         self.addAlgorithm(InitializeCentralDatabase())
         self.addAlgorithm(PackageCentralDatabase())
         self.addAlgorithm(DeployDatabaseServerPackage())
-        self.addAlgorithm(SynchronizeMediaSubfolderToFtp())
         self.addAlgorithm(SynchronizeDatabase())
-        self.addAlgorithm(SynchronizeProjectFolderFromFtp())
+        self.addAlgorithm(GetProjectsAndFilesFromCentralFtp())
+        self.addAlgorithm(SendProjectsAndFilesToCloneFtp())
+        self.addAlgorithm(SynchronizeMediaSubfolderToFtp())
 
     def id(self):
         return 'lizsync'
