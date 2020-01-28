@@ -260,11 +260,11 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
                 '-p {0}'.format(uri.port()),
                 '-d {0}'.format(uri.database()),
                 '-U {0}'.format(uri.username()),
-                '-W'
             ]
 
         for i in (a_sql, b_sql, c_sql, d_sql):
             try:
+                feedback.pushInfo(self.tr('Loading file') + ' {0} ....'.format(i))
                 cmd = [
                     'psql'
                 ] + cmdo + [
@@ -287,7 +287,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
                 # Delete SQL scripts
                 os.remove(i)
             except:
-                raise Exception(self.tr('Error loading file {0}'.format(i)))
+                raise Exception(self.tr('Error loading file') + ' {0}'.format(i))
             finally:
                 feedback.pushInfo('* {0} has been loaded'.format(i.replace(dir_path, '')))
 
@@ -296,6 +296,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         feedback.pushInfo(self.tr('ADDING THE SERVER ID IN THE CLONE metadata table'))
         if clone_id and clone_name:
             sql = '''
+            DELETE FROM lizsync.server_metadata;
             INSERT INTO lizsync.server_metadata (server_id, server_name)
             VALUES ( '{0}', '{1}' )
             RETURNING server_id, server_name
@@ -305,6 +306,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
             )
         else:
             sql = '''
+            DELETE FROM lizsync.server_metadata;
             INSERT INTO lizsync.server_metadata (server_name)
             VALUES ( concat('clone',  ' ', md5((now())::text) ) )
             RETURNING server_id, server_name

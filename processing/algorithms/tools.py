@@ -278,7 +278,7 @@ def check_lizsync_installation_status(connection_name, test_list=['structure', '
         sql+= " SELECT table_schema, table_name"
         sql+= " FROM information_schema.tables"
         sql+= " WHERE True"
-        sql+= " AND table_schema IN ('test')"
+        sql+= " AND table_schema IN ( {0} )"
         sql+= " AND table_type = 'BASE TABLE'"
         sql+= " AND (quote_ident(table_schema) || '.' || quote_ident(table_name))::text NOT IN ("
         sql+= "     SELECT (tgrelid::regclass)::text"
@@ -286,8 +286,11 @@ def check_lizsync_installation_status(connection_name, test_list=['structure', '
         sql+= "     WHERE TRUE"
         sql+= "     AND tgname LIKE 'audit_trigger_%'"
         sql+= " )"
+        sqlc = sql.format(
+            schemas_sql
+        )
         status = False
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
+        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sqlc)
         missing = []
         if ok:
             if rowCount > 0:
@@ -367,7 +370,6 @@ def pg_dump(connection_name, output_file_name, schemas, additionnal_parameters=[
             '-p {0}'.format(uri.port()),
             '-d {0}'.format(uri.database()),
             '-U {0}'.format(uri.username()),
-            '-W'
         ]
     cmd = [
         'pg_dump'
@@ -409,7 +411,6 @@ def pg_dump(connection_name, output_file_name, schemas, additionnal_parameters=[
 
 def setQgisProjectOffline(qgis_directory, connection_name_central, connection_name_clone, feedback):
     import re
-
     # Get uri from connection names
     status_central, uri_central, error_message_central = getUriFromConnectionName(connection_name_central)
     status_clone, uri_clone, error_message_clone = getUriFromConnectionName(connection_name_clone)
@@ -444,13 +445,20 @@ def setQgisProjectOffline(qgis_directory, connection_name_central, connection_na
                     uri.password()
                 )
             }
-
+    dbitems = {
+        'service': "service='{}'",
+        'dbname': "dbname='{}'",
+        'host': "host={}",
+        'port': "port={}",
+        'user': "user='{}'",
+        'password': "password='{}'"
+    }
     for file in os.listdir(qgis_directory):
         if file.endswith(".qgs"):
             qf = os.path.join(qgis_directory, file)
             feedback.pushInfo(tr('Process QGIS project file') + ' %s' % qf)
-            output = open(qf + 'new', 'w')
-            with open(qf) as input:
+            output = open(qf + 'new', 'wt')
+            with open(qf, 'rt') as input:
                 regex = re.compile(r"user='[A_Za-z_@]+'", re.IGNORECASE)
                 for s in input:
                     l = s
@@ -462,19 +470,21 @@ def setQgisProjectOffline(qgis_directory, connection_name_central, connection_na
                         output.write(l)
                         continue
                     # Loop through connection parameters and replace
-                    items = ('service', 'dbname', 'host', 'port', 'user', 'password')
-                    for k in items:
+                    for k, v in dbitems.items():
                         if k in uris['central']['info'] and k in uris['clone']['info']:
-                            stext = str(uris['central']['info'][k])
-                            rtext = str(uris['clone']['info'][k])
+                            stext = v.format(uris['central']['info'][k])
+                            rtext = v.format(uris['clone']['info'][k])
                             if stext in l:
                                 l = l.replace(stext, rtext)
+
                     # to improve
                     # alway replace user by clone local user
                     # needed if there are multiple user stored in the qgis project for the same server
                     # because one of them can be different from the central connection name user
                     if "user=" in l and 'user' in uris['clone']['info']:
-                        rtext = "user='%s'" % uris['clone']['info']['user']
+                        rtext = dbitems['user'].format(
+                            uris['clone']['info']['user']
+                        )
                         l = regex.sub(
                             rtext,
                             l
@@ -483,4 +493,4 @@ def setQgisProjectOffline(qgis_directory, connection_name_central, connection_na
                 output.close()
             os.remove(qf)
             os.rename(qf + 'new', qf)
-            feedback.pushInfo(tr('Project modified'))
+            feedback.pushInfo(tr('Project modified !'))
