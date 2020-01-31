@@ -20,6 +20,10 @@ from db_manager.db_plugins.postgis.connector import PostGisDBConnector
 import os, subprocess
 from platform import system as psys
 
+from qgis.core import (
+    QgsExpressionContextUtils
+)
+import netrc
 def tr(string):
     return QCoreApplication.translate('Processing', string)
 
@@ -44,7 +48,8 @@ def getShortHelpString(alg_file_basename):
 def check_internet():
     # return True
     import requests
-    url='https://www.google.com/'
+    # url='https://www.google.com/'
+    url='https://www.3liz.com/images/flavicon.png'
     timeout=5
     try:
         _ = requests.get(url, timeout=timeout)
@@ -159,7 +164,7 @@ def getVersionInteger(f):
     return ''.join([a.zfill(2) for a in f.strip().split('.')])
 
 
-def run_command(cmd, feedback):
+def run_command(cmd, myenv, feedback):
     '''
     Run any command using subprocess
     '''
@@ -170,7 +175,8 @@ def run_command(cmd, feedback):
         " ".join(cmd),
         shell=True,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
+        stderr=subprocess.PIPE,
+        env=myenv
     )
     for line in process.stdout:
         output = "{}".format(line.rstrip().decode("utf-8"))
@@ -311,53 +317,167 @@ def check_lizsync_installation_status(connection_name, test_list=['structure', '
 
     return global_status, tests
 
+
+def checkFtpBinary():
+    # Check WinSCP path contains binary
+    test = False
+
+    # Windows : search for WinSCP
+    if psys().lower().startswith('win'):
+        test_path = QgsExpressionContextUtils.globalScope().variable('lizsync_winscp_binary_path')
+        test_bin = 'WinSCP.com'
+        error_message = 'WinSCP binary has not been found in specified path'
+        test = True
+
+    # Linux : search for lftp
+    if psys().lower().startswith('linux'):
+        test_path = '/usr/bin/'
+        test_bin = 'lftp'
+        error_message = 'LFTP binary has not been found in your system'
+        test = True
+
+    # Compute full path to test
+    ftp_bin = os.path.join(
+        test_path,
+        test_bin
+    )
+
+    # Run test
+    if test and not os.path.isfile(ftp_bin):
+        return False, tr(error_message)
+    if not test:
+        return False, tr('No FTP binary has been found in your system')
+    return True, tr('FTP Binary has been found in your system')
+
 def ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, excludedirs, feedback):
 
-    try:
-        cmd = []
-        cmd.append('lftp')
-        cmd.append('ftp://{0}@{1}:{2}'.format(ftpuser, ftphost, ftpport))
-        cmd.append('-e')
-        cmd.append('"')
-        cmd.append('set ftp:ssl-allow no; set ssl:verify-certificate no; ')
-        cmd.append('mirror')
-        if direction == 'to':
-            cmd.append('-R')
-        cmd.append('--verbose')
-        cmd.append('--continue')
-        cmd.append('--use-cache')
-        # cmd.append('-e') # pour supprimer tout ce qui n'est pas sur le serveur
-        for d in excludedirs.split(','):
-            ed = d.strip().strip('/') + '/'
-            if ed != '/':
-                cmd.append('-x %s' % ed)
-        cmd.append('--ignore-time')
-        cmd.append('{0}'.format(localdir))
-        cmd.append('{0}'.format(ftpdir))
-        cmd.append('; quit"')
-        feedback.pushInfo('LFTP = %s' % ' '.join(cmd) )
+    # LINUX : USE lftp command line
+    if psys().lower().startswith('linux'):
+        try:
+            cmd = []
+            cmd.append('lftp')
+            cmd.append('ftp://{0}@{1}:{2}'.format(ftpuser, ftphost, ftpport))
+            cmd.append('-e')
+            cmd.append('"')
+            cmd.append('set ftp:ssl-allow no; set ssl:verify-certificate no; ')
+            cmd.append('mirror')
+            if direction == 'to':
+                cmd.append('-R')
+            cmd.append('--verbose')
+            cmd.append('--continue')
+            cmd.append('--use-cache')
+            # cmd.append('-e') # pour supprimer tout ce qui n'est pas sur le serveur
+            for d in excludedirs.split(','):
+                ed = d.strip().strip('/') + '/'
+                if ed != '/':
+                    cmd.append('-x %s' % ed)
+            cmd.append('--ignore-time')
+            # LFTP NEEDS TO PUT
+            # * from -> ftpdir (remote FTP server) BEFORE
+            # * to (-R) -> localdir (computer) BEFORE ftpdir (remote FTP server)
+            if direction == 'to':
+                cmd.append('{} {}'.format(localdir, ftpdir))
+            else:
+                cmd.append('{} {}'.format(ftpdir, localdir))
 
-        # myenv = {**{'MYVAR': myvar}, **os.environ }
-        run_command(cmd, feedback)
+            cmd.append('; quit"')
+            feedback.pushInfo('LFTP = %s' % ' '.join(cmd) )
 
-    except:
-        feedback.pushInfo(tr('Error during FTP sync'))
-        raise Exception(tr('Error during FTP sync'))
-    finally:
-        feedback.pushInfo(tr('FTP sync done'))
+            myenv = { **os.environ }
+            run_command(cmd, myenv, feedback)
+
+        except:
+            feedback.pushInfo(tr('Error during FTP sync'))
+            raise Exception(tr('Error during FTP sync'))
+        finally:
+            feedback.pushInfo(tr('FTP sync done'))
+
+    # WINDOWS : USE WinSCP.com tool
+    elif psys().lower().startswith('win'):
+        try:
+            auth = netrc.netrc().authenticators(ftphost)
+            if auth is not None:
+                ftplogin, account, ftppass = auth
+        except (netrc.NetrcParseError, IOError):
+            raise Exception(self.tr('Could not retrieve password from ~/.netrc file'))
+        if not ftppass:
+            raise Exception(self.tr('Could not retrieve password from ~/.netrc file or is empty'))
+        try:
+            cmd = []
+            winscp_bin = os.path.join(
+                QgsExpressionContextUtils.globalScope().variable('lizsync_winscp_binary_path'),
+                'WinSCP.com'
+            ).replace('\\','/')
+            cmd.append('"' + winscp_bin + '"')
+            cmd.append('/ini=nul')
+            cmd.append('/console')
+            cmd.append('/command')
+            cmd.append('"option batch off"')
+            cmd.append('"option transfer binary"')
+            cmd.append('"option confirm off"')
+            cmd.append('"open ftp://{}:{}@{}:{}"'.format(ftpuser, ftppass, ftphost, ftpport))
+            cmd.append('"')
+            cmd.append('synchronize')
+            way = 'local'
+            if direction == 'to':
+                way = 'remote'
+            cmd.append(way)
+            # WINSCP NEED TO ALWAYS HAVE local directory (computer) BEFORE FTP server remote directory
+            cmd.append(
+                '{} {}'.format(
+                    localdir,
+                    ftpdir
+                )
+            )
+            cmd.append('-mirror')
+            # cmd.append('-delete') # to delete "to" side files not present in the "from" side
+            cmd.append('-criteria=time')
+            cmd.append('-resumesupport=on')
+            ex = []
+            for d in excludedirs.split(','):
+                ed = d.strip().strip('/') + '/'
+                if ed != '/':
+                    # For directory, no need to put * after.
+                    # Just use the / at the end, for example: data/
+                    ex.append('%s' % ed)
+            if ex:
+                # | 2010*; 2011*
+                # double '""' needed because it's inside already quoted synchronize subcommand
+                cmd.append('-filemask=""|' + ';'.join(ex) + '""')
+            cmd.append('"')
+
+            cmd.append('"close"')
+            cmd.append('"exit"')
+
+            infomsg = 'WinSCP = %s' % ' '.join(cmd)
+            feedback.pushInfo(
+                infomsg.replace(
+                    ':{}@'.format(ftppass),
+                    ':********@'
+                )
+            )
+
+            myenv = { **os.environ }
+            run_command(cmd, myenv, feedback)
+
+        except:
+            feedback.pushInfo(tr('Error during FTP sync'))
+            raise Exception(tr('Error during FTP sync'))
+        finally:
+            feedback.pushInfo(tr('FTP sync done'))
 
     return True
 
 
 
-def pg_dump(postgresql_binary_path, connection_name, output_file_name, schemas, additionnal_parameters=[]):
+def pg_dump(feedback, postgresql_binary_path, connection_name, output_file_name, schemas, additionnal_parameters=[]):
 
     messages = []
     status = False
 
     # Check binary
     pgbin = 'pg_dump'
-    if psys() == 'Windows':
+    if psys().lower().startswith('win'):
         pgbin+= '.exe'
     pgbin = os.path.join(
         postgresql_binary_path,
@@ -385,6 +505,9 @@ def pg_dump(postgresql_binary_path, connection_name, output_file_name, schemas, 
             '-d {0}'.format(uri.database()),
             '-U {0}'.format(uri.username()),
         ]
+    # Escape pgbin for Windows
+    if psys().lower().startswith('win'):
+        pgbin = '"' + pgbin + '"'
     cmd = [
         pgbin
     ] + cmdo + [
@@ -403,17 +526,20 @@ def pg_dump(postgresql_binary_path, connection_name, output_file_name, schemas, 
         cmd = cmd + additionnal_parameters
 
     # Run command
+    # print(" ".join(cmd))
     try:
         # messages.append('PG_DUMP = %s' % ' '.join(cmd) )
         # Add password if needed
         myenv = { **os.environ }
         if not uri.service():
             myenv = {**{'PGPASSWORD': uri.password()}, **os.environ }
-        subprocess.run(
-            " ".join(cmd),
-            shell=True,
-            env=myenv
-        )
+        run_command(cmd, myenv, feedback)
+
+        # subprocess.run(
+            # " ".join(cmd),
+            # shell=True,
+            # env=myenv
+        # )
         status = True
         messages.append(tr('Database has been successfull dumped') + ' into {0}'.format(output_file_name))
     except:

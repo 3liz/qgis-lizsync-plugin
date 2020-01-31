@@ -190,6 +190,15 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         )
 
 
+    def checkParameterValues(self, parameters, context):
+
+        # Check FTP binary
+        status, msg = checkFtpBinary()
+        if not status:
+            return status, msg
+
+        return super(SendProjectsAndFilesToCloneFtp, self).checkParameterValues(parameters, context)
+
     def processAlgorithm(self, parameters, context, feedback):
         """
         Here is where the processing itself takes place.

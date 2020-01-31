@@ -156,7 +156,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         # Check postgresql binary path
         postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
         test_bin = 'psql'
-        if psys() == 'Windows':
+        if psys().lower().startswith('win'):
             test_bin+= '.exe'
         has_bin_file = os.path.isfile(
             os.path.join(
@@ -262,6 +262,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
                 sync_schemas = f.readline().strip()
         if sync_schemas == '':
             raise Exception(self.tr('No schema to syncronize'))
+        feedback.pushInfo(self.tr('Schema list found in sync_schemas.txt') + ' %s' % sync_schemas )
 
         # CLONE DATABASE
         # Run SQL scripts from archive with PSQL command
@@ -292,12 +293,14 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
             ]
 
         pgbin = 'psql'
-        if psys() == 'Windows':
+        if psys().lower().startswith('win'):
             pgbin+= '.exe'
         pgbin = os.path.join(
             postgresql_binary_path,
             pgbin
         )
+        if psys().lower().startswith('win'):
+            pgbin = '"' + pgbin + '"'
         for i in (a_sql, b_sql, c_sql, d_sql):
             try:
                 feedback.pushInfo(self.tr('Loading file') + ' {0} ....'.format(i))
@@ -313,11 +316,12 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
                 if not uri.service():
                     myenv = {**{'PGPASSWORD': uri.password()}, **os.environ }
 
-                subprocess.run(
-                    " ".join(cmd),
-                    shell=True,
-                    env=myenv
-                )
+                run_command(cmd, myenv, feedback)
+                # subprocess.run(
+                    # " ".join(cmd),
+                    # shell=True,
+                    # env=myenv
+                # )
                 msg+= '* {0} -> OK'.format(i.replace(dir_path, ''))
 
                 # Delete SQL scripts

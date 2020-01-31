@@ -36,6 +36,7 @@ from ftplib import FTP
 import netrc
 import re
 from .tools import *
+from platform import system as psys
 
 class GetProjectsAndFilesFromCentralFtp(QgsProcessingAlgorithm):
     """
@@ -46,7 +47,6 @@ class GetProjectsAndFilesFromCentralFtp(QgsProcessingAlgorithm):
     # Constants used to refer to parameters and outputs. They will be
     # used when calling the algorithm from another algorithm, or when
     # calling from the QGIS console.
-
     CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     CENTRAL_FTP_HOST = 'CENTRAL_FTP_HOST'
     CENTRAL_FTP_PORT = 'CENTRAL_FTP_PORT'
@@ -88,7 +88,7 @@ class GetProjectsAndFilesFromCentralFtp(QgsProcessingAlgorithm):
         Here we define the inputs and output of the algorithm, along
         with some other properties.
         """
-        # INPUTS
+        # Central connexion info
         connection_name_central = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
         db_param_a = QgsProcessingParameterString(
             self.CONNECTION_NAME_CENTRAL,
@@ -189,6 +189,15 @@ class GetProjectsAndFilesFromCentralFtp(QgsProcessingAlgorithm):
         )
 
 
+    def checkParameterValues(self, parameters, context):
+
+        # Check FTP binary
+        status, msg = checkFtpBinary()
+        if not status:
+            return status, msg
+
+        return super(GetProjectsAndFilesFromCentralFtp, self).checkParameterValues(parameters, context)
+
     def processAlgorithm(self, parameters, context, feedback):
         """
         Here is where the processing itself takes place.
@@ -252,7 +261,10 @@ class GetProjectsAndFilesFromCentralFtp(QgsProcessingAlgorithm):
         feedback.pushInfo(self.tr('FTP directory') + ' %s' % ftpdir)
         excludedirs = parameters[self.FTP_EXCLUDE_REMOTE_SUBDIRS].strip()
         direction = 'from' # we get data FROM FTP
-        ftp_sync(ftphost, ftpport, ftplogin, ftpdir, localdir, direction, excludedirs, feedback)
+        print("LOCAL DIR = %s" % localdir)
+        print("FTP   DIR = %s" % ftpdir)
+
+        ftp_sync(ftphost, ftpport, ftplogin, localdir, ftpdir, direction, excludedirs, feedback)
 
         # Adapt QGIS project to Geopoppy
         # Mainly change database connection parameters (central -> clone)

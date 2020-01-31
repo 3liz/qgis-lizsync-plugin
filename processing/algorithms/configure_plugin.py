@@ -42,6 +42,8 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
     # calling from the QGIS console.
 
     POSTGRESQL_BINARY_PATH = 'POSTGRESQL_BINARY_PATH'
+    WINSCP_BINARY_PATH = 'WINSCP_BINARY_PATH'
+
     CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     CENTRAL_FTP_HOST = 'CENTRAL_FTP_HOST'
     CENTRAL_FTP_PORT = 'CENTRAL_FTP_PORT'
@@ -94,6 +96,16 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
                 defaultValue=postgresql_binary_path,
                 behavior=QgsProcessingParameterFile.Folder,
                 optional=False
+            )
+        )
+        winscp_binary_path = QgsExpressionContextUtils.globalScope().variable('lizsync_winscp_binary_path')
+        self.addParameter(
+            QgsProcessingParameterFile(
+                self.WINSCP_BINARY_PATH,
+                self.tr('WinSCP binary path (Windows only)'),
+                defaultValue=winscp_binary_path,
+                behavior=QgsProcessingParameterFile.Folder,
+                optional=True
             )
         )
 
@@ -247,6 +259,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         """
         Here is where the processing itself takes place.
         """
+        winscp_binary_path = parameters[self.WINSCP_BINARY_PATH]
         postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
 
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
@@ -267,6 +280,8 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         # Set global variable
         QgsExpressionContextUtils.setGlobalVariable('lizsync_postgresql_binary_path', postgresql_binary_path)
         feedback.pushInfo(self.tr('PostgreSQL local binary path') + ' = ' + postgresql_binary_path)
+        QgsExpressionContextUtils.setGlobalVariable('lizsync_winscp_binary_path', winscp_binary_path)
+        feedback.pushInfo(self.tr('WinSCP binary path (Windows only)') + ' = ' + winscp_binary_path)
 
         QgsExpressionContextUtils.setGlobalVariable('lizsync_connection_name_central', connection_name_central)
         feedback.pushInfo(self.tr('PostgreSQL connection to central database') + ' = ' + connection_name_central)

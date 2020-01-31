@@ -94,7 +94,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         })
         self.addParameter(db_param_a)
 
-        # PostgreSQL binary path (with psql, pg_dump, pg_restore)
+        # PostgreSQL binary path (with psql pg_restore, etc.)
         postgresql_binary_path = QgsExpressionContextUtils.globalScope().variable('lizsync_postgresql_binary_path')
         self.addParameter(
             QgsProcessingParameterFile(
@@ -177,7 +177,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         # Check postgresql binary path
         postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
         test_bin = 'psql'
-        if psys() == 'Windows':
+        if psys().lower().startswith('win'):
             test_bin+= '.exe'
         has_bin_file = os.path.isfile(
             os.path.join(
@@ -279,6 +279,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         ####
         feedback.pushInfo(self.tr('CREATE SCRIPT 02_data.sql'))
         pstatus, pmessages = pg_dump(
+            feedback,
             postgresql_binary_path,
             connection_name_central,
             sql_files['02_data.sql'],
@@ -322,6 +323,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         # We get it from central database to be sure everything will be compatible
         feedback.pushInfo(self.tr('CREATE SCRIPT 04_lizsync.sql'))
         pstatus, pmessages = pg_dump(
+            feedback,
             postgresql_binary_path,
             connection_name_central,
             sql_files['04_lizsync.sql'],
