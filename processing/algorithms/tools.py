@@ -18,6 +18,7 @@ from db_manager.db_plugins.plugin import BaseError
 from db_manager.db_plugins import createDbPlugin
 from db_manager.db_plugins.postgis.connector import PostGisDBConnector
 import os, subprocess
+from platform import system as psys
 
 def tr(string):
     return QCoreApplication.translate('Processing', string)
@@ -310,7 +311,8 @@ def check_lizsync_installation_status(connection_name, test_list=['structure', '
 
     return global_status, tests
 
-def ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, excludedirs, parameters, context, feedback):
+def ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, excludedirs, feedback):
+
     try:
         cmd = []
         cmd.append('lftp')
@@ -348,10 +350,22 @@ def ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, excludedirs
 
 
 
-def pg_dump(connection_name, output_file_name, schemas, additionnal_parameters=[]):
+def pg_dump(postgresql_binary_path, connection_name, output_file_name, schemas, additionnal_parameters=[]):
 
     messages = []
     status = False
+
+    # Check binary
+    pgbin = 'pg_dump'
+    if psys() == 'Windows':
+        pgbin+= '.exe'
+    pgbin = os.path.join(
+        postgresql_binary_path,
+        pgbin
+    )
+    if not os.path.isfile(pgbin):
+        messages.append(tr('PostgreSQL pg_dump tool cannot be found in specified path'))
+        return False, messages
 
     # Get connection parameters
     status, uri, error_message = getUriFromConnectionName(connection_name)
@@ -372,7 +386,7 @@ def pg_dump(connection_name, output_file_name, schemas, additionnal_parameters=[
             '-U {0}'.format(uri.username()),
         ]
     cmd = [
-        'pg_dump'
+        pgbin
     ] + cmdo + [
         '--no-acl',
         '--no-owner',

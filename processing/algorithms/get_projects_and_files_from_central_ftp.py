@@ -166,10 +166,11 @@ class GetProjectsAndFilesFromCentralFtp(QgsProcessingAlgorithm):
 
         clone_qgis_project_folder = QgsExpressionContextUtils.globalScope().variable('lizsync_clone_qgis_project_folder')
         self.addParameter(
-            QgsProcessingParameterString(
+            QgsProcessingParameterFile(
                 self.CLONE_QGIS_PROJECT_FOLDER,
                 self.tr('Clone QGIS project folder'),
                 defaultValue=clone_qgis_project_folder,
+                behavior=QgsProcessingParameterFile.Folder,
                 optional=False
             )
         )
@@ -251,7 +252,7 @@ class GetProjectsAndFilesFromCentralFtp(QgsProcessingAlgorithm):
         feedback.pushInfo(self.tr('FTP directory') + ' %s' % ftpdir)
         excludedirs = parameters[self.FTP_EXCLUDE_REMOTE_SUBDIRS].strip()
         direction = 'from' # we get data FROM FTP
-        ftp_sync(ftphost, ftpport, ftplogin, ftpdir, localdir, direction, excludedirs, parameters, context, feedback)
+        ftp_sync(ftphost, ftpport, ftplogin, ftpdir, localdir, direction, excludedirs, feedback)
 
         # Adapt QGIS project to Geopoppy
         # Mainly change database connection parameters (central -> clone)

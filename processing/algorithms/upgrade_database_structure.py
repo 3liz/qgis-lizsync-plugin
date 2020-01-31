@@ -49,7 +49,7 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
         return 'upgrade_database_structure'
 
     def displayName(self):
-        return self.tr('Upgrade database structure')
+        return self.tr('Upgrade LizSync tools in central database')
 
     def group(self):
         return self.tr('01 Installation')

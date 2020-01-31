@@ -24,6 +24,7 @@ from qgis.core import (
     QgsProcessingAlgorithm,
     QgsProcessingParameterNumber,
     QgsProcessingParameterString,
+    QgsProcessingParameterFile,
     QgsProcessingOutputString,
     QgsProcessingOutputNumber,
     QgsExpressionContextUtils
@@ -40,6 +41,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
     # used when calling the algorithm from another algorithm, or when
     # calling from the QGIS console.
 
+    POSTGRESQL_BINARY_PATH = 'POSTGRESQL_BINARY_PATH'
     CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     CENTRAL_FTP_HOST = 'CENTRAL_FTP_HOST'
     CENTRAL_FTP_PORT = 'CENTRAL_FTP_PORT'
@@ -84,6 +86,16 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         with some other properties.
         """
         # INPUTS
+        postgresql_binary_path = QgsExpressionContextUtils.globalScope().variable('lizsync_postgresql_binary_path')
+        self.addParameter(
+            QgsProcessingParameterFile(
+                self.POSTGRESQL_BINARY_PATH,
+                self.tr('PostgreSQL binary path'),
+                defaultValue=postgresql_binary_path,
+                behavior=QgsProcessingParameterFile.Folder,
+                optional=False
+            )
+        )
 
         # Central database connection parameters
         connection_name_central = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
@@ -141,10 +153,11 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
 
         local_qgis_project_folder = QgsExpressionContextUtils.globalScope().variable('lizsync_local_qgis_project_folder')
         self.addParameter(
-            QgsProcessingParameterString(
+            QgsProcessingParameterFile(
                 self.LOCAL_QGIS_PROJECT_FOLDER,
                 self.tr('Local desktop QGIS project folder'),
                 defaultValue=local_qgis_project_folder,
+                behavior=QgsProcessingParameterFile.Folder,
                 optional=False
             )
         )
@@ -205,10 +218,11 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
 
         clone_qgis_project_folder = QgsExpressionContextUtils.globalScope().variable('lizsync_clone_qgis_project_folder')
         self.addParameter(
-            QgsProcessingParameterString(
+            QgsProcessingParameterFile(
                 self.CLONE_QGIS_PROJECT_FOLDER,
                 self.tr('Clone QGIS project folder'),
                 defaultValue=clone_qgis_project_folder,
+                behavior=QgsProcessingParameterFile.Folder,
                 optional=False
             )
         )
@@ -233,6 +247,8 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         """
         Here is where the processing itself takes place.
         """
+        postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
+
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         lizsync_central_ftp_host = parameters[self.CENTRAL_FTP_HOST]
         lizsync_central_ftp_port = parameters[self.CENTRAL_FTP_PORT]
@@ -249,6 +265,9 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         lizsync_clone_qgis_project_folder = parameters[self.CLONE_QGIS_PROJECT_FOLDER]
 
         # Set global variable
+        QgsExpressionContextUtils.setGlobalVariable('lizsync_postgresql_binary_path', postgresql_binary_path)
+        feedback.pushInfo(self.tr('PostgreSQL local binary path') + ' = ' + postgresql_binary_path)
+
         QgsExpressionContextUtils.setGlobalVariable('lizsync_connection_name_central', connection_name_central)
         feedback.pushInfo(self.tr('PostgreSQL connection to central database') + ' = ' + connection_name_central)
 

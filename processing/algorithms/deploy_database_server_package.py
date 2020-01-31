@@ -31,6 +31,7 @@ import os, subprocess, tempfile, zipfile
 from pathlib import Path
 import processing
 from .tools import *
+from platform import system as psys
 
 class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
     """
@@ -43,8 +44,8 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
     # calling from the QGIS console.
     CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     CONNECTION_NAME_CLONE = 'CONNECTION_NAME_CLONE'
+    POSTGRESQL_BINARY_PATH = 'POSTGRESQL_BINARY_PATH'
     ZIP_FILE = 'ZIP_FILE'
-    PACKAGE_FILE = ''
 
     OUTPUT_STATUS = 'OUTPUT_STATUS'
     OUTPUT_STRING = 'OUTPUT_STRING'
@@ -106,10 +107,23 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         })
         self.addParameter(db_param_b)
 
+        # PostgreSQL binary path (with psql, pg_dump, pg_restore)
+        postgresql_binary_path = QgsExpressionContextUtils.globalScope().variable('lizsync_postgresql_binary_path')
         self.addParameter(
-            QgsProcessingParameterString(
-                self.ZIP_FILE, 'Full archive path. Leave empty inside clone database',
+            QgsProcessingParameterFile(
+                self.POSTGRESQL_BINARY_PATH,
+                self.tr('PostgreSQL binary path'),
+                defaultValue=postgresql_binary_path,
+                behavior=QgsProcessingParameterFile.Folder,
+                optional=False
+            )
+        )
+
+        self.addParameter(
+            QgsProcessingParameterFile(
+                self.ZIP_FILE, 'Full ZIP archive path',
                 defaultValue=os.path.join(tempfile.gettempdir(), 'central_database_package.zip'),
+                behavior=QgsProcessingParameterFile.File,
                 optional=True
             )
         )
@@ -138,8 +152,22 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         )
 
     def checkParameterValues(self, parameters, context):
-        # Check inputs
 
+        # Check postgresql binary path
+        postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
+        test_bin = 'psql'
+        if psys() == 'Windows':
+            test_bin+= '.exe'
+        has_bin_file = os.path.isfile(
+            os.path.join(
+                postgresql_binary_path,
+                test_bin
+            )
+        )
+        if not has_bin_file:
+            return False, self.tr('The needed PostgreSQL binaries cannot be found in the specified path')
+
+        # Check output zip path
         package_file = parameters[self.ZIP_FILE]
         if not os.path.exists(package_file):
             package_file = os.path.join(
@@ -150,7 +178,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
 
         # Check ZIP archive content
         if not ok:
-            return False, "The package does not exists: {0}".format(package_file)
+            return False, self.tr("The ZIP archive does not exists in the specified path") + ": {0}".format(package_file)
         parameters[self.ZIP_FILE] = package_file
 
         return super(DeployDatabaseServerPackage, self).checkParameterValues(parameters, context)
@@ -162,6 +190,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         package_file = parameters[self.ZIP_FILE]
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
+        postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
 
         # Check archive
         if not os.path.exists(package_file):
@@ -262,11 +291,18 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
                 '-U {0}'.format(uri.username()),
             ]
 
+        pgbin = 'psql'
+        if psys() == 'Windows':
+            pgbin+= '.exe'
+        pgbin = os.path.join(
+            postgresql_binary_path,
+            pgbin
+        )
         for i in (a_sql, b_sql, c_sql, d_sql):
             try:
                 feedback.pushInfo(self.tr('Loading file') + ' {0} ....'.format(i))
                 cmd = [
-                    'psql'
+                    pgbin
                 ] + cmdo + [
                     '--no-password',
                     '-f {0}'.format(i)

@@ -96,10 +96,11 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
 
         local_qgis_project_folder = QgsExpressionContextUtils.globalScope().variable('lizsync_local_qgis_project_folder')
         self.addParameter(
-            QgsProcessingParameterString(
+            QgsProcessingParameterFile(
                 self.LOCAL_QGIS_PROJECT_FOLDER,
                 self.tr('Local QGIS project folder'),
                 defaultValue=local_qgis_project_folder,
+                behavior=QgsProcessingParameterFile.Folder,
                 optional=False
             )
         )
@@ -217,7 +218,7 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         if os.path.isdir(localdir):
             # Run FTP sync
             direction = 'to'
-            ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, '', parameters, context, feedback)
+            ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, '', feedback)
             msg = self.tr("Synchronization successfull")
         else:
             m = self.tr('Local directory does not exists. No synchronization needed.')

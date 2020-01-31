@@ -30,7 +30,6 @@ from .tools import *
 class SynchronizeDatabase(QgsProcessingAlgorithm):
     """
     """
-
     # Constants used to refer to parameters and outputs. They will be
     # used when calling the algorithm from another algorithm, or when
     # calling from the QGIS console.

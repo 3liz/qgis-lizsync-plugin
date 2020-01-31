@@ -120,10 +120,11 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
 
         local_qgis_project_folder = QgsExpressionContextUtils.globalScope().variable('lizsync_local_qgis_project_folder')
         self.addParameter(
-            QgsProcessingParameterString(
+            QgsProcessingParameterFile(
                 self.LOCAL_QGIS_PROJECT_FOLDER,
                 self.tr('Local desktop QGIS project folder'),
                 defaultValue=local_qgis_project_folder,
+                behavior=QgsProcessingParameterFile.Folder,
                 optional=False
             )
         )
@@ -250,7 +251,7 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         feedback.pushInfo(self.tr('FTP directory') + ' %s' % ftpdir)
         direction = 'to' # we send data TO FTP
         excludedirs = parameters[self.FTP_EXCLUDE_REMOTE_SUBDIRS].strip()
-        ftp_sync(ftphost, ftpport, ftplogin, localdir, ftpdir, direction, excludedirs, parameters, context, feedback)
+        ftp_sync(ftphost, ftpport, ftplogin, localdir, ftpdir, direction, excludedirs, feedback)
 
 
         status = 1

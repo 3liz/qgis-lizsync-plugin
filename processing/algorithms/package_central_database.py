@@ -23,6 +23,7 @@ from qgis.core import (
     QgsProcessingException,
     QgsProcessingParameterString,
     QgsProcessingParameterNumber,
+    QgsProcessingParameterFile,
     QgsProcessingParameterFileDestination,
     QgsProcessingOutputString,
     QgsProcessingOutputNumber,
@@ -34,6 +35,7 @@ from datetime import date, datetime
 from .tools import *
 import zipfile
 import tempfile
+from platform import system as psys
 
 class PackageCentralDatabase(QgsProcessingAlgorithm):
     """
@@ -45,6 +47,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
     # calling from the QGIS console.
     CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     SCHEMAS = 'SCHEMAS'
+    POSTGRESQL_BINARY_PATH = 'POSTGRESQL_BINARY_PATH'
     ZIP_FILE = 'ZIP_FILE'
     OUTPUT_STATUS = 'OUTPUT_STATUS'
     OUTPUT_STRING = 'OUTPUT_STRING'
@@ -70,20 +73,6 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
     def createInstance(self):
         return PackageCentralDatabase()
 
-    def checkParameterValues(self, parameters, context):
-
-        # Check that the connection name has been configured
-        connection_name = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
-        if not connection_name:
-            return False, self.tr('You must use the "Configure Lizsync plugin" alg to set the CENTRAL database connection name')
-
-        # Check that it corresponds to an existing connection
-        dbpluginclass = createDbPlugin( 'postgis' )
-        connections = [c.connectionName() for c in dbpluginclass.connections()]
-        if connection_name not in connections:
-            return False, self.tr('The configured connection name does not exists in QGIS')
-
-        return super(PackageCentralDatabase, self).checkParameterValues(parameters, context)
 
     def initAlgorithm(self, config):
         """
@@ -105,6 +94,19 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         })
         self.addParameter(db_param_a)
 
+        # PostgreSQL binary path (with psql, pg_dump, pg_restore)
+        postgresql_binary_path = QgsExpressionContextUtils.globalScope().variable('lizsync_postgresql_binary_path')
+        self.addParameter(
+            QgsProcessingParameterFile(
+                self.POSTGRESQL_BINARY_PATH,
+                self.tr('PostgreSQL binary path'),
+                defaultValue=postgresql_binary_path,
+                behavior=QgsProcessingParameterFile.Folder,
+                optional=False
+            )
+        )
+
+        # List of schemas to package
         self.addParameter(
             QgsProcessingParameterString(
                 self.SCHEMAS,
@@ -113,6 +115,8 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
                 optional=False
             )
         )
+
+        # Output zip file destination
         self.addParameter(
             QgsProcessingParameterFileDestination(
                 self.ZIP_FILE,
@@ -166,12 +170,45 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         else:
             feedback.pushInfo(self.tr('Every test has passed successfully !'))
 
+
+
+    def checkParameterValues(self, parameters, context):
+
+        # Check postgresql binary path
+        postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
+        test_bin = 'psql'
+        if psys() == 'Windows':
+            test_bin+= '.exe'
+        has_bin_file = os.path.isfile(
+            os.path.join(
+                postgresql_binary_path,
+                test_bin
+            )
+        )
+        if not has_bin_file:
+            return False, self.tr('The needed PostgreSQL binaries cannot be found in the specified path')
+
+        # Check that the connection name has been configured
+        connection_name = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
+        if not connection_name:
+            return False, self.tr('You must use the "Configure Lizsync plugin" alg to set the CENTRAL database connection name')
+
+        # Check that it corresponds to an existing connection
+        dbpluginclass = createDbPlugin( 'postgis' )
+        connections = [c.connectionName() for c in dbpluginclass.connections()]
+        if connection_name not in connections:
+            return False, self.tr('The configured connection name does not exists in QGIS')
+
+        return super(PackageCentralDatabase, self).checkParameterValues(parameters, context)
+
+
     def processAlgorithm(self, parameters, context, feedback):
         """
         Here is where the processing itself takes place.
         """
         msg = ''
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+        postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
 
         # First run some test in database
         self.checkCentralDatabase(parameters, feedback)
@@ -242,6 +279,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         ####
         feedback.pushInfo(self.tr('CREATE SCRIPT 02_data.sql'))
         pstatus, pmessages = pg_dump(
+            postgresql_binary_path,
             connection_name_central,
             sql_files['02_data.sql'],
             schemas,
@@ -284,6 +322,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         # We get it from central database to be sure everything will be compatible
         feedback.pushInfo(self.tr('CREATE SCRIPT 04_lizsync.sql'))
         pstatus, pmessages = pg_dump(
+            postgresql_binary_path,
             connection_name_central,
             sql_files['04_lizsync.sql'],
             ['lizsync'],
