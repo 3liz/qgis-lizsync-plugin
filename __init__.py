@@ -37,3 +37,10 @@ def classFactory(iface):  # pylint: disable=invalid-name
     #
     from .lizsync import LizsyncPlugin
     return LizsyncPlugin()
+
+from typing import Any
+def WPSClassFactory(iface: 'WPSServerInterface') -> Any:
+    """ Load GeoVit
+    """
+    from .processing.provider import LizsyncProvider
+    iface.registerProvider(LizsyncProvider())
