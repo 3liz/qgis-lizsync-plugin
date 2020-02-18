@@ -27,24 +27,6 @@ import netrc
 def tr(string):
     return QCoreApplication.translate('Processing', string)
 
-def getShortHelpString(alg_file_basename):
-    '''
-    Read help file for given alg id
-    And return short help string
-    '''
-    help = ''
-    path = os.path.dirname(__file__)
-
-    help_file = os.path.join(
-        path,
-        'help',
-        alg_file_basename.replace('.py', '.txt')
-    )
-    if os.path.exists(help_file):
-        with open(help_file) as f:
-            help = f.read()
-    return help
-
 def check_internet():
     # return True
     import requests
@@ -175,11 +157,14 @@ def run_command(cmd, myenv, feedback):
         " ".join(cmd),
         shell=True,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
         env=myenv
     )
     for line in process.stdout:
-        output = "{}".format(line.rstrip().decode("utf-8"))
+        try:
+            output = "{}".format(line.rstrip().decode("utf-8"))
+        except:
+            output = "{}".format(line.rstrip())
         if not pattern.search(output):
             print(output)
         if output == '' and process.poll() is not None:
@@ -634,3 +619,19 @@ def setQgisProjectOffline(qgis_directory, connection_name_central, connection_na
             os.remove(qf)
             os.rename(qf + 'new', qf)
             feedback.pushInfo(tr('Project modified !'))
+
+
+
+def returnError(output, msg, feedback):
+    """
+    Report errors
+    """
+    status = 0
+    output_string = 'OUTPUT_STRING'
+    feedback.reportError(msg)
+    if output_string in output:
+        output[output_string] = msg
+    # return QgsProcessingException(msg)
+    # commented because it does not work with py-qgis-wps
+
+    return output

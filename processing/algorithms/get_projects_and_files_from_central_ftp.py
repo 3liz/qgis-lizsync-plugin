@@ -18,8 +18,6 @@ from PyQt5.QtCore import QCoreApplication
 from qgis.core import (
     QgsProcessing,
     QgsProcessingAlgorithm,
-    QgsProcessingUtils,
-    QgsProcessingException,
     QgsProcessingParameterString,
     QgsProcessingParameterNumber,
     QgsProcessingParameterFile,
@@ -75,7 +73,13 @@ class GetProjectsAndFilesFromCentralFtp(QgsProcessingAlgorithm):
         return 'lizsync_sync'
 
     def shortHelpString(self):
-        return getShortHelpString(os.path.basename(__file__))
+        short_help = self.tr(
+            ' Get QGIS projects and files from the give FTP server and remote directory'
+            ' and adapt QGIS projects for the local clone database'
+            ' by replacing PostgreSQL connection data with the local PostgreSQL server data.'
+            ' An internet connection is needed to use this algorithm'
+        )
+        return short_help
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
@@ -202,13 +206,15 @@ class GetProjectsAndFilesFromCentralFtp(QgsProcessingAlgorithm):
         """
         Here is where the processing itself takes place.
         """
-
+        output = {
+            self.OUTPUT_STATUS: 0,
+            self.OUTPUT_STRING: ''
+        }
         # Check internet
         feedback.pushInfo(self.tr('CHECK INTERNET CONNECTION'))
         if not check_internet():
             m = self.tr('No internet connection')
-            feedback.pushInfo(m)
-            raise Exception(m)
+            return returnError(output, m, feedback)
 
         # Parameters
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
@@ -226,9 +232,11 @@ class GetProjectsAndFilesFromCentralFtp(QgsProcessingAlgorithm):
             if auth is not None:
                 ftplogin, account, ftppass = auth
         except (netrc.NetrcParseError, IOError):
-            raise Exception(self.tr('Could not retrieve password from ~/.netrc file'))
+            m = self.tr('Could not retrieve password from ~/.netrc file')
+            return returnError(output, m, feedback)
         if not ftppass:
-            raise Exception(self.tr('Could not retrieve password from ~/.netrc file or is empty'))
+            m = self.tr('Could not retrieve password from ~/.netrc file or is empty')
+            return returnError(output, m, feedback)
 
         msg = ''
 
@@ -236,8 +244,7 @@ class GetProjectsAndFilesFromCentralFtp(QgsProcessingAlgorithm):
         feedback.pushInfo(self.tr('CHECK LOCAL PROJECT DIRECTORY'))
         if not localdir or not os.path.isdir(localdir):
             m = self.tr('QGIS project local directory not found')
-            feedback.pushInfo(m)
-            raise Exception(m)
+            return returnError(output, m, feedback)
         else:
             m = self.tr('QGIS project local directory ok')
 
@@ -253,8 +260,7 @@ class GetProjectsAndFilesFromCentralFtp(QgsProcessingAlgorithm):
         except Exception:
             ftp.close()
             m = self.tr('Remote directory does not exist')
-            feedback.pushInfo(m)
-            raise Exception(m)
+            return returnError(output, m, feedback)
 
         # Run FTP sync
         feedback.pushInfo(self.tr('Local directory') + ' %s' % localdir)
@@ -273,9 +279,9 @@ class GetProjectsAndFilesFromCentralFtp(QgsProcessingAlgorithm):
 
         status = 1
         msg = self.tr("Synchronization successfull")
-        out = {
+        output = {
             self.OUTPUT_STATUS: status,
             self.OUTPUT_STRING: msg
         }
-        return out
+        return output
 
