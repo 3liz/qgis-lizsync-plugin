@@ -19,7 +19,6 @@ from qgis.core import (
     QgsProcessing,
     QgsProcessingAlgorithm,
     QgsProcessingUtils,
-    QgsProcessingException,
     QgsProcessingParameterString,
     QgsProcessingParameterNumber,
     QgsProcessingParameterFile,
@@ -220,13 +219,18 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         """
         Here is where the processing itself takes place.
         """
+        status = 0
+        msg = ''
+        output = {
+            self.OUTPUT_STATUS: status,
+            self.OUTPUT_STRING: msg
+        }
 
         # Check internet
         feedback.pushInfo(self.tr('CHECK INTERNET CONNECTION'))
         if not check_internet():
             m = self.tr('No internet connection')
-            feedback.pushInfo(m)
-            raise Exception(m)
+            return returnError(output, m, feedback)
 
         # Parameters
         ftphost = parameters[self.CLONE_FTP_HOST]
@@ -242,9 +246,11 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
             if auth is not None:
                 ftplogin, account, ftppass = auth
         except (netrc.NetrcParseError, IOError):
-            raise Exception(self.tr('Could not retrieve password from ~/.netrc file'))
+            m = self.tr('Could not retrieve password from ~/.netrc file')
+            return returnError(output, m, feedback)
         if not ftppass:
-            raise Exception(self.tr('Could not retrieve password from ~/.netrc file or is empty'))
+            m = self.tr('Could not retrieve password from ~/.netrc file or is empty')
+            return returnError(output, m, feedback)
 
         msg = ''
 
@@ -252,10 +258,9 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         feedback.pushInfo(self.tr('CHECK LOCAL PROJECT DIRECTORY'))
         if not localdir or not os.path.isdir(localdir):
             m = self.tr('QGIS project local directory not found')
-            feedback.pushInfo(m)
-            raise Exception(m)
+            return returnError(output, m, feedback)
         else:
-            m = self.tr('QGIS project local directory ok')
+            feedback.pushInfo(self.tr('QGIS project local directory ok'))
 
         # Check if ftpdir exists
         feedback.pushInfo(self.tr('CHECK REMOTE DIRECTORY') + ' %s' % ftpdir )
@@ -269,22 +274,24 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         except Exception:
             ftp.close()
             m = self.tr('Remote directory does not exist')
-            feedback.pushInfo(m)
-            raise Exception(m)
+            return returnError(output, m, feedback)
 
         # Run FTP sync
         feedback.pushInfo(self.tr('Local directory') + ' %s' % localdir)
         feedback.pushInfo(self.tr('FTP directory') + ' %s' % ftpdir)
         direction = 'to' # we send data TO FTP
         excludedirs = parameters[self.FTP_EXCLUDE_REMOTE_SUBDIRS].strip()
-        ftp_sync(ftphost, ftpport, ftplogin, localdir, ftpdir, direction, excludedirs, feedback)
+        ok, msg = ftp_sync(ftphost, ftpport, ftplogin, localdir, ftpdir, direction, excludedirs, feedback)
+        if not ok:
+            m = msg
+            return returnError(output, m, feedback)
 
 
         status = 1
         msg = self.tr("Synchronization successfull")
-        out = {
+        output = {
             self.OUTPUT_STATUS: status,
             self.OUTPUT_STRING: msg
         }
-        return out
+        return output
 

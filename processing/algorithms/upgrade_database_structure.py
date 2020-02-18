@@ -155,19 +155,18 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
         """
         Here is where the processing itself takes place.
         """
+        output = {
+            self.OUTPUT_STATUS: 0,
+            self.OUTPUT_STRING: ''
+        }
 
         connection_name = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name')
 
         # Drop schema if needed
         runit = self.parameterAsBool(parameters, self.RUNIT, context)
         if not runit:
-            status = 0
-            msg = self.tr('You must check the box to run the upgrade !')
-            # raise Exception(msg)
-            return {
-                self.OUTPUT_STATUS: status,
-                self.OUTPUT_STRING: msg
-            }
+            m = self.tr('You must check the box to run the upgrade !')
+            return returnError(output, m, feedback)
 
         # get database version
         sql = '''
@@ -181,15 +180,15 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
             sql
         )
         if not ok:
-            feedback.pushInfo(error_message)
-            status = 0
-            raise Exception(error_message)
+            m = error_message
+            return returnError(output, m, feedback)
         db_version = None
         for a in data:
             db_version = a[0]
         if not db_version:
             error_message = self.tr('No installed version found in the database !')
-            raise Exception(error_message)
+            m = error_message
+            return returnError(output, m, feedback)
         feedback.pushInfo(self.tr('Database structure version') + ' = %s' % db_version)
 
         # get plugin version
@@ -258,15 +257,11 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
                 if ok:
                     feedback.pushInfo('* ' + sf + ' -- SUCCESS !')
                 else:
-                    feedback.pushInfo(error_message)
-                    status = 0
-                    raise Exception(error_message)
-                    # return {
-                    # self.OUTPUT_STATUS: status,
-                    # self.OUTPUT_STRING: error_message
-                    # }
+                    m = error_message
+                    return returnError(output, m, feedback)
 
-        return {
+        output = {
             self.OUTPUT_STATUS: 1,
             self.OUTPUT_STRING: self.tr('Lizsync database structure has been successfully upgraded.')
         }
+        return output

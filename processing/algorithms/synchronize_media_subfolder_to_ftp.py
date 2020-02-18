@@ -19,7 +19,6 @@ from qgis.core import (
     QgsProcessing,
     QgsProcessingAlgorithm,
     QgsProcessingUtils,
-    QgsProcessingException,
     QgsProcessingParameterString,
     QgsProcessingParameterNumber,
     QgsProcessingParameterFile,
@@ -177,12 +176,18 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         """
         Here is where the processing itself takes place.
         """
+        status = 0
+        msg = ''
+        output = {
+            self.OUTPUT_STATUS: status,
+            self.OUTPUT_STRING: msg
+        }
 
         # Check internet
         feedback.pushInfo(self.tr('Check internet connection'))
         if not check_internet():
-            feedback.pushInfo(self.tr('No internet connection'))
-            raise Exception(self.tr('No internet connection'))
+            m = self.tr('No internet connection')
+            return returnError(output, m, feedback)
 
         # Parameters
         ftphost = parameters[self.CENTRAL_FTP_HOST]
@@ -198,9 +203,11 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
             if auth is not None:
                 ftpuser, account, ftppass = auth
         except (netrc.NetrcParseError, IOError):
-            raise Exception(self.tr('Could not retrieve password from ~/.netrc file'))
+            m = self.tr('Could not retrieve password from ~/.netrc file')
+            return returnError(output, m, feedback)
         if not ftppass:
-            raise Exception(self.tr('Could not retrieve password from ~/.netrc file or is empty'))
+            m =self.tr('Could not retrieve password from ~/.netrc file or is empty')
+            return returnError(output, m, feedback)
 
         msg = ''
 
@@ -208,8 +215,7 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         feedback.pushInfo(self.tr('CHECK LOCAL PROJECT DIRECTORY'))
         if not localdir or not os.path.isdir(localdir):
             m = self.tr('QGIS project local directory not found')
-            feedback.pushInfo(m)
-            raise Exception(m)
+            return returnError(output, m, feedback)
         else:
             m = self.tr('QGIS project local directory ok')
 
@@ -225,8 +231,7 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         except Exception:
             ftp.close()
             m = self.tr('Remote directory does not exist')
-            feedback.pushInfo(m)
-            raise Exception(m)
+            return returnError(output, m, feedback)
 
         # Check if media/upload exists locally
         feedback.pushInfo(self.tr('START FTP DIRECTORY SYNCHRONIZATION TO SERVER') + ' %s' % ftpdir )
@@ -237,17 +242,19 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         if os.path.isdir(localdir):
             # Run FTP sync
             direction = 'to'
-            ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, '', feedback)
-            msg = self.tr("Synchronization successfull")
+            ok, msg = ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, '', feedback)
+            if not ok:
+                m = msg
+                return returnError(output, m, feedback)
         else:
             m = self.tr('Local directory does not exists. No synchronization needed.')
             feedback.pushInfo(m)
             msg = m
 
         status = 1
-        msg = 'Synchro'
-        out = {
+        msg = self.tr('Media upload subfolder sucessfully synchronized to the central server')
+        output = {
             self.OUTPUT_STATUS: status,
             self.OUTPUT_STRING: msg
         }
-        return out
+        return output

@@ -20,7 +20,6 @@ from qgis.core import (
     QgsProcessing,
     QgsProcessingAlgorithm,
     QgsProcessingUtils,
-    QgsProcessingException,
     QgsProcessingParameterString,
     QgsProcessingParameterNumber,
     QgsProcessingParameterFile,
@@ -178,11 +177,9 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
                         message=test['message'].replace('"', '')
                     )
                     feedback.pushInfo(item_msg)
-            raise Exception(msg)
+            return False, msg
         else:
             feedback.pushInfo(self.tr('Every test has passed successfully !'))
-
-
 
     def checkParameterValues(self, parameters, context):
 
@@ -219,11 +216,18 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         Here is where the processing itself takes place.
         """
         msg = ''
+        status = 0
+        output = {
+            self.OUTPUT_STATUS: status,
+            self.OUTPUT_STRING: msg
+        }
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
 
         # First run some test in database
-        self.checkCentralDatabase(parameters, feedback)
+        test, m = self.checkCentralDatabase(parameters, feedback)
+        if not test:
+            return returnError(output, m, feedback)
 
         # Create temporary files
         sql_file_list = [
@@ -301,7 +305,8 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         for pmessage in pmessages:
             feedback.pushInfo(pmessage)
         if not pstatus:
-            raise Exception(' '.join(pmessages))
+            m = ' '.join(pmessages)
+            return returnError(output, m, feedback)
 
         # 3/ 03_after.sql
         ####
@@ -345,7 +350,8 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         for pmessage in pmessages:
             feedback.pushInfo(pmessage)
         if not pstatus:
-            raise Exception(' '.join(pmessages))
+            m = ' '.join(pmessages)
+            return returnError(output, m, feedback)
 
         # 5/ sync_schemas.txt
         # Add schemas into file
@@ -399,15 +405,16 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
                     f.write(sync_id)
                     feedback.pushInfo(self.tr('File sync_id.txt created'))
             else:
-                msg = self.tr('No synchronization item could be added !')
-                feedback.pushInfo(msg)
-                feedback.pushInfo(error_message)
-                raise Exception(msg)
+                m = self.tr('No synchronization item could be added !')
+                m+= ' '
+                m+= msg
+                m+= ' '
+                m+= error_message
+                return returnError(output, m, feedback)
         else:
-            msg = self.tr('No synchronization item could be added !')
-            msg+= ' ' + error_message
-            # feedback.pushInfo(msg)
-            raise Exception(msg)
+            m = self.tr('No synchronization item could be added !')
+            m+= ' ' + error_message
+            return returnError(output, m, feedback)
 
         # Create ZIP archive
         try:
@@ -433,11 +440,13 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
                 except:
                     status = 0
                     msg+= self.tr("Error while zipping file") + ': ' + fname
-                    raise Exception(msg)
+                    m = msg
+                    return returnError(output, m, feedback)
         msg = self.tr('Package has been successfully created !')
         feedback.pushInfo(msg)
 
-        return {
+        output = {
             self.OUTPUT_STATUS: status,
             self.OUTPUT_STRING: msg
         }
+        return output

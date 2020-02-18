@@ -18,10 +18,10 @@ __copyright__ = '(C) 2018 by 3liz'
 from PyQt5.QtCore import QCoreApplication
 from qgis.core import (
     QgsProcessing,
-    QgsProcessingException,
     QgsProcessingAlgorithm,
     QgsProcessingParameterString,
     QgsProcessingOutputString,
+    QgsProcessingOutputNumber,
     QgsExpressionContextUtils
 )
 import processing
@@ -119,6 +119,11 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         # OUTPUTS
         # Add output for message
         self.addOutput(
+            QgsProcessingOutputNumber(
+                self.OUTPUT_STATUS, self.tr('Output status')
+            )
+        )
+        self.addOutput(
             QgsProcessingOutputString(
                 self.OUTPUT_STRING, self.tr('Output message')
             )
@@ -126,12 +131,17 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
 
     def processAlgorithm(self, parameters, context, feedback):
 
+        output = {
+            self.OUTPUT_STATUS: 1,
+            self.OUTPUT_STRING: ''
+        }
+
         uid_field = 'uid'
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
         if not check_internet():
-            feedback.pushInfo(self.tr('No internet connection'))
-            raise Exception(self.tr('No internet connection'))
+            m = self.tr('No internet connection')
+            return returnError(output, m, feedback)
 
         # Send some information to the user
         feedback.pushInfo(self.tr('Internet connection OK'))
@@ -155,7 +165,8 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         )
         if not ok:
             feedback.pushInfo(sql)
-            raise Exception(error_message)
+            m = error_message+ ' '+ sql
+            return returnError(output, m, feedback)
         for a in data:
             central_id = a[0]
             feedback.pushInfo(self.tr('Server id') +' = %s' % central_id)
@@ -172,8 +183,8 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             sql
         )
         if not ok:
-            feedback.pushInfo(sql)
-            raise Exception(error_message)
+            m = error_message+ ' '+ sql
+            return returnError(output, m, feedback)
         for a in data:
             clone_id = a[0]
             feedback.pushInfo(self.tr('Clone id') + ' = %s' % clone_id)
@@ -204,8 +215,8 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             sql
         )
         if not ok:
-            feedback.pushInfo(sql)
-            raise Exception(error_message)
+            m = error_message+ ' '+ sql
+            return returnError(output, m, feedback)
         for a in data:
             last_sync = {
                 'max_action_tstamp_tx': a[0],
@@ -261,8 +272,8 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             sql
         )
         if not ok:
-            feedback.pushInfo(sql)
-            raise Exception(error_message)
+            m = error_message+ ' '+ sql
+            return returnError(output, m, feedback)
         for a in data:
             ids.append(int(a[0]))
             max_action_tstamp_tx = a[1]
@@ -299,8 +310,8 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                 sql
             )
             if not ok:
-                feedback.pushInfo(sql)
-                raise Exception(error_message)
+                m = error_message+ ' '+ sql
+                return returnError(output, m, feedback)
             for a in data:
                 sync_id = a[0]
                 feedback.pushInfo(
@@ -320,8 +331,8 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                 sql
             )
             if not ok:
-                feedback.pushInfo(sql)
-                raise Exception(error_message)
+                m = error_message+ ' '+ sql
+                return returnError(output, m, feedback)
             feedback.pushInfo(
                 self.tr('SQL queries have been replayed from the central to the clone database')
             )
@@ -346,8 +357,8 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                 sql
             )
             if not ok:
-                feedback.pushInfo(sql)
-                raise Exception(error_message)
+                m = error_message+ ' '+ sql
+                return returnError(output, m, feedback)
             feedback.pushInfo(
                 self.tr('Logged actions sync_data has been updated in the central database with the clone id')
             )
@@ -366,8 +377,8 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                 sql
             )
             if not ok:
-                feedback.pushInfo(sql)
-                raise Exception(error_message)
+                m = error_message+ ' '+ sql
+                return returnError(output, m, feedback)
             feedback.pushInfo(
                 self.tr('History sync_status has been updated to "done" in the central database')
             )
@@ -403,8 +414,8 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             sql
         )
         if not ok:
-            feedback.pushInfo(sql)
-            raise Exception(error_message)
+            m = error_message+ ' '+ sql
+            return returnError(output, m, feedback)
         if rowCount > 0:
             feedback.pushInfo(
                 self.tr('Number of features to synchronize') + ' = {0}'.format(rowCount)
@@ -436,8 +447,8 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                 sql
             )
             if not ok:
-                feedback.pushInfo(sql)
-                raise Exception(error_message)
+                m = error_message+ ' '+ sql
+                return returnError(output, m, feedback)
             for a in data:
                 sync_id = a[0]
                 feedback.pushInfo(
@@ -463,8 +474,8 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                 sql
             )
             if not ok:
-                feedback.pushInfo(sql)
-                raise Exception(error_message)
+                m = error_message+ ' '+ sql
+                return returnError(output, m, feedback)
 
             # Delete all data from clone audit logged_actions
             sql = '''
@@ -476,8 +487,8 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                 sql
             )
             if not ok:
-                feedback.pushInfo(sql)
-                raise Exception(error_message)
+                m = error_message+ ' '+ sql
+                return returnError(output, m, feedback)
 
             # Modify central server synchronization item
             sql = '''
@@ -493,8 +504,8 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                 sql
             )
             if not ok:
-                feedback.pushInfo(sql)
-                raise Exception(error_message)
+                m = error_message+ ' '+ sql
+                return returnError(output, m, feedback)
         else:
             # No data to sync
             feedback.pushInfo('No data to synchronize from the clone database')
@@ -502,5 +513,8 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
 
         feedback.setProgress(int(2 * total))
 
-        feedback.pushInfo('*************')
-        return {self.OUTPUT_STRING: 'Synchronization done'}
+        output = {
+            self.OUTPUT_STATUS: 1,
+            self.OUTPUT_STRING: self.tr('Two-way database synchronization done')
+        }
+        return output

@@ -180,6 +180,10 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         """
         Here is where the processing itself takes place.
         """
+        output = {
+            self.OUTPUT_STATUS: 0,
+            self.OUTPUT_STRING: ''
+        }
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
 
         # Drop schemas if needed
@@ -207,11 +211,8 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
                 else:
                     feedback.pushInfo(error_message)
                     status = 0
-                    # raise Exception(msg)
-                    return {
-                        self.OUTPUT_STATUS: status,
-                        self.OUTPUT_STRING: msg
-                    }
+                    m = error_message
+                    return returnError(output, m, feedback)
 
         # Create full structure
         sql_files = [
@@ -246,15 +247,10 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
                     sql
                 )
                 if ok:
-                    feedback.pushInfo('  Success !')
+                    feedback.pushInfo(self.tr('SQL file successfully played'))
                 else:
-                    feedback.pushInfo('* ' + error_message)
-                    status = 0
-                    raise Exception(error_message)
-                    # return {
-                        # self.OUTPUT_STATUS: status,
-                        # self.OUTPUT_STRING: error_message
-                    # }
+                    m = error_message
+                    return returnError(output, m, feedback)
 
         # Add version
         config = configparser.ConfigParser()
@@ -271,8 +267,14 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
             connection_name_central,
             sql
         )
+        if ok:
+            feedback.pushInfo(self.tr('Version added in the lizsync metadata table'))
+        else:
+            m = error_message
+            return returnError(output, m, feedback)
 
-        return {
+        output = {
             self.OUTPUT_STATUS: 1,
             self.OUTPUT_STRING: self.tr('Lizsync database structure has been successfully created.')
         }
+        return output

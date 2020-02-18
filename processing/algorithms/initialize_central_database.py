@@ -204,6 +204,10 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
         """
         msg = ''
         status = 1
+        output = {
+            self.OUTPUT_STATUS: status,
+            self.OUTPUT_STRING: msg
+        }
 
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         add_uid_columns = self.parameterAsBool(parameters, self.ADD_UID_COLUMNS, context)
@@ -235,7 +239,12 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
         # Check structure
         feedback.pushInfo(self.tr('CHECK LIZSYNC STRUCTURE'))
         if not tests['structure']['status']:
-            raise Exception(self.tr('Lizsync has not been installed in the central database. Run the script "Create database structure"'))
+            m = self.tr(
+                'Lizsync has not been installed in the central database.'
+                ' Run the script "Create database structure"'
+            )
+            return returnError(output, m, feedback)
+
         feedback.pushInfo(self.tr('Lizsync structure OK'))
 
         # ADD SERVER ID IN METADATA TABLE
@@ -259,10 +268,10 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
                         server_id = a[0]
                         feedback.pushInfo(self.tr('Server id successfully added') + ' {0}'.format(server_id))
             else:
-                msg = self.tr('Error adding server name in server_metadata table.')
-                feedback.pushInfo(msg)
-                feedback.pushInfo(error_message)
-                raise Exception(msg)
+                m = self.tr('Error adding server name in server_metadata table.')
+                m+= ' '
+                m+= error_message
+                return returnError(output, m, feedback)
 
         # Add UID columns for given schema names
         if add_uid_columns and not tests['uid columns']['status']:
@@ -299,10 +308,8 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
                     msg = self.tr('No UID columns were missing.')
                     feedback.pushInfo(msg)
             else:
-                msg = error_message
-                status = 0
-                feedback.pushInfo(msg)
-                raise Exception(msg)
+                m = error_message
+                return returnError(output, m, feedback)
 
 
         # ADD MISSING AUDIT TRIGGERS
@@ -345,14 +352,13 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
                     msg = self.tr('No audit triggers were missing.')
                     feedback.pushInfo(msg)
             else:
-                msg = error_message
-                status = 0
-                feedback.pushInfo(msg)
-                raise Exception(msg)
+                m = error_message
+                return returnError(output, m, feedback)
 
 
-        return {
+        output = {
             self.OUTPUT_STATUS: status,
             self.OUTPUT_STRING: msg
         }
+        return output
 

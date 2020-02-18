@@ -372,8 +372,8 @@ def ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, excludedirs
             run_command(cmd, myenv, feedback)
 
         except:
-            feedback.pushInfo(tr('Error during FTP sync'))
-            raise Exception(tr('Error during FTP sync'))
+            m = tr('Error during FTP sync')
+            return False, m
         finally:
             feedback.pushInfo(tr('FTP sync done'))
 
@@ -384,9 +384,11 @@ def ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, excludedirs
             if auth is not None:
                 ftplogin, account, ftppass = auth
         except (netrc.NetrcParseError, IOError):
-            raise Exception(self.tr('Could not retrieve password from ~/.netrc file'))
+            m = self.tr('Could not retrieve password from ~/.netrc file')
+            return False, m
         if not ftppass:
-            raise Exception(self.tr('Could not retrieve password from ~/.netrc file or is empty'))
+            m = self.tr('Could not retrieve password from ~/.netrc file or is empty')
+            return False, m
         try:
             cmd = []
             winscp_bin = os.path.join(
@@ -446,12 +448,12 @@ def ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, excludedirs
             run_command(cmd, myenv, feedback)
 
         except:
-            feedback.pushInfo(tr('Error during FTP sync'))
-            raise Exception(tr('Error during FTP sync'))
+            m = tr('Error during FTP sync')
+            return False, m
         finally:
             feedback.pushInfo(tr('FTP sync done'))
 
-    return True
+    return True, 'Success'
 
 
 
@@ -540,9 +542,11 @@ def setQgisProjectOffline(qgis_directory, connection_name_central, connection_na
     status_central, uri_central, error_message_central = getUriFromConnectionName(connection_name_central)
     status_clone, uri_clone, error_message_clone = getUriFromConnectionName(connection_name_clone)
     if not status_central:
-        raise Exception(error_message_central)
+        m = error_message_central
+        return False, m
     if not status_clone:
-        raise Exception(error_message_clone)
+        m = error_message_clone
+        return False, m
 
     uris = {
         'central': {'uri': uri_central},
@@ -620,7 +624,7 @@ def setQgisProjectOffline(qgis_directory, connection_name_central, connection_na
             os.rename(qf + 'new', qf)
             feedback.pushInfo(tr('Project modified !'))
 
-
+    return True, 'Success'
 
 def returnError(output, msg, feedback):
     """
@@ -631,7 +635,7 @@ def returnError(output, msg, feedback):
     feedback.reportError(msg)
     if output_string in output:
         output[output_string] = msg
-    # return QgsProcessingException(msg)
+    # raise Exception(msg)
     # commented because it does not work with py-qgis-wps
 
     return output

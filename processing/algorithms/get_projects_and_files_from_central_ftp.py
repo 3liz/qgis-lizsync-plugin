@@ -270,15 +270,21 @@ class GetProjectsAndFilesFromCentralFtp(QgsProcessingAlgorithm):
         print("LOCAL DIR = %s" % localdir)
         print("FTP   DIR = %s" % ftpdir)
 
-        ftp_sync(ftphost, ftpport, ftplogin, localdir, ftpdir, direction, excludedirs, feedback)
+        ok, msg = ftp_sync(ftphost, ftpport, ftplogin, localdir, ftpdir, direction, excludedirs, feedback)
+        if not ok:
+            m = msg
+            return returnError(output, m, feedback)
 
         # Adapt QGIS project to Geopoppy
         # Mainly change database connection parameters (central -> clone)
         feedback.pushInfo(self.tr('ADAPT QGIS PROJECTS FOR OFFLINE USE'))
-        setQgisProjectOffline(localdir, connection_name_central, connection_name_clone, feedback)
+        ok, msg = setQgisProjectOffline(localdir, connection_name_central, connection_name_clone, feedback)
+        if not ok:
+            m = msg
+            return returnError(output, m, feedback)
 
         status = 1
-        msg = self.tr("Synchronization successfull")
+        msg = self.tr("QGIS projects and file successfully synchronized from the central FTP server")
         output = {
             self.OUTPUT_STATUS: status,
             self.OUTPUT_STRING: msg
