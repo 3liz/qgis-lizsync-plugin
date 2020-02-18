@@ -65,7 +65,19 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         return 'lizsync_package'
 
     def shortHelpString(self):
-        return getShortHelpString(os.path.basename(__file__))
+        short_help = self.tr(
+            ' Package data from the central database, for future deployement on one or several clone(s).'
+            '<br>'
+            '<br>'
+            ' This script backups all data from the given list of schemas'
+            ' to a ZIP archive, named by default "central_database_package.zip".'
+            '<br>'
+            '<br>'
+            ' An internet connection is needed because a synchronization item must be written'
+            ' to the central database "lizsync.history" table during the process.'
+            ' and obviously data must be downloaded from the central database'
+        )
+        return short_help
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
@@ -110,7 +122,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.SCHEMAS,
-                self.tr('List of schemas to package. (schemas public, lizsync & audit are never processed)'),
+                self.tr('List of schemas to package, separated by commas. (schemas public, lizsync & audit are never processed)'),
                 defaultValue='test',
                 optional=False
             )
