@@ -75,7 +75,24 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         return 'lizsync_sync'
 
     def shortHelpString(self):
-        return getShortHelpString(os.path.basename(__file__))
+        short_help = self.tr(
+            ' Send QGIS projects and files to the clone FTP server remote directory.'
+            '<br>'
+            '<br>'
+            ' This script can be used by the geomatician in charge of the deployment of data'
+            ' to one or several clone(s).'
+            '<br>'
+            '<br>'
+            ' It synchronizes the files from the given local QGIS project folder'
+            ' to the clone remote folder by using the given FTP connexion.'
+            ' This means all the files from the clone folder will be overwritten'
+            ' by the files from the local QGIS project folder.'
+            '<br>'
+            '<br>'
+            ' Beware ! This script does not adapt projects for the clone database'
+            ' (no modification of the PostgreSQL connexion data inside the QGIS project files) !'
+        )
+        return short_help
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
