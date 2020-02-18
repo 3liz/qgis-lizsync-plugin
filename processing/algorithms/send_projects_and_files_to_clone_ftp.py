@@ -66,7 +66,7 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         return 'send_projects_and_files_to_clone_ftp'
 
     def displayName(self):
-        return self.tr('Send local projects and files to clone FTP server')
+        return self.tr('Send local QGIS projects and files to the clone FTP server')
 
     def group(self):
         return self.tr('03 Synchronize data and files')

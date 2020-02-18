@@ -53,7 +53,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         return 'synchronize_database'
 
     def displayName(self):
-        return self.tr('Two-way database synchronization')
+        return self.tr('Two-way database synchronization between central and clone databases')
 
     def group(self):
         return self.tr('03 Synchronize data and files')

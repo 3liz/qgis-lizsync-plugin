@@ -64,7 +64,7 @@ class GetProjectsAndFilesFromCentralFtp(QgsProcessingAlgorithm):
         return 'get_projects_and_files_from_central_ftp'
 
     def displayName(self):
-        return self.tr('Get projects and files from central FTP server')
+        return self.tr('Get projects and files from the central FTP server')
 
     def group(self):
         return self.tr('03 Synchronize data and files')

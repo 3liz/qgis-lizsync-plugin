@@ -54,7 +54,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         return 'deploy_database_server_package'
 
     def displayName(self):
-        return self.tr('Deploy database package')
+        return self.tr('Deploy a database package to the clone')
 
     def group(self):
         return self.tr('02 Package and deploy database data')

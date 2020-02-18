@@ -57,7 +57,7 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
         return 'initialize_central_database'
 
     def displayName(self):
-        return self.tr('Prepare central database')
+        return self.tr('Prepare the central database')
 
     def group(self):
         return self.tr('01 Installation')

@@ -56,7 +56,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         return 'package_master_database'
 
     def displayName(self):
-        return self.tr('Create a package from central database')
+        return self.tr('Create a package from the central database')
 
     def group(self):
         return self.tr('02 Package and deploy database data')

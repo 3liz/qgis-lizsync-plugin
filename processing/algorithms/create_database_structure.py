@@ -51,7 +51,7 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         return 'create_database_structure'
 
     def displayName(self):
-        return self.tr('Install Lizsync tools on central database')
+        return self.tr('Install Lizsync tools on the central database')
 
     def group(self):
         return self.tr('01 Installation')

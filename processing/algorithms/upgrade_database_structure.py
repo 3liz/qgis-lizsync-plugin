@@ -49,7 +49,7 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
         return 'upgrade_database_structure'
 
     def displayName(self):
-        return self.tr('Upgrade LizSync tools in central database')
+        return self.tr('Upgrade LizSync tools in the central database')
 
     def group(self):
         return self.tr('01 Installation')
@@ -58,7 +58,14 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
         return 'lizsync_installation'
 
     def shortHelpString(self):
-        return getShortHelpString(os.path.basename(__file__))
+        short_help = self.tr(
+            ' Upgrade the Lizsync tables and functions in the central database.'
+            '<br>'
+            '<br>'
+            ' If you have upgraded your QGIS LizSync plugin, you can run this script'
+            ' to upgrade your central database to the new plugin version.'
+        )
+        return short_help
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
