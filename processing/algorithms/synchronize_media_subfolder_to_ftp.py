@@ -39,7 +39,7 @@ import netrc
 
 class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
     """
-    Synchronize local media/upload data to remote FTP
+    Synchronize clone media/upload data to remote FTP
     via LFTP
     """
 
@@ -63,7 +63,7 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         return 'synchronize_media_subfolder_to_ftp'
 
     def displayName(self):
-        return self.tr('Synchronize local media subfolder to central FTP server')
+        return self.tr('Synchronize the clone media subfolder to the central FTP server')
 
     def group(self):
         return self.tr('03 Synchronize data and files')
@@ -72,7 +72,17 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         return 'lizsync_sync'
 
     def shortHelpString(self):
-        return getShortHelpString(os.path.basename(__file__))
+        short_help = self.tr(
+            ' Send media files, such as new images, stored in the clone QGIS "media/upload/" folder,'
+            ' TO the central FTP server remote directory "media/upload/"'
+            '<br>'
+            '<br>'
+            ' These media files can for example have been added by using Lizmap editing form.'
+            '<br>'
+            '<br>'
+            ' Every file existing in the clone "media/upload/" folder but not in the central server "media/upload/" folder will be sent.'
+        )
+        return short_help
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
