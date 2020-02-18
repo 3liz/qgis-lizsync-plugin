@@ -23,7 +23,6 @@ from qgis.core import QgsProcessingProvider
 from .algorithms.configure_plugin import ConfigurePlugin
 from .algorithms.create_database_structure import CreateDatabaseStructure
 from .algorithms.upgrade_database_structure import UpgradeDatabaseStructure
-# from .algorithms.execute_sql import ExecuteSql
 # from .algorithms.get_data_as_layer import GetDataAsLayer
 from .algorithms.initialize_central_database import InitializeCentralDatabase
 from .algorithms.package_central_database import PackageCentralDatabase
@@ -49,7 +48,6 @@ class LizsyncProvider(QgsProcessingProvider):
         self.addAlgorithm(ConfigurePlugin())
         self.addAlgorithm(CreateDatabaseStructure())
         self.addAlgorithm(UpgradeDatabaseStructure())
-        # self.addAlgorithm(ExecuteSql())
         # self.addAlgorithm(GetDataAsLayer())
         self.addAlgorithm(InitializeCentralDatabase())
         self.addAlgorithm(PackageCentralDatabase())
