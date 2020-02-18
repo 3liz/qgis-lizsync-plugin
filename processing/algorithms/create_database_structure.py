@@ -60,7 +60,21 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         return 'lizsync_installation'
 
     def shortHelpString(self):
-        return getShortHelpString(os.path.basename(__file__))
+        short_help = (
+            ' Install the LizSync schema with tables and function on the central database.'
+            '<br>'
+            '<br>'
+            ' This script will add'
+            '<br>'
+            ' * An audit schema with auditing functions and tables'
+            '<br>'
+            ' * A lizsync schema with tables and functions'
+            '<br>'
+            '<br>'
+            'Beware ! If you check the "override" checkboxes, you will loose all existing data in the audit and/or lizsync schema !'
+
+        )
+        return short_help
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)

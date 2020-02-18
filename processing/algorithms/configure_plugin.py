@@ -74,7 +74,15 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         return 'lizsync_installation'
 
     def shortHelpString(self):
-        return getShortHelpString(os.path.basename(__file__))
+        short_help = (
+            ' Configure the LizSync plugin'
+            '<br>'
+            '<br>'
+            ' You must run this script before any other script.'
+            '<br>'
+            ' Every parameter will be used in the other algorithms, as default values for parameters.'
+        )
+        return short_help
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
