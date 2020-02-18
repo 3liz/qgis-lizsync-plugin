@@ -62,7 +62,28 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         return 'lizsync_sync'
 
     def shortHelpString(self):
-        return getShortHelpString(os.path.basename(__file__))
+        short_help = self.tr(
+            ' This scripts run a two-way data synchronization between the central and clone database.'
+            '<br>'
+            '<br>'
+            ' The data to synchronize are listed by reading'
+            ' the content of the "audit.logged_actions" of each database,'
+            ' since the last synchronization or the last deployement of ZIP package.'
+            '<br>'
+            '<br>'
+            ' This audit data are transformed into INSERT/UPDATE/DELETE SQL queries'
+            ' which are played in the databases in this order:'
+            '<br>'
+            ' 1/ From the CENTRAL to the CLONE database'
+            '<br>'
+            ' 2/ From the CLONE to the CENTRAL database'
+            '<br>'
+            '<br>'
+            'The central database stores which clone has replayed which audited modification'
+            ', and keeps an history of synchronization items.'
+
+        )
+        return short_help
 
     def initAlgorithm(self, config=None):
         # INPUTS
