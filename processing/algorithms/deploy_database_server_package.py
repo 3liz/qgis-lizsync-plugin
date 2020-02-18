@@ -63,7 +63,13 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         return 'lizsync_package'
 
     def shortHelpString(self):
-        return getShortHelpString(os.path.basename(__file__))
+        short_help = (
+            ' Deploy a ZIP archive, previously saved with the'
+            ' "Package central database" algorithm, to the chosen clone.'
+            ' This ZIP archive, named by default "central_database_package.zip"'
+            ' contains data from the central PostgreSQL database.'
+        )
+        return short_help
 
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
@@ -127,21 +133,6 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
                 optional=True
             )
         )
-
-        # Clone database connection parameters
-        connection_name_clone = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_clone')
-        db_param_b = QgsProcessingParameterString(
-            self.CONNECTION_NAME_CLONE,
-            self.tr('PostgreSQL connection to the CLONE database'),
-            defaultValue=connection_name_clone,
-            optional=False
-        )
-        db_param_b.setMetadata({
-            'widget_wrapper': {
-                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
-            }
-        })
-        self.addParameter(db_param_b)
 
         # OUTPUTS
         # Add output for message
