@@ -23,6 +23,7 @@ from qgis.core import (
     QgsProcessingParameterNumber,
     QgsProcessingParameterFile,
     QgsProcessingOutputString,
+    QgsProcessingOutputNumber,
     QgsExpressionContextUtils
 )
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery
@@ -126,15 +127,22 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
 
         self.addParameter(
             QgsProcessingParameterFile(
-                self.ZIP_FILE, 'Full ZIP archive path',
+                self.ZIP_FILE,
+                self.tr('Full ZIP archive path'),
                 defaultValue=os.path.join(tempfile.gettempdir(), 'central_database_package.zip'),
                 behavior=QgsProcessingParameterFile.File,
-                optional=True
+                optional=True,
+                extension='zip'
             )
         )
 
         # OUTPUTS
         # Add output for message
+        self.addOutput(
+            QgsProcessingOutputNumber(
+                self.OUTPUT_STATUS, self.tr('Output status')
+            )
+        )
         self.addOutput(
             QgsProcessingOutputString(
                 self.OUTPUT_STRING, self.tr('Output message')

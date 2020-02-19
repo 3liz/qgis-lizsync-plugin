@@ -179,7 +179,8 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
                     feedback.pushInfo(item_msg)
             return False, msg
         else:
-            feedback.pushInfo(self.tr('Every test has passed successfully !'))
+            msg = self.tr('Every test has passed successfully !')
+        return True, msg
 
     def checkParameterValues(self, parameters, context):
 
