@@ -239,7 +239,7 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
             'lizsync/50_TRIGGER.sql',
             'lizsync/60_CONSTRAINT.sql',
             'lizsync/70_COMMENT.sql',
-            # 'lizsync/90_GLOSSARY.sql',
+            'lizsync/90_function_current_setting.sql',
             '99_finalize_database.sql',
         ]
         msg = ''
