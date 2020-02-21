@@ -262,6 +262,24 @@ class GetProjectsAndFilesFromCentralFtp(QgsProcessingAlgorithm):
             m = self.tr('Remote directory does not exist')
             return returnError(output, m, feedback)
 
+        # Remove existing QGIS project files with subprocess to avoid a nasty bug
+        # in Userland context
+        if os.path.isdir('/storage/internal/geopoppy') and psys().lower().startswith('linux'):
+            cmd = [
+                'rm',
+                '-v',
+                '{}/*.qgs'.format(
+                    os.path.abspath(localdir)
+                )
+            ]
+            feedback.pushInfo(self.tr('USELAND CONTEXT: Remove old QGIS project files to avoid bug'))
+            feedback.pushInfo(" ".join(cmd))
+            myenv = { **os.environ }
+            run_command(cmd, myenv, feedback)
+
+        import time
+        time.sleep(1)
+
         # Run FTP sync
         feedback.pushInfo(self.tr('Local directory') + ' %s' % localdir)
         feedback.pushInfo(self.tr('FTP directory') + ' %s' % ftpdir)

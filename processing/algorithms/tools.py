@@ -24,6 +24,9 @@ from qgis.core import (
     QgsExpressionContextUtils
 )
 import netrc
+import re
+import time
+
 def tr(string):
     return QCoreApplication.translate('Processing', string)
 
@@ -150,28 +153,29 @@ def run_command(cmd, myenv, feedback):
     '''
     Run any command using subprocess
     '''
-    import re
+    feedback.pushInfo(" ".join(cmd))
     stop_words = ['warning']
     pattern = re.compile('|'.join(r'\b{}\b'.format(word) for word in stop_words), re.IGNORECASE)
-    process = subprocess.Popen(
+    rc = None
+    with subprocess.Popen(
         " ".join(cmd),
         shell=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         env=myenv
-    )
-    for line in process.stdout:
-        try:
-            output = "{}".format(line.rstrip().decode("utf-8"))
-        except:
-            output = "{}".format(line.rstrip())
-        if not pattern.search(output):
-            print(output)
-        if output == '' and process.poll() is not None:
-            break
-        if output:
-            feedback.pushInfo(output)
-    rc = process.poll()
+    ) as process:
+        for line in process.stdout:
+            try:
+                output = "{}".format(line.rstrip().decode("utf-8"))
+            except:
+                output = "{}".format(line.rstrip())
+            if not pattern.search(output):
+                print(output)
+            if output == '' and process.poll() is not None:
+                break
+            if output:
+                feedback.pushInfo(output)
+        rc = process.poll()
     return rc
 
 def check_lizsync_installation_status(connection_name, test_list=['structure', 'server id', 'uid columns', 'audit triggers'], schemas='test'):
@@ -582,62 +586,57 @@ def setQgisProjectOffline(qgis_directory, connection_name_central, connection_na
         'user': "user='{}'",
         'password': "password='{}'"
     }
+
+    # Desktop context : use Python
     # First loop to create modified version of QGIS projects (with added .xml extension)
+    files = []
     for filename in os.listdir(qgis_directory):
-        if filename.endswith(".qgs"):
-            qf = os.path.join(qgis_directory, filename)
-            feedback.pushInfo(tr('Process QGIS project file') + ' %s' % qf)
+        if not os.path.isfile(os.path.join(qgis_directory, filename)):
+            continue
+        if filename.endswith(".qgs") and not filename.endswith("_.qgs"):
+            files.append(filename)
 
-            # Store QGIS project content in memory
-            with open(qf, 'rt') as f:
-                file_str = f.read()
+    for filename in files:
+        qf = os.path.join(qgis_directory, filename)
+        feedback.pushInfo(tr('Process QGIS project file') + ' %s' % qf)
 
-            # Replace needed data
-            # Loop through connection parameters and replace
-            for k, v in dbitems.items():
-                if k in uris['central']['info'] and k in uris['clone']['info']:
-                    stext = v.format(uris['central']['info'][k])
-                    rtext = v.format(uris['clone']['info'][k])
-                    if stext in file_str:
-                        print(stext)
-                        print(rtext)
-                        file_str = file_str.replace(stext, rtext)
+        # Store QGIS project content in memory
+        file_str = None
+        with open(qf, 'r') as f:
+            file_str = f.read()
+        if not file_str:
+            continue
 
-            # to improve
-            # alway replace user by clone local user
-            # needed if there are multiple user stored in the qgis project for the same server
-            # because one of them can be different from the central connection name user
-            import re
-            replaceAllUsers = True
-            if replaceAllUsers:
-                regex = re.compile(r"user='[A_Za-z_]+'", re.IGNORECASE)
-                rtext = dbitems['user'].format(
-                    uris['clone']['info']['user']
-                )
-                file_str = regex.sub(
-                    rtext,
-                    file_str
-                )
+        # Replace needed data
+        # Loop through connection parameters and replace
+        seds = []
+        for k, v in dbitems.items():
+            if k in uris['central']['info'] and k in uris['clone']['info']:
+                stext = v.format(uris['central']['info'][k])
+                rtext = v.format(uris['clone']['info'][k])
+                if stext in file_str:
+                    file_str = file_str.replace(stext, rtext)
 
-            # Write content back to project file
-            qf2 = os.path.join(qgis_directory, filename + '.xml')
-            feedback.pushInfo(tr('Write new QGIS project with XML extension') + ' %s' % filename + '.xml' )
-            with open(qf2, "w") as f:
-                f.write(file_str)
 
-    # Remove old QGIS projects
-    for filename in os.listdir(qgis_directory):
-        if filename.endswith(".qgs"):
-            qf = os.path.join(qgis_directory, filename)
-            feedback.pushInfo(tr('Remove old QGIS project') + ' %s' % filename )
-            os.remove(qf)
+        # to improve
+        # alway replace user by clone local user
+        # needed if there are multiple user stored in the qgis project for the same server
+        # because one of them can be different from the central connection name user
+        replaceAllUsers = True
+        if replaceAllUsers:
+            regex = re.compile(r"user='[A_Za-z_]+'", re.IGNORECASE)
+            rtext = dbitems['user'].format(
+                uris['clone']['info']['user']
+            )
+            file_str = regex.sub(
+                rtext,
+                file_str
+            )
 
-    # Rename new QGIS projects
-    for filename in os.listdir(qgis_directory):
-        if filename.endswith(".qgs.xml"):
-            qf = os.path.join(qgis_directory, filename)
-            feedback.pushInfo(tr('Rename new QGIS project to *.qgs') + ' %s' % filename )
-            os.rename(qf, qf.replace('.qgs.xml', '.qgs'))
+        # Write content back to project file
+        feedback.pushInfo(tr('Overwrite QGIS project file with new data') + ' %s' % filename)
+        with open(qf, 'w') as f:
+            f.write(file_str)
 
     return True, 'Success'
 
