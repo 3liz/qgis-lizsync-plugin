@@ -296,20 +296,20 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
 
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
-        ftp:central/host = parameters[self.CENTRAL_FTP_HOST]
-        ftp:central/port = parameters[self.CENTRAL_FTP_PORT]
-        ftp:central/user = parameters[self.CENTRAL_FTP_LOGIN]
-        ftp:central/password = parameters[self.CENTRAL_FTP_PASSWORD]
-        ftp:central/remote_directory = parameters[self.CENTRAL_FTP_REMOTE_DIR]
-        local/qgis_project_folder = parameters[self.LOCAL_QGIS_PROJECT_FOLDER]
+        ftp_central_host = parameters[self.CENTRAL_FTP_HOST]
+        ftp_central_port = parameters[self.CENTRAL_FTP_PORT]
+        ftp_central_user = parameters[self.CENTRAL_FTP_LOGIN]
+        ftp_central_password = parameters[self.CENTRAL_FTP_PASSWORD]
+        ftp_central_remote_directory = parameters[self.CENTRAL_FTP_REMOTE_DIR]
+        local_qgis_project_folder = parameters[self.LOCAL_QGIS_PROJECT_FOLDER]
 
         connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
-        ftp:clone/host = parameters[self.CLONE_FTP_HOST]
-        ftp:clone/port = parameters[self.CLONE_FTP_PORT]
-        ftp:clone/user = parameters[self.CLONE_FTP_LOGIN]
-        ftp:clone/password = parameters[self.CLONE_FTP_PASSWORD]
-        ftp:clone/remote_directory = parameters[self.CLONE_FTP_REMOTE_DIR]
-        clone/qgis_project_folder = parameters[self.CLONE_QGIS_PROJECT_FOLDER]
+        ftp_clone_host = parameters[self.CLONE_FTP_HOST]
+        ftp_clone_port = parameters[self.CLONE_FTP_PORT]
+        ftp_clone_user = parameters[self.CLONE_FTP_LOGIN]
+        ftp_clone_password = parameters[self.CLONE_FTP_PASSWORD]
+        ftp_clone_remote_directory = parameters[self.CLONE_FTP_REMOTE_DIR]
+        clone_qgis_project_folder = parameters[self.CLONE_QGIS_PROJECT_FOLDER]
 
         # LizSync config file from ini
         ls = lizsyncConfig()
@@ -323,45 +323,45 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         ls.setVariable('postgresql:central/name', connection_name_central)
         feedback.pushInfo(self.tr('PostgreSQL connection to central database') + ' = ' + connection_name_central)
 
-        ls.setVariable('ftp:central/host', ftp:central/host)
-        feedback.pushInfo(self.tr('Central FTP Server host') + ' = ' + ftp:central/host)
+        ls.setVariable('ftp:central/host', ftp_central_host)
+        feedback.pushInfo(self.tr('Central FTP Server host') + ' = ' + ftp_central_host)
 
-        ls.setVariable('ftp:central/port', ftp:central/port)
-        feedback.pushInfo(self.tr('Central FTP Server port') + ' = %s' % ftp:central/port)
+        ls.setVariable('ftp:central/port', ftp_central_port)
+        feedback.pushInfo(self.tr('Central FTP Server port') + ' = %s' % ftp_central_port)
 
-        ls.setVariable('ftp:central/user', ftp:central/user)
-        feedback.pushInfo(self.tr('Central FTP Server login') + ' = ' + ftp:central/user)
+        ls.setVariable('ftp:central/user', ftp_central_user)
+        feedback.pushInfo(self.tr('Central FTP Server login') + ' = ' + ftp_central_user)
 
-        ls.setVariable('ftp:central/password', ftp:central/password)
-        feedback.pushInfo(self.tr('Central FTP Server password') + ' = ' + ftp:central/password)
+        ls.setVariable('ftp:central/password', ftp_central_password)
+        feedback.pushInfo(self.tr('Central FTP Server password') + ' = ' + ftp_central_password)
 
-        ls.setVariable('ftp:central/remote_directory', ftp:central/remote_directory)
-        feedback.pushInfo(self.tr('Central FTP Server remote directory') + ' = ' + ftp:central/remote_directory)
+        ls.setVariable('ftp:central/remote_directory', ftp_central_remote_directory)
+        feedback.pushInfo(self.tr('Central FTP Server remote directory') + ' = ' + ftp_central_remote_directory)
 
 
         ls.setVariable('postgresql:clone/name', connection_name_clone)
         feedback.pushInfo(self.tr('PostgreSQL connection to local clone database') + ' = ' + connection_name_clone)
 
-        ls.setVariable('ftp:clone/host', ftp:clone/host)
-        feedback.pushInfo(self.tr('Clone FTP Server host') + ' = ' + ftp:clone/host)
+        ls.setVariable('ftp:clone/host', ftp_clone_host)
+        feedback.pushInfo(self.tr('Clone FTP Server host') + ' = ' + ftp_clone_host)
 
-        ls.setVariable('ftp:clone/port', ftp:clone/port)
-        feedback.pushInfo(self.tr('clone FTP Server port') + ' = %s' % ftp:clone/port)
+        ls.setVariable('ftp:clone/port', ftp_clone_port)
+        feedback.pushInfo(self.tr('clone FTP Server port') + ' = %s' % ftp_clone_port)
 
-        ls.setVariable('ftp:clone/user', ftp:clone/user)
-        feedback.pushInfo(self.tr('Clone FTP Server login') + ' = ' + ftp:clone/user)
+        ls.setVariable('ftp:clone/user', ftp_clone_user)
+        feedback.pushInfo(self.tr('Clone FTP Server login') + ' = ' + ftp_clone_user)
 
-        ls.setVariable('ftp:clone/password', ftp:clone/password)
-        feedback.pushInfo(self.tr('Clone FTP Server login') + ' = ' + ftp:clone/password)
+        ls.setVariable('ftp:clone/password', ftp_clone_password)
+        feedback.pushInfo(self.tr('Clone FTP Server login') + ' = ' + ftp_clone_password)
 
-        ls.setVariable('ftp:clone/remote_directory', ftp:clone/remote_directory)
-        feedback.pushInfo(self.tr('Clone FTP Server remote directory') + ' = ' + ftp:clone/remote_directory)
+        ls.setVariable('ftp:clone/remote_directory', ftp_clone_remote_directory)
+        feedback.pushInfo(self.tr('Clone FTP Server remote directory') + ' = ' + ftp_clone_remote_directory)
 
-        ls.setVariable('local/qgis_project_folder', local/qgis_project_folder)
-        feedback.pushInfo(self.tr('Local Desktop QGIS project folder') + ' = ' + local/qgis_project_folder)
+        ls.setVariable('local/qgis_project_folder', local_qgis_project_folder)
+        feedback.pushInfo(self.tr('Local Desktop QGIS project folder') + ' = ' + local_qgis_project_folder)
 
-        ls.setVariable('clone/qgis_project_folder', clone/qgis_project_folder)
-        feedback.pushInfo(self.tr('Clone QGIS project folder') + ' = ' + clone/qgis_project_folder)
+        ls.setVariable('clone/qgis_project_folder', clone_qgis_project_folder)
+        feedback.pushInfo(self.tr('Clone QGIS project folder') + ' = ' + clone_qgis_project_folder)
 
         ls.save()
 
