@@ -26,8 +26,7 @@ from qgis.core import (
     QgsProcessingParameterString,
     QgsProcessingParameterFile,
     QgsProcessingOutputString,
-    QgsProcessingOutputNumber,
-    QgsExpressionContextUtils
+    QgsProcessingOutputNumber
 )
 from .tools import *
 from processing.tools import postgis
@@ -48,6 +47,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
     CENTRAL_FTP_HOST = 'CENTRAL_FTP_HOST'
     CENTRAL_FTP_PORT = 'CENTRAL_FTP_PORT'
     CENTRAL_FTP_LOGIN = 'CENTRAL_FTP_LOGIN'
+    CENTRAL_FTP_PASSWORD = 'CENTRAL_FTP_PASSWORD'
     CENTRAL_FTP_REMOTE_DIR = 'CENTRAL_FTP_REMOTE_DIR'
     LOCAL_QGIS_PROJECT_FOLDER = 'LOCAL_QGIS_PROJECT_FOLDER'
 
@@ -55,6 +55,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
     CLONE_FTP_HOST = 'CLONE_FTP_HOST'
     CLONE_FTP_PORT = 'CLONE_FTP_PORT'
     CLONE_FTP_LOGIN = 'CLONE_FTP_LOGIN'
+    CLONE_FTP_PASSWORD = 'CLONE_FTP_PASSWORD'
     CLONE_FTP_REMOTE_DIR = 'CLONE_FTP_REMOTE_DIR'
     CLONE_QGIS_PROJECT_FOLDER = 'CLONE_QGIS_PROJECT_FOLDER'
 
@@ -95,8 +96,12 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         Here we define the inputs and output of the algorithm, along
         with some other properties.
         """
+        # LizSync config file from ini
+        ls = lizsyncConfig()
+
         # INPUTS
-        postgresql_binary_path = QgsExpressionContextUtils.globalScope().variable('lizsync_postgresql_binary_path')
+        postgresql_binary_path = ls.variable('binaries/postgresql')
+
         self.addParameter(
             QgsProcessingParameterFile(
                 self.POSTGRESQL_BINARY_PATH,
@@ -106,7 +111,9 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
                 optional=False
             )
         )
-        winscp_binary_path = QgsExpressionContextUtils.globalScope().variable('lizsync_winscp_binary_path')
+        winscp_binary_path = ls.variable('binaries/winscp')
+        if not winscp_binary_path.strip():
+            winscp_binary_path = plugin_path('install', 'WinSCP')
         self.addParameter(
             QgsProcessingParameterFile(
                 self.WINSCP_BINARY_PATH,
@@ -118,7 +125,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         )
 
         # Central database connection parameters
-        connection_name_central = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
+        connection_name_central = ls.variable('postgresql:central/name')
         db_param_a = QgsProcessingParameterString(
             self.CONNECTION_NAME_CENTRAL,
             self.tr('PostgreSQL connection to the CENTRAL database'),
@@ -132,7 +139,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         })
         self.addParameter(db_param_a)
 
-        central_ftp_host = QgsExpressionContextUtils.globalScope().variable('lizsync_central_ftp_host')
+        central_ftp_host = ls.variable('ftp:central/host')
         self.addParameter(
             QgsProcessingParameterString(
                 self.CENTRAL_FTP_HOST,
@@ -141,7 +148,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
                 optional=False
             )
         )
-        central_ftp_port = QgsExpressionContextUtils.globalScope().variable('lizsync_central_ftp_port')
+        central_ftp_port = ls.variable('ftp:central/port')
         if not central_ftp_port:
             central_ftp_port = 21
         self.addParameter(
@@ -152,7 +159,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
                 optional=False
             )
         )
-        central_ftp_login = QgsExpressionContextUtils.globalScope().variable('lizsync_central_ftp_login')
+        central_ftp_login = ls.variable('ftp:central/user')
         self.addParameter(
             QgsProcessingParameterString(
                 self.CENTRAL_FTP_LOGIN,
@@ -161,7 +168,16 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
                 optional=False
             )
         )
-        central_ftp_remote_dir = QgsExpressionContextUtils.globalScope().variable('lizsync_central_ftp_remote_dir')
+        central_ftp_password = ls.variable('ftp:central/password')
+        self.addParameter(
+            QgsProcessingParameterString(
+                self.CENTRAL_FTP_PASSWORD,
+                self.tr('Central FTP Server password'),
+                defaultValue=central_ftp_password,
+                optional=True
+            )
+        )
+        central_ftp_remote_dir = ls.variable('ftp:central/remote_directory')
         self.addParameter(
             QgsProcessingParameterString(
                 self.CENTRAL_FTP_REMOTE_DIR,
@@ -171,7 +187,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
             )
         )
 
-        local_qgis_project_folder = QgsExpressionContextUtils.globalScope().variable('lizsync_local_qgis_project_folder')
+        local_qgis_project_folder = ls.variable('local/qgis_project_folder')
         self.addParameter(
             QgsProcessingParameterFile(
                 self.LOCAL_QGIS_PROJECT_FOLDER,
@@ -183,7 +199,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         )
 
         # Clone database connection parameters
-        connection_name_clone = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_clone')
+        connection_name_clone = ls.variable('postgresql:clone/name')
         db_param_b = QgsProcessingParameterString(
             self.CONNECTION_NAME_CLONE,
             self.tr('PostgreSQL connection to the CLONE database'),
@@ -197,7 +213,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         })
         self.addParameter(db_param_b)
 
-        clone_ftp_host = QgsExpressionContextUtils.globalScope().variable('lizsync_clone_ftp_host')
+        clone_ftp_host = ls.variable('ftp:clone/host')
         self.addParameter(
             QgsProcessingParameterString(
                 self.CLONE_FTP_HOST,
@@ -206,7 +222,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
                 optional=False
             )
         )
-        clone_ftp_port = QgsExpressionContextUtils.globalScope().variable('lizsync_clone_ftp_port')
+        clone_ftp_port = ls.variable('ftp:clone/port')
         if not clone_ftp_port:
             clone_ftp_port = 21
         self.addParameter(
@@ -217,7 +233,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
                 optional=False
             )
         )
-        clone_ftp_login = QgsExpressionContextUtils.globalScope().variable('lizsync_clone_ftp_login')
+        clone_ftp_login = ls.variable('ftp:clone/user')
         self.addParameter(
             QgsProcessingParameterString(
                 self.CLONE_FTP_LOGIN,
@@ -226,7 +242,16 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
                 optional=False
             )
         )
-        clone_ftp_remote_dir = QgsExpressionContextUtils.globalScope().variable('lizsync_clone_ftp_remote_dir')
+        clone_ftp_password = ls.variable('ftp:clone/password')
+        self.addParameter(
+            QgsProcessingParameterString(
+                self.CLONE_FTP_PASSWORD,
+                self.tr('Clone FTP Server password'),
+                defaultValue=clone_ftp_password,
+                optional=True
+            )
+        )
+        clone_ftp_remote_dir = ls.variable('ftp:clone/remote_directory')
         self.addParameter(
             QgsProcessingParameterString(
                 self.CLONE_FTP_REMOTE_DIR,
@@ -236,7 +261,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
             )
         )
 
-        clone_qgis_project_folder = QgsExpressionContextUtils.globalScope().variable('lizsync_clone_qgis_project_folder')
+        clone_qgis_project_folder = ls.variable('clone/qgis_project_folder')
         self.addParameter(
             QgsProcessingParameterFile(
                 self.CLONE_QGIS_PROJECT_FOLDER,
@@ -271,62 +296,74 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
 
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
-        lizsync_central_ftp_host = parameters[self.CENTRAL_FTP_HOST]
-        lizsync_central_ftp_port = parameters[self.CENTRAL_FTP_PORT]
-        lizsync_central_ftp_login = parameters[self.CENTRAL_FTP_LOGIN]
-        lizsync_central_ftp_remote_dir = parameters[self.CENTRAL_FTP_REMOTE_DIR]
-        lizsync_local_qgis_project_folder = parameters[self.LOCAL_QGIS_PROJECT_FOLDER]
+        ftp:central/host = parameters[self.CENTRAL_FTP_HOST]
+        ftp:central/port = parameters[self.CENTRAL_FTP_PORT]
+        ftp:central/user = parameters[self.CENTRAL_FTP_LOGIN]
+        ftp:central/password = parameters[self.CENTRAL_FTP_PASSWORD]
+        ftp:central/remote_directory = parameters[self.CENTRAL_FTP_REMOTE_DIR]
+        local/qgis_project_folder = parameters[self.LOCAL_QGIS_PROJECT_FOLDER]
 
         connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
-        lizsync_clone_ftp_host = parameters[self.CLONE_FTP_HOST]
-        lizsync_clone_ftp_port = parameters[self.CLONE_FTP_PORT]
-        lizsync_clone_ftp_login = parameters[self.CLONE_FTP_LOGIN]
-        lizsync_clone_ftp_port = parameters[self.CLONE_FTP_PORT]
-        lizsync_clone_ftp_remote_dir = parameters[self.CLONE_FTP_REMOTE_DIR]
-        lizsync_clone_qgis_project_folder = parameters[self.CLONE_QGIS_PROJECT_FOLDER]
+        ftp:clone/host = parameters[self.CLONE_FTP_HOST]
+        ftp:clone/port = parameters[self.CLONE_FTP_PORT]
+        ftp:clone/user = parameters[self.CLONE_FTP_LOGIN]
+        ftp:clone/password = parameters[self.CLONE_FTP_PASSWORD]
+        ftp:clone/remote_directory = parameters[self.CLONE_FTP_REMOTE_DIR]
+        clone/qgis_project_folder = parameters[self.CLONE_QGIS_PROJECT_FOLDER]
+
+        # LizSync config file from ini
+        ls = lizsyncConfig()
 
         # Set global variable
-        QgsExpressionContextUtils.setGlobalVariable('lizsync_postgresql_binary_path', postgresql_binary_path)
+        ls.setVariable('binaries/postgresql', postgresql_binary_path)
         feedback.pushInfo(self.tr('PostgreSQL local binary path') + ' = ' + postgresql_binary_path)
-        QgsExpressionContextUtils.setGlobalVariable('lizsync_winscp_binary_path', winscp_binary_path)
+        ls.setVariable('binaries/winscp', winscp_binary_path)
         feedback.pushInfo(self.tr('WinSCP binary path (Windows only)') + ' = ' + winscp_binary_path)
 
-        QgsExpressionContextUtils.setGlobalVariable('lizsync_connection_name_central', connection_name_central)
+        ls.setVariable('postgresql:central/name', connection_name_central)
         feedback.pushInfo(self.tr('PostgreSQL connection to central database') + ' = ' + connection_name_central)
 
-        QgsExpressionContextUtils.setGlobalVariable('lizsync_central_ftp_host', lizsync_central_ftp_host)
-        feedback.pushInfo(self.tr('Central FTP Server host') + ' = ' + lizsync_central_ftp_host)
+        ls.setVariable('ftp:central/host', ftp:central/host)
+        feedback.pushInfo(self.tr('Central FTP Server host') + ' = ' + ftp:central/host)
 
-        QgsExpressionContextUtils.setGlobalVariable('lizsync_central_ftp_port', lizsync_central_ftp_port)
-        feedback.pushInfo(self.tr('Central FTP Server port') + ' = %s' % lizsync_central_ftp_port)
+        ls.setVariable('ftp:central/port', ftp:central/port)
+        feedback.pushInfo(self.tr('Central FTP Server port') + ' = %s' % ftp:central/port)
 
-        QgsExpressionContextUtils.setGlobalVariable('lizsync_central_ftp_login', lizsync_central_ftp_login)
-        feedback.pushInfo(self.tr('Central FTP Server login') + ' = ' + lizsync_central_ftp_login)
+        ls.setVariable('ftp:central/user', ftp:central/user)
+        feedback.pushInfo(self.tr('Central FTP Server login') + ' = ' + ftp:central/user)
 
-        QgsExpressionContextUtils.setGlobalVariable('lizsync_central_ftp_remote_dir', lizsync_central_ftp_remote_dir)
-        feedback.pushInfo(self.tr('Central FTP Server remote directory') + ' = ' + lizsync_central_ftp_remote_dir)
+        ls.setVariable('ftp:central/password', ftp:central/password)
+        feedback.pushInfo(self.tr('Central FTP Server password') + ' = ' + ftp:central/password)
 
-        QgsExpressionContextUtils.setGlobalVariable('lizsync_local_qgis_project_folder', lizsync_local_qgis_project_folder)
-        feedback.pushInfo(self.tr('Local Desktop QGIS project folder') + ' = ' + lizsync_local_qgis_project_folder)
+        ls.setVariable('ftp:central/remote_directory', ftp:central/remote_directory)
+        feedback.pushInfo(self.tr('Central FTP Server remote directory') + ' = ' + ftp:central/remote_directory)
 
 
-        QgsExpressionContextUtils.setGlobalVariable('lizsync_connection_name_clone', connection_name_clone)
+        ls.setVariable('postgresql:clone/name', connection_name_clone)
         feedback.pushInfo(self.tr('PostgreSQL connection to local clone database') + ' = ' + connection_name_clone)
 
-        QgsExpressionContextUtils.setGlobalVariable('lizsync_clone_ftp_host', lizsync_clone_ftp_host)
-        feedback.pushInfo(self.tr('Clone FTP Server host') + ' = ' + lizsync_clone_ftp_host)
+        ls.setVariable('ftp:clone/host', ftp:clone/host)
+        feedback.pushInfo(self.tr('Clone FTP Server host') + ' = ' + ftp:clone/host)
 
-        QgsExpressionContextUtils.setGlobalVariable('lizsync_clone_ftp_port', lizsync_clone_ftp_port)
-        feedback.pushInfo(self.tr('clone FTP Server port') + ' = %s' % lizsync_clone_ftp_port)
+        ls.setVariable('ftp:clone/port', ftp:clone/port)
+        feedback.pushInfo(self.tr('clone FTP Server port') + ' = %s' % ftp:clone/port)
 
-        QgsExpressionContextUtils.setGlobalVariable('lizsync_clone_ftp_login', lizsync_clone_ftp_login)
-        feedback.pushInfo(self.tr('Clone FTP Server login') + ' = ' + lizsync_clone_ftp_login)
+        ls.setVariable('ftp:clone/user', ftp:clone/user)
+        feedback.pushInfo(self.tr('Clone FTP Server login') + ' = ' + ftp:clone/user)
 
-        QgsExpressionContextUtils.setGlobalVariable('lizsync_clone_ftp_remote_dir', lizsync_clone_ftp_remote_dir)
-        feedback.pushInfo(self.tr('Clone FTP Server remote directory') + ' = ' + lizsync_clone_ftp_remote_dir)
+        ls.setVariable('ftp:clone/password', ftp:clone/password)
+        feedback.pushInfo(self.tr('Clone FTP Server login') + ' = ' + ftp:clone/password)
 
-        QgsExpressionContextUtils.setGlobalVariable('lizsync_clone_qgis_project_folder', lizsync_clone_qgis_project_folder)
-        feedback.pushInfo(self.tr('Clone QGIS project folder') + ' = ' + lizsync_clone_qgis_project_folder)
+        ls.setVariable('ftp:clone/remote_directory', ftp:clone/remote_directory)
+        feedback.pushInfo(self.tr('Clone FTP Server remote directory') + ' = ' + ftp:clone/remote_directory)
+
+        ls.setVariable('local/qgis_project_folder', local/qgis_project_folder)
+        feedback.pushInfo(self.tr('Local Desktop QGIS project folder') + ' = ' + local/qgis_project_folder)
+
+        ls.setVariable('clone/qgis_project_folder', clone/qgis_project_folder)
+        feedback.pushInfo(self.tr('Clone QGIS project folder') + ' = ' + clone/qgis_project_folder)
+
+        ls.save()
 
         msg = self.tr('Configuration has been saved')
         feedback.pushInfo(msg)

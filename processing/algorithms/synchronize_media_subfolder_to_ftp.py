@@ -24,8 +24,7 @@ from qgis.core import (
     QgsProcessingParameterFile,
     QgsProcessingOutputString,
     QgsProcessingOutputNumber,
-    QgsProcessingParameterDefinition,
-    QgsExpressionContextUtils
+    QgsProcessingParameterDefinition
 )
 
 import os, subprocess
@@ -94,6 +93,9 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         Here we define the inputs and output of the algorithm, along
         with some other properties.
         """
+        # LizSync config file from ini
+        ls = lizsyncConfig()
+
         # INPUTS
         p = QgsProcessingParameterString(
             self.INPUT_SYNC_DATE, 'Synchronization time',
@@ -103,7 +105,7 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         p.setFlags(QgsProcessingParameterDefinition.FlagHidden)
         self.addParameter(p)
 
-        local_qgis_project_folder = QgsExpressionContextUtils.globalScope().variable('lizsync_local_qgis_project_folder')
+        local_qgis_project_folder = ls.variable('local/qgis_project_folder')
         self.addParameter(
             QgsProcessingParameterFile(
                 self.LOCAL_QGIS_PROJECT_FOLDER,
@@ -113,7 +115,7 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
                 optional=False
             )
         )
-        central_ftp_host = QgsExpressionContextUtils.globalScope().variable('lizsync_central_ftp_host')
+        central_ftp_host = ls.variable('ftp:central/host')
         self.addParameter(
             QgsProcessingParameterString(
                 self.CENTRAL_FTP_HOST,
@@ -122,7 +124,7 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
                 optional=False
             )
         )
-        central_ftp_port = QgsExpressionContextUtils.globalScope().variable('lizsync_central_ftp_port')
+        central_ftp_port = ls.variable('ftp:central/port')
         self.addParameter(
             QgsProcessingParameterNumber(
                 self.CENTRAL_FTP_PORT,
@@ -131,7 +133,7 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
                 optional=False
             )
         )
-        central_ftp_login = QgsExpressionContextUtils.globalScope().variable('lizsync_central_ftp_login')
+        central_ftp_login = ls.variable('ftp:central/user')
         self.addParameter(
             QgsProcessingParameterString(
                 self.CENTRAL_FTP_LOGIN,
@@ -140,7 +142,7 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
                 optional=False
             )
         )
-        central_ftp_remote_dir = QgsExpressionContextUtils.globalScope().variable('lizsync_central_ftp_remote_dir')
+        central_ftp_remote_dir = ls.variable('ftp:central/remote_directory')
         self.addParameter(
             QgsProcessingParameterString(
                 self.CENTRAL_FTP_REMOTE_DIR,

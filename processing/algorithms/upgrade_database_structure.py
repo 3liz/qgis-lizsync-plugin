@@ -23,11 +23,11 @@ import os
 from db_manager.db_plugins import createDbPlugin
 from qgis.core import (
     QgsProcessingAlgorithm,
+    QgsProcessingParameterString,
     QgsProcessingParameterBoolean,
     QgsProcessingParameterCrs,
     QgsProcessingOutputNumber,
-    QgsProcessingOutputString,
-    QgsExpressionContextUtils
+    QgsProcessingOutputString
 )
 
 from .tools import *
@@ -35,12 +35,14 @@ from .tools import *
 
 class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
     """
-
+    Upgrade database by comparing metadata in database
+    and plugin version in metadata.txt
     """
 
     # Constants used to refer to parameters and outputs. They will be
     # used when calling the algorithm from another algorithm, or when
     # calling from the QGIS console.
+    CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     RUNIT = 'RUNIT'
     OUTPUT_STATUS = 'OUTPUT_STATUS'
     OUTPUT_STRING = 'OUTPUT_STRING'
@@ -78,6 +80,24 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
         Here we define the inputs and output of the algorithm, along
         with some other properties.
         """
+        # LizSync config file from ini
+        ls = lizsyncConfig()
+
+        # INPUTS
+        connection_name_central = ls.variable('postgresql:central/name')
+        db_param_a = QgsProcessingParameterString(
+            self.CONNECTION_NAME_CENTRAL,
+            self.tr('PostgreSQL connection to the central database'),
+            defaultValue=connection_name_central,
+            optional=False
+        )
+        db_param_a.setMetadata({
+            'widget_wrapper': {
+                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
+            }
+        })
+        self.addParameter(db_param_a)
+
         # INPUTS
         self.addParameter(
             QgsProcessingParameterBoolean(
@@ -104,6 +124,9 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
         )
 
     def checkParameterValues(self, parameters, context):
+        # LizSync config file from ini
+        ls = lizsyncConfig()
+
         # Check if runit is checked
         runit = self.parameterAsBool(parameters, self.RUNIT, context)
         if not runit:
@@ -112,14 +135,14 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
             return ok, msg
 
         # Check that the connection name has been configured
-        connection_name = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name')
-        if not connection_name:
-            return False, self.tr('You must use the "Configure LizSync plugin" alg to set the database connection name')
+        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+        if not connection_name_central:
+            return False, self.tr('You must use the "Configure Lizsync plugin" alg to set the central database connection name')
 
         # Check that it corresponds to an existing connection
-        dbpluginclass = createDbPlugin('postgis')
+        dbpluginclass = createDbPlugin( 'postgis' )
         connections = [c.connectionName() for c in dbpluginclass.connections()]
-        if connection_name not in connections:
+        if connection_name_central not in connections:
             return False, self.tr('The configured connection name does not exists in QGIS')
 
         # Check database content
@@ -135,9 +158,12 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
             FROM information_schema.schemata
             WHERE schema_name = 'lizsync';
         '''
-        connection_name = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name')
+        # LizSync config file from ini
+        ls = lizsyncConfig()
+
+        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         [header, data, rowCount, ok, error_message] = fetchDataFromSqlQuery(
-            connection_name,
+            connection_name_central,
             sql
         )
         if not ok:
@@ -155,12 +181,14 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
         """
         Here is where the processing itself takes place.
         """
+        # LizSync config file from ini
+        ls = lizsyncConfig()
+
         output = {
             self.OUTPUT_STATUS: 0,
             self.OUTPUT_STRING: ''
         }
-
-        connection_name = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name')
+        connection_name = parameters[self.CONNECTION_NAME_CENTRAL]
 
         # Drop schema if needed
         runit = self.parameterAsBool(parameters, self.RUNIT, context)

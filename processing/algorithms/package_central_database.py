@@ -25,8 +25,7 @@ from qgis.core import (
     QgsProcessingParameterFile,
     QgsProcessingParameterFileDestination,
     QgsProcessingOutputString,
-    QgsProcessingOutputNumber,
-    QgsExpressionContextUtils
+    QgsProcessingOutputNumber
 )
 
 import os
@@ -90,8 +89,11 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         Here we define the inputs and output of the algorithm, along
         with some other properties.
         """
+        # LizSync config file from ini
+        ls = lizsyncConfig()
+
         # INPUTS
-        connection_name_central = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
+        connection_name_central = ls.variable('postgresql:central/name')
         db_param_a = QgsProcessingParameterString(
             self.CONNECTION_NAME_CENTRAL,
             self.tr('PostgreSQL connection to the central database'),
@@ -106,7 +108,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         self.addParameter(db_param_a)
 
         # PostgreSQL binary path (with psql pg_restore, etc.)
-        postgresql_binary_path = QgsExpressionContextUtils.globalScope().variable('lizsync_postgresql_binary_path')
+        postgresql_binary_path = ls.variable('binaries:postgresql')
         self.addParameter(
             QgsProcessingParameterFile(
                 self.POSTGRESQL_BINARY_PATH,
@@ -183,6 +185,8 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         return True, msg
 
     def checkParameterValues(self, parameters, context):
+        # LizSync config file from ini
+        ls = lizsyncConfig()
 
         # Check postgresql binary path
         postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
@@ -199,7 +203,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
             return False, self.tr('The needed PostgreSQL binaries cannot be found in the specified path')
 
         # Check that the connection name has been configured
-        connection_name = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
+        connection_name = ls.variable('postgresql:central/name')
         if not connection_name:
             return False, self.tr('You must use the "Configure Lizsync plugin" alg to set the CENTRAL database connection name')
 

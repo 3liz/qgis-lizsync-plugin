@@ -26,8 +26,7 @@ from qgis.core import (
     QgsProcessingParameterString,
     QgsProcessingParameterBoolean,
     QgsProcessingOutputNumber,
-    QgsProcessingOutputString,
-    QgsExpressionContextUtils
+    QgsProcessingOutputString
 )
 from .tools import *
 
@@ -87,8 +86,11 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         Here we define the inputs and output of the algorithm, along
         with some other properties.
         """
+        # LizSync config file from ini
+        ls = lizsyncConfig()
+
         # INPUTS
-        connection_name_central = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
+        connection_name_central = ls.variable('postgresql:central/name')
         db_param_a = QgsProcessingParameterString(
             self.CONNECTION_NAME_CENTRAL,
             self.tr('PostgreSQL connection to the central database'),

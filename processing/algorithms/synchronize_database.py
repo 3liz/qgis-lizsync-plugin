@@ -21,8 +21,7 @@ from qgis.core import (
     QgsProcessingAlgorithm,
     QgsProcessingParameterString,
     QgsProcessingOutputString,
-    QgsProcessingOutputNumber,
-    QgsExpressionContextUtils
+    QgsProcessingOutputNumber
 )
 import processing
 from .tools import *
@@ -86,8 +85,11 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         return short_help
 
     def initAlgorithm(self, config=None):
+        # LizSync config file from ini
+        ls = lizsyncConfig()
+
         # INPUTS
-        connection_name_central = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
+        connection_name_central = ls.variable('postgresql:central/name')
         db_param_a = QgsProcessingParameterString(
             self.CONNECTION_NAME_CENTRAL,
             self.tr('PostgreSQL connection to the central database'),
@@ -102,7 +104,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         self.addParameter(db_param_a)
 
         # Clone database connection parameters
-        connection_name_clone = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_clone')
+        connection_name_clone = ls.variable('postgresql:clone/name')
         db_param_b = QgsProcessingParameterString(
             self.CONNECTION_NAME_CLONE,
             self.tr('PostgreSQL connection to the clone database'),

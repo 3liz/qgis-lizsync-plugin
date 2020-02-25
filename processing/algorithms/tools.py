@@ -21,11 +21,27 @@ import os, subprocess
 from platform import system as psys
 
 from qgis.core import (
-    QgsExpressionContextUtils
+    QgsApplication
 )
 import netrc
 import re
 import time
+
+def plugin_path(*args):
+    """Get the path to plugin root folder.
+
+    :param args List of path elements e.g. ['img', 'logos', 'image.png']
+    :type args: str
+
+    :return: Absolute path to the resoure.
+    :rtype: str
+    """
+    path = os.path.dirname(os.path.dirname(__file__))
+    path = os.path.abspath(os.path.abspath(os.path.join(path, os.path.pardir)))
+    for item in args:
+        path = os.path.abspath(os.path.join(path, item))
+
+    return path
 
 def tr(string):
     return QCoreApplication.translate('Processing', string)
@@ -311,9 +327,12 @@ def checkFtpBinary():
     # Check WinSCP path contains binary
     test = False
 
+    # LizSync config file from ini
+    ls = lizsyncConfig()
+
     # Windows : search for WinSCP
     if psys().lower().startswith('win'):
-        test_path = QgsExpressionContextUtils.globalScope().variable('lizsync_winscp_binary_path')
+        test_path = ls.variable('binaries:winscp')
         test_bin = 'WinSCP.com'
         error_message = 'WinSCP binary has not been found in specified path'
         test = True
@@ -339,6 +358,9 @@ def checkFtpBinary():
     return True, tr('FTP Binary has been found in your system')
 
 def ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, excludedirs, feedback):
+
+    # LizSync config file from ini
+    ls = lizsyncConfig()
 
     # LINUX : USE lftp command line
     if psys().lower().startswith('linux'):
@@ -396,7 +418,7 @@ def ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, excludedirs
         try:
             cmd = []
             winscp_bin = os.path.join(
-                QgsExpressionContextUtils.globalScope().variable('lizsync_winscp_binary_path'),
+                ls.variable('binaries:winscp'),
                 'WinSCP.com'
             ).replace('\\','/')
             cmd.append('"' + winscp_bin + '"')
@@ -653,3 +675,70 @@ def returnError(output, msg, feedback):
     # commented because it does not work with py-qgis-wps
 
     return output
+
+
+from configparser import ConfigParser
+from shutil import copyfile
+class lizsyncConfig:
+
+    def __init__(self):
+        config_file = os.path.abspath(
+            os.path.join(
+                QgsApplication.qgisSettingsDirPath(),
+                'LizSync.ini'
+            )
+        )
+        dir_path = plugin_path('install')
+        template_config_file = os.path.join(dir_path, 'LizSync.ini')
+
+        if not os.path.exists(config_file):
+            copyfile(template_config_file, config_file)
+
+        config = ConfigParser()
+        self.config_file =config_file
+        config.read(self.config_file)
+        self.config = config
+
+        self.sections = (
+            'binaries',
+            'postgresql:central', 'postgresql:clone',
+            'ftp:central', 'ftp:clone',
+            'local', 'clone'
+        )
+
+    def getAddressFromAlias(self, alias):
+        '''
+        Parse addres like ftp:central/host into ['ftp:central', 'host']
+        '''
+        variables = alias.split('/')
+        if len(variables) != 2 or variables[0] not in self.sections:
+            return None
+        return variables
+
+    def variable(self, alias):
+        '''
+        Get configuration
+        '''
+        address = self.getAddressFromAlias(alias)
+        if not address:
+            return None
+        val = self.config.get(address[0], address[1])
+        return val
+
+    def setVariable(self, alias, value):
+        '''
+        Set configuration
+        '''
+        address = self.getAddressFromAlias(alias)
+        if not address:
+            return None
+        # values must be passed as string
+        self.config[address[0]][address[1]] = str(value)
+
+    def save(self):
+        '''
+        Save config file
+        '''
+        with open(self.config_file, 'w') as f:
+            self.config.write(f)
+

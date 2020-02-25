@@ -31,8 +31,6 @@ from .algorithms.get_projects_and_files_from_central_ftp import GetProjectsAndFi
 from .algorithms.send_projects_and_files_to_clone_ftp import SendProjectsAndFilesToCloneFtp
 from .algorithms.synchronize_media_subfolder_to_ftp import SynchronizeMediaSubfolderToFtp
 
-
-
 class LizsyncProvider(QgsProcessingProvider):
 
     def unload(self):

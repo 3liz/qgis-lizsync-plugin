@@ -23,8 +23,7 @@ from qgis.core import (
     QgsProcessingParameterNumber,
     QgsProcessingParameterFile,
     QgsProcessingOutputString,
-    QgsProcessingOutputNumber,
-    QgsExpressionContextUtils
+    QgsProcessingOutputNumber
 )
 from PyQt5.QtSql import QSqlDatabase, QSqlQuery
 import os, subprocess, tempfile, zipfile
@@ -82,9 +81,12 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         Here we define the inputs and output of the algorithm, along
         with some other properties.
         """
+        # LizSync config file from ini
+        ls = lizsyncConfig()
+
         # INPUTS
         # central database
-        connection_name_central = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
+        connection_name_central = ls.variable('postgresql:central/name')
         db_param_a = QgsProcessingParameterString(
             self.CONNECTION_NAME_CENTRAL,
             self.tr('PostgreSQL connection to the central database'),
@@ -99,7 +101,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         self.addParameter(db_param_a)
 
         # Clone database connection parameters
-        connection_name_clone = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_clone')
+        connection_name_clone = ls.variable('postgresql:clone/name')
         db_param_b = QgsProcessingParameterString(
             self.CONNECTION_NAME_CLONE,
             self.tr('PostgreSQL connection to the clone database'),
@@ -114,7 +116,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         self.addParameter(db_param_b)
 
         # PostgreSQL binary path (with psql, pg_dump, pg_restore)
-        postgresql_binary_path = QgsExpressionContextUtils.globalScope().variable('lizsync_postgresql_binary_path')
+        postgresql_binary_path = ls.variable('binaries:postgresql')
         self.addParameter(
             QgsProcessingParameterFile(
                 self.POSTGRESQL_BINARY_PATH,

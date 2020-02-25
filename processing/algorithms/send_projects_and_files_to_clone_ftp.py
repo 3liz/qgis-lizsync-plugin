@@ -23,8 +23,7 @@ from qgis.core import (
     QgsProcessingParameterNumber,
     QgsProcessingParameterFile,
     QgsProcessingOutputString,
-    QgsProcessingOutputNumber,
-    QgsExpressionContextUtils
+    QgsProcessingOutputNumber
 )
 
 import os, subprocess
@@ -104,8 +103,11 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         Here we define the inputs and output of the algorithm, along
         with some other properties.
         """
+        # LizSync config file from ini
+        ls = lizsyncConfig()
+
         # INPUTS
-        connection_name_central = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_central')
+        connection_name_central = ls.variable('postgresql:central/name')
         db_param_a = QgsProcessingParameterString(
             self.CONNECTION_NAME_CENTRAL,
             self.tr('PostgreSQL connection to the central database'),
@@ -120,7 +122,7 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         self.addParameter(db_param_a)
 
         # Clone database connection parameters
-        connection_name_clone = QgsExpressionContextUtils.globalScope().variable('lizsync_connection_name_clone')
+        connection_name_clone = ls.variable('postgresql:clone/name')
         db_param_b = QgsProcessingParameterString(
             self.CONNECTION_NAME_CLONE,
             self.tr('PostgreSQL connection to the local database'),
@@ -134,7 +136,7 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         })
         self.addParameter(db_param_b)
 
-        local_qgis_project_folder = QgsExpressionContextUtils.globalScope().variable('lizsync_local_qgis_project_folder')
+        local_qgis_project_folder = ls.variable('local/qgis_project_folder')
         self.addParameter(
             QgsProcessingParameterFile(
                 self.LOCAL_QGIS_PROJECT_FOLDER,
@@ -145,7 +147,7 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
             )
         )
 
-        clone_ftp_host = QgsExpressionContextUtils.globalScope().variable('lizsync_clone_ftp_host')
+        clone_ftp_host = ls.variable('ftp:clone/host')
         self.addParameter(
             QgsProcessingParameterString(
                 self.CLONE_FTP_HOST,
@@ -154,7 +156,7 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
                 optional=False
             )
         )
-        clone_ftp_port = QgsExpressionContextUtils.globalScope().variable('lizsync_clone_ftp_port')
+        clone_ftp_port = ls.variable('ftp:clone/port')
         self.addParameter(
             QgsProcessingParameterNumber(
                 self.CLONE_FTP_PORT,
@@ -163,7 +165,7 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
                 optional=False
             )
         )
-        clone_ftp_login = QgsExpressionContextUtils.globalScope().variable('lizsync_clone_ftp_login')
+        clone_ftp_login = ls.variable('ftp:clone/user')
         self.addParameter(
             QgsProcessingParameterString(
                 self.CLONE_FTP_LOGIN,
@@ -172,7 +174,7 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
                 optional=False
             )
         )
-        clone_ftp_remote_dir = QgsExpressionContextUtils.globalScope().variable('lizsync_clone_ftp_remote_dir')
+        clone_ftp_remote_dir = ls.variable('ftp:clone/remote_directory')
         self.addParameter(
             QgsProcessingParameterString(
                 self.CLONE_FTP_REMOTE_DIR,
