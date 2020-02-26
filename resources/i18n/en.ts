@@ -93,11 +93,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/initialize_central_database.py" line="69"/>
-        <source> Prepare the central server PostgreSQL database with the needed data for LizSync tool.&lt;br&gt;&lt;br&gt; LizSync needs to have :&lt;br&gt; * A server ID stored in the lizsync.server_metadata table&lt;br&gt; * All tables from the given schema must have a unique identifier column (uid) with standard uuid inside&lt;br&gt; * All tables from the given schema must be audited (trigger of the audit tool)&lt;br&gt;&lt;br&gt; You can pass a list of PostgreSQL central database schemas and this alg will add the necessary data and tools</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../../processing/algorithms/initialize_central_database.py" line="112"/>
         <source>Add server id in metadata table</source>
         <translation type="unfinished"></translation>
@@ -378,11 +373,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/synchronize_database.py" line="62"/>
-        <source> This scripts run a two-way data synchronization between the central and clone database.&lt;br&gt;&lt;br&gt; The data to synchronize are listed by reading the content of the &quot;audit.logged_actions&quot; of each database, since the last synchronization or the last deployement of ZIP package.&lt;br&gt;&lt;br&gt; This audit data are transformed into INSERT/UPDATE/DELETE SQL queries which are played in the databases in this order:&lt;br&gt; 1/ From the CENTRAL to the CLONE database&lt;br&gt; 2/ From the CLONE to the CENTRAL database&lt;br&gt;&lt;br&gt;The central database stores which clone has replayed which audited modification, and keeps an history of synchronization items.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../../processing/algorithms/synchronize_database.py" line="148"/>
         <source>Internet connection OK</source>
         <translation type="unfinished"></translation>
@@ -435,11 +425,6 @@
     <message>
         <location filename="../../processing/algorithms/synchronize_media_subfolder_to_ftp.py" line="65"/>
         <source>Synchronize the clone media subfolder to the central FTP server</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../processing/algorithms/synchronize_media_subfolder_to_ftp.py" line="74"/>
-        <source> Send media files, such as new images, stored in the clone QGIS &quot;media/upload/&quot; folder, TO the central FTP server remote directory &quot;media/upload/&quot;&lt;br&gt;&lt;br&gt; These media files can for example have been added by using Lizmap editing form.&lt;br&gt;&lt;br&gt; Every file existing in the clone &quot;media/upload/&quot; folder but not in the central server &quot;media/upload/&quot; folder will be sent.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -543,11 +528,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="67"/>
-        <source> Package data from the central database, for future deployement on one or several clone(s).&lt;br&gt;&lt;br&gt; This script backups all data from the given list of schemas to a ZIP archive, named by default &quot;central_database_package.zip&quot;.&lt;br&gt;&lt;br&gt; An internet connection is needed because a synchronization item must be written to the central database &quot;lizsync.history&quot; table during the process. and obviously data must be downloaded from the central database</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../../processing/algorithms/package_central_database.py" line="121"/>
         <source>List of schemas to package, separated by commas. (schemas public, lizsync &amp; audit are never processed)</source>
         <translation type="unfinished"></translation>
@@ -645,11 +625,6 @@
     <message>
         <location filename="../../processing/algorithms/send_projects_and_files_to_clone_ftp.py" line="68"/>
         <source>Send local QGIS projects and files to the clone FTP server</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../../processing/algorithms/send_projects_and_files_to_clone_ftp.py" line="77"/>
-        <source> Send QGIS projects and files to the clone FTP server remote directory.&lt;br&gt;&lt;br&gt; This script can be used by the geomatician in charge of the deployment of data to one or several clone(s).&lt;br&gt;&lt;br&gt; It synchronizes the files from the given local QGIS project folder to the clone remote folder by using the given FTP connexion. This means all the files from the clone folder will be overwritten by the files from the local QGIS project folder.&lt;br&gt;&lt;br&gt; Beware ! This script does not adapt projects for the clone database (no modification of the PostgreSQL connexion data inside the QGIS project files) !</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -883,11 +858,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/upgrade_database_structure.py" line="63"/>
-        <source> Upgrade the Lizsync tables and functions in the central database.&lt;br&gt;&lt;br&gt; If you have upgraded your QGIS LizSync plugin, you can run this script to upgrade your central database to the new plugin version.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <location filename="../../processing/algorithms/upgrade_database_structure.py" line="99"/>
         <source>Check this box to upgrade. No action will be done otherwise</source>
         <translation type="unfinished"></translation>
@@ -955,6 +925,67 @@
     <message>
         <location filename="../../test/test_translations.py" line="48"/>
         <source>Good morning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../processing/algorithms/initialize_central_database.py" line="69"/>
+        <source> Prepare the central server PostgreSQL database with the needed data for LizSync tool.
+
+ LizSync needs to have :
+ * A server ID stored in the lizsync.server_metadata table
+ * All tables from the given schema must have a unique identifier column (uid) with standard uuid inside
+ * All tables from the given schema must be audited (trigger of the audit tool)
+
+ You can pass a list of PostgreSQL central database schemas and this alg will add the necessary data and tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../processing/algorithms/synchronize_database.py" line="62"/>
+        <source> This scripts run a two-way data synchronization between the central and clone database.
+
+ The data to synchronize are listed by reading the content of the &quot;audit.logged_actions&quot; of each database, since the last synchronization or the last deployement of ZIP package.
+
+ This audit data are transformed into INSERT/UPDATE/DELETE SQL queries which are played in the databases in this order:
+ 1/ From the CENTRAL to the CLONE database
+ 2/ From the CLONE to the CENTRAL database
+
+The central database stores which clone has replayed which audited modification, and keeps an history of synchronization items.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../processing/algorithms/synchronize_media_subfolder_to_ftp.py" line="74"/>
+        <source> Send media files, such as new images, stored in the clone QGIS &quot;media/upload/&quot; folder, TO the central FTP server remote directory &quot;media/upload/&quot;
+
+ These media files can for example have been added by using Lizmap editing form.
+
+ Every file existing in the clone &quot;media/upload/&quot; folder but not in the central server &quot;media/upload/&quot; folder will be sent.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../processing/algorithms/package_central_database.py" line="67"/>
+        <source> Package data from the central database, for future deployement on one or several clone(s).
+
+ This script backups all data from the given list of schemas to a ZIP archive, named by default &quot;central_database_package.zip&quot;.
+
+ An internet connection is needed because a synchronization item must be written to the central database &quot;lizsync.history&quot; table during the process. and obviously data must be downloaded from the central database</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../processing/algorithms/send_projects_and_files_to_clone_ftp.py" line="77"/>
+        <source> Send QGIS projects and files to the clone FTP server remote directory.
+
+ This script can be used by the geomatician in charge of the deployment of data to one or several clone(s).
+
+ It synchronizes the files from the given local QGIS project folder to the clone remote folder by using the given FTP connexion. This means all the files from the clone folder will be overwritten by the files from the local QGIS project folder.
+
+ Beware ! This script does not adapt projects for the clone database (no modification of the PostgreSQL connexion data inside the QGIS project files) !</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../processing/algorithms/upgrade_database_structure.py" line="63"/>
+        <source> Upgrade the Lizsync tables and functions in the central database.
+
+ If you have upgraded your QGIS LizSync plugin, you can run this script to upgrade your central database to the new plugin version.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
