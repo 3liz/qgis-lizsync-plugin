@@ -332,7 +332,7 @@ def checkFtpBinary():
 
     # Windows : search for WinSCP
     if psys().lower().startswith('win'):
-        test_path = ls.variable('binaries:winscp')
+        test_path = ls.variable('binaries/winscp')
         test_bin = 'WinSCP.com'
         error_message = 'WinSCP binary has not been found in specified path'
         test = True
@@ -418,7 +418,7 @@ def ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, excludedirs
         try:
             cmd = []
             winscp_bin = os.path.join(
-                ls.variable('binaries:winscp'),
+                ls.variable('binaries/winscp'),
                 'WinSCP.com'
             ).replace('\\','/')
             cmd.append('"' + winscp_bin + '"')

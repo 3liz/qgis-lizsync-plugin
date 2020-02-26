@@ -108,7 +108,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         self.addParameter(db_param_a)
 
         # PostgreSQL binary path (with psql pg_restore, etc.)
-        postgresql_binary_path = ls.variable('binaries:postgresql')
+        postgresql_binary_path = ls.variable('binaries/postgresql')
         self.addParameter(
             QgsProcessingParameterFile(
                 self.POSTGRESQL_BINARY_PATH,

@@ -101,7 +101,6 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
 
         # INPUTS
         postgresql_binary_path = ls.variable('binaries/postgresql')
-
         self.addParameter(
             QgsProcessingParameterFile(
                 self.POSTGRESQL_BINARY_PATH,
@@ -111,6 +110,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
                 optional=False
             )
         )
+
         winscp_binary_path = ls.variable('binaries/winscp')
         if not winscp_binary_path.strip():
             winscp_binary_path = plugin_path('install', 'WinSCP')

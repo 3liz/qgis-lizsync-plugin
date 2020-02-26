@@ -116,7 +116,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         self.addParameter(db_param_b)
 
         # PostgreSQL binary path (with psql, pg_dump, pg_restore)
-        postgresql_binary_path = ls.variable('binaries:postgresql')
+        postgresql_binary_path = ls.variable('binaries/postgresql')
         self.addParameter(
             QgsProcessingParameterFile(
                 self.POSTGRESQL_BINARY_PATH,
