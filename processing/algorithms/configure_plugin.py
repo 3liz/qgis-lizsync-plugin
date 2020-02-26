@@ -83,10 +83,10 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
     def shortHelpString(self):
         short_help = (
             ' Configure the LizSync plugin'
-            '<br>'
-            '<br>'
+            '\n'
+            '\n'
             ' You must run this script before any other script.'
-            '<br>'
+            '\n'
             ' Every parameter will be used in the other algorithms, as default values for parameters.'
         )
         return short_help

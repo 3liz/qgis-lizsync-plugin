@@ -62,8 +62,8 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
     def shortHelpString(self):
         short_help = tr(
             ' Upgrade the Lizsync tables and functions in the central database.'
-            '<br>'
-            '<br>'
+            '\n'
+            '\n'
             ' If you have upgraded your QGIS LizSync plugin, you can run this script'
             ' to upgrade your central database to the new plugin version.'
         )

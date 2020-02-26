@@ -68,17 +68,17 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
     def shortHelpString(self):
         short_help = tr(
             ' Prepare the central server PostgreSQL database with the needed data for LizSync tool.'
-            '<br>'
-            '<br>'
+            '\n'
+            '\n'
             ' LizSync needs to have :'
-            '<br>'
+            '\n'
             ' * A server ID stored in the lizsync.server_metadata table'
-            '<br>'
+            '\n'
             ' * All tables from the given schema must have a unique identifier column (uid) with standard uuid inside'
-            '<br>'
+            '\n'
             ' * All tables from the given schema must be audited (trigger of the audit tool)'
-            '<br>'
-            '<br>'
+            '\n'
+            '\n'
             ' You can pass a list of PostgreSQL central database schemas and this alg will add the necessary data and tools'
         )
         return short_help

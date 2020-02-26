@@ -74,11 +74,11 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         short_help = tr(
             ' Send media files, such as new images, stored in the clone QGIS "media/upload/" folder,'
             ' TO the central FTP server remote directory "media/upload/"'
-            '<br>'
-            '<br>'
+            '\n'
+            '\n'
             ' These media files can for example have been added by using Lizmap editing form.'
-            '<br>'
-            '<br>'
+            '\n'
+            '\n'
             ' Every file existing in the clone "media/upload/" folder but not in the central server "media/upload/" folder will be sent.'
         )
         return short_help
