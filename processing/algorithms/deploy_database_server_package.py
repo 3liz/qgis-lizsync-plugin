@@ -63,7 +63,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         return 'lizsync_package'
 
     def shortHelpString(self):
-        short_help = (
+        short_help = tr(
             ' Deploy a ZIP archive, previously saved with the'
             ' "Package central database" algorithm, to the chosen clone.'
             ' This ZIP archive, named by default "central_database_package.zip"'
@@ -224,6 +224,22 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
             m = tr('Package extraction error')
             return returnError(output, m, feedback)
 
+        # Check needed files
+        feedback.pushInfo(tr('CHECK UNCOMPRESSED FILES'))
+        sql_file_list = [
+            '01_before.sql',
+            '02_data.sql',
+            '03_after.sql',
+            '04_lizsync.sql',
+            'sync_id.txt',
+            'sync_schemas.txt'
+        ]
+        for f in sql_file_list:
+            if not os.path.exists(os.path.join(dir_path, f)):
+                m = tr('One mandatory file has not been found in the ZIP archive') + '  - %s' % f
+                return returnError(output, m, feedback)
+        feedback.pushInfo(tr('All the mandatory files have been sucessfully found'))
+
         # CLONE DATABASE
         # Get existing data to avoid recreating server_id for this machine
         feedback.pushInfo(tr('GET EXISTING METADATA TO AVOID RECREATING SERVER_ID FOR THIS CLONE'))
@@ -247,6 +263,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         else:
             m = error_message
             return returnError(output, m, feedback)
+
         # get existing server_id
         if has_sync:
             sql = '''
@@ -268,6 +285,51 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
             else:
                 m = error_message
                 return returnError(output, m, feedback)
+
+
+        # Get last synchro and
+        # check if no newer bi-directionnal (partial sync)
+        # or archive deployment (full sync)
+        # have been made since last deployment
+        feedback.pushInfo(tr('CHECK LAST SYNCHRONIZATION'))
+        with open(os.path.join(dir_path, 'sync_id.txt')) as f:
+            sync_id = f.readline().strip()
+        if not sync_id:
+            m = tr('No synchronization ID has been found in the file sync_id.txt')
+            return returnError(output, m, feedback)
+        sql = '''
+            SELECT sync_id
+            FROM lizsync.history
+            WHERE TRUE
+            AND sync_time > (
+                SELECT sync_time
+                FROM lizsync.history
+                WHERE sync_id = '{sync_id}'
+            )
+            AND server_from = (
+                SELECT server_id
+                FROM lizsync.server_metadata
+                LIMIT 1
+            )
+            AND '{clone_id}' = ANY (server_to)
+        '''.format(
+            sync_id=sync_id,
+            clone_id=clone_id
+        )
+        last_sync = None
+        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            connection_name_central,
+            sql
+        )
+        if not ok:
+            m = error_message+ ' '+ sql
+            return returnError(output, m, feedback)
+        for a in data:
+            last_sync = a[0]
+        if last_sync:
+            m = tr('Synchronization has already been made on this clone since the deployment of this package. Abort the current deployment')
+            return returnError(output, m, feedback)
+
 
         # Get synchronized schemas
         feedback.pushInfo(tr('GET THE LIST OF SYNCHRONIZED SCHEMAS FROM THE FILE sync_schemas.txt'))
