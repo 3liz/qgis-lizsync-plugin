@@ -248,52 +248,52 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="231"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="247"/>
         <source>GET EXISTING METADATA TO AVOID RECREATING SERVER_ID FOR THIS CLONE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="248"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="264"/>
         <source>Clone database already has sync metadata table</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="267"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="284"/>
         <source>Clone metadata are already set</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="385"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="448"/>
         <source>* server id</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="386"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="449"/>
         <source>* server name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="275"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="338"/>
         <source>GET THE LIST OF SYNCHRONIZED SCHEMAS FROM THE FILE sync_schemas.txt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="281"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="344"/>
         <source>No schema to syncronize</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="284"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="347"/>
         <source>Schema list found in sync_schemas.txt</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="288"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="351"/>
         <source>RUN SQL SCRIPT FROM THE DECOMPRESSED ZIP FILE</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="294"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="357"/>
         <source>SQL files not found</source>
         <translation type="unfinished"></translation>
     </message>
@@ -303,62 +303,62 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="326"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="389"/>
         <source>Loading file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="350"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="413"/>
         <source>Error loading file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="358"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="421"/>
         <source>ADDING THE SERVER ID IN THE CLONE metadata table</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="384"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="447"/>
         <source>Server metadata added in the clone database</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="388"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="451"/>
         <source>Error while adding server id in clone metadata table</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="395"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="458"/>
         <source>ADDING THE LIST OF SYNCHRONIZED SCHEMAS FOR THIS CLONE IN THE CENTRAL DATABASE </source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="413"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="476"/>
         <source>List of synchronized schemas added in central database for this clone</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="416"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="479"/>
         <source>Error while adding the synchronized schemas in the central database</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="421"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="484"/>
         <source>ADD CLONE ID IN THE CENTRAL DATABASE HISTORY ITEM FOR THIS ARCHIVE DEPLOYEMENT</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="440"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="503"/>
         <source>History item has been successfully updated for this archive deployement in the central database</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="443"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="506"/>
         <source>Error while updating the history item for this archive deployement</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="448"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="511"/>
         <source>The central database ZIP package has been successfully deployed to the clone</source>
         <translation type="unfinished"></translation>
     </message>
@@ -986,6 +986,60 @@ The central database stores which clone has replayed which audited modification,
         <source> Upgrade the Lizsync tables and functions in the central database.
 
  If you have upgraded your QGIS LizSync plugin, you can run this script to upgrade your central database to the new plugin version.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="230"/>
+        <source>CHECK UNCOMPRESSED FILES</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="241"/>
+        <source>One mandatory file has not been found in the ZIP archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="243"/>
+        <source>All the mandatory files have been sucessfully found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="296"/>
+        <source>CHECK LAST SYNCHRONIZATION</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="300"/>
+        <source>No synchronization ID has been found in the file sync_id.txt</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="333"/>
+        <source>Synchronization has already been made on this clone since the deployment of this package. Abort the current deployment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../processing/algorithms/create_database_structure.py" line="63"/>
+        <source> Install the LizSync schema with tables and function on the central database.
+
+ This script will add
+ * An audit schema with auditing functions and tables
+ * A lizsync schema with tables and functions
+
+Beware ! If you check the &quot;override&quot; checkboxes, you will loose all existing data in the audit and/or lizsync schema !</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="66"/>
+        <source> Deploy a ZIP archive, previously saved with the &quot;Package central database&quot; algorithm, to the chosen clone. This ZIP archive, named by default &quot;central_database_package.zip&quot; contains data from the central PostgreSQL database.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="84"/>
+        <source> Configure the LizSync plugin
+
+ You must run this script before any other script.
+ Every parameter will be used in the other algorithms, as default values for parameters.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

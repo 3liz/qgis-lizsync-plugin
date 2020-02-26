@@ -81,7 +81,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         return 'lizsync_installation'
 
     def shortHelpString(self):
-        short_help = (
+        short_help = tr(
             ' Configure the LizSync plugin'
             '\n'
             '\n'

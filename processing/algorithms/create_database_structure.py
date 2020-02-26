@@ -60,7 +60,7 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         return 'lizsync_installation'
 
     def shortHelpString(self):
-        short_help = (
+        short_help = tr(
             ' Install the LizSync schema with tables and function on the central database.'
             '\n'
             '\n'
