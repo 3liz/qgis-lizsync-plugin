@@ -127,11 +127,17 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
             )
         )
 
+        database_archive_file = ls.variable('general/database_archive_file')
+        if not database_archive_file:
+            database_archive_file = os.path.join(
+                tempfile.gettempdir(),
+                'central_database_package.zip'
+            )
         self.addParameter(
             QgsProcessingParameterFile(
                 self.ZIP_FILE,
-                self.tr('Full ZIP archive path'),
-                defaultValue=os.path.join(tempfile.gettempdir(), 'central_database_package.zip'),
+                self.tr('Database ZIP archive path'),
+                defaultValue=database_archive_file,
                 behavior=QgsProcessingParameterFile.File,
                 optional=True,
                 extension='zip'

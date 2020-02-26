@@ -130,13 +130,19 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         )
 
         # Output zip file destination
+        database_archive_file = ls.variable('general/database_archive_file')
+        if not database_archive_file:
+            database_archive_file = os.path.join(
+                tempfile.gettempdir(),
+                'central_database_package.zip'
+            )
         self.addParameter(
             QgsProcessingParameterFileDestination(
                 self.ZIP_FILE,
                 self.tr('Output archive file (ZIP)'),
                 fileFilter='zip',
                 optional=False,
-                defaultValue=os.path.join(tempfile.gettempdir(), 'central_database_package.zip')
+                defaultValue=database_archive_file
             )
         )
 

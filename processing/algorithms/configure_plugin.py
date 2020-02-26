@@ -25,11 +25,13 @@ from qgis.core import (
     QgsProcessingParameterNumber,
     QgsProcessingParameterString,
     QgsProcessingParameterFile,
+    QgsProcessingParameterFileDestination,
     QgsProcessingOutputString,
     QgsProcessingOutputNumber
 )
 from .tools import *
 from processing.tools import postgis
+import os, tempfile
 
 class ConfigurePlugin(QgsProcessingAlgorithm):
     """
@@ -58,6 +60,8 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
     CLONE_FTP_PASSWORD = 'CLONE_FTP_PASSWORD'
     CLONE_FTP_REMOTE_DIR = 'CLONE_FTP_REMOTE_DIR'
     CLONE_QGIS_PROJECT_FOLDER = 'CLONE_QGIS_PROJECT_FOLDER'
+
+    ZIP_FILE = 'ZIP_FILE'
 
     OUTPUT_STATUS = 'OUTPUT_STATUS'
     OUTPUT_STRING = 'OUTPUT_STRING'
@@ -272,6 +276,22 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
             )
         )
 
+        database_archive_file = ls.variable('general/database_archive_file')
+        if not database_archive_file:
+            database_archive_file = os.path.join(
+                tempfile.gettempdir(),
+                'central_database_package.zip'
+            )
+        self.addParameter(
+            QgsProcessingParameterFileDestination(
+                self.ZIP_FILE,
+                self.tr('Database ZIP archive default path'),
+                fileFilter='zip',
+                optional=False,
+                defaultValue=database_archive_file
+            )
+        )
+
         # OUTPUTS
         # Add output for status (integer)
         self.addOutput(
@@ -310,6 +330,8 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         ftp_clone_password = parameters[self.CLONE_FTP_PASSWORD]
         ftp_clone_remote_directory = parameters[self.CLONE_FTP_REMOTE_DIR]
         clone_qgis_project_folder = parameters[self.CLONE_QGIS_PROJECT_FOLDER]
+
+        database_archive_file = parameters[self.ZIP_FILE]
 
         # LizSync config file from ini
         ls = lizsyncConfig()
@@ -362,6 +384,9 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
 
         ls.setVariable('clone/qgis_project_folder', clone_qgis_project_folder)
         feedback.pushInfo(self.tr('Clone QGIS project folder') + ' = ' + clone_qgis_project_folder)
+
+        ls.setVariable('general/database_archive_file', database_archive_file)
+        feedback.pushInfo(self.tr('Database ZIP archive default path') + ' = ' + database_archive_file)
 
         ls.save()
 

@@ -677,30 +677,40 @@ def returnError(output, msg, feedback):
     return output
 
 
-from configparser import ConfigParser
+from configparser import SafeConfigParser
 from shutil import copyfile
 class lizsyncConfig:
 
     def __init__(self):
+        # Get default config file path
         config_file = os.path.abspath(
             os.path.join(
                 QgsApplication.qgisSettingsDirPath(),
                 'LizSync.ini'
             )
         )
-        dir_path = plugin_path('install')
-        template_config_file = os.path.join(dir_path, 'LizSync.ini')
 
+        # Override config path from environment variable
+        epath = os.environ.get('LIZSYNC_CONFIG_FILE')
+        if epath:
+            config_file = epath
+
+        # Use template if no file found
         if not os.path.exists(config_file):
+            # Get template ini file
+            dir_path = plugin_path('install')
+            template_config_file = os.path.join(dir_path, 'LizSync.ini')
             copyfile(template_config_file, config_file)
 
-        config = ConfigParser()
+        # Read config
+        config = SafeConfigParser()
         self.config_file =config_file
         config.read(self.config_file)
         self.config = config
 
+        # White list of config sections
         self.sections = (
-            'binaries',
+            'general', 'binaries',
             'postgresql:central', 'postgresql:clone',
             'ftp:central', 'ftp:clone',
             'local', 'clone'
@@ -722,7 +732,10 @@ class lizsyncConfig:
         address = self.getAddressFromAlias(alias)
         if not address:
             return None
-        val = self.config.get(address[0], address[1])
+        try:
+            val = self.config.get(address[0], address[1])
+        except:
+            val = None
         return val
 
     def setVariable(self, alias, value):
@@ -733,7 +746,13 @@ class lizsyncConfig:
         if not address:
             return None
         # values must be passed as string
-        self.config[address[0]][address[1]] = str(value)
+        if address[0] in self.sections and not self.config.has_section(address[0]):
+            self.config.add_section(address[0])
+        self.config.set(
+            address[0],
+            address[1],
+            str(value)
+        )
 
     def save(self):
         '''
