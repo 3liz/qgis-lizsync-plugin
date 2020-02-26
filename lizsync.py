@@ -42,6 +42,7 @@ cmd_folder = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
 
+from qgis.PyQt.QtCore import QCoreApplication, QTranslator
 from .qgis_plugin_tools.tools.i18n import setup_translation
 
 class LizsyncPlugin:
@@ -49,12 +50,16 @@ class LizsyncPlugin:
     def __init__(self):
         self.provider = LizsyncProvider()
 
-        locale = setup_translation()
-
-        if locale:
+        locale, file_path = setup_translation()
+        if file_path:
+            # LOGGER.info('Translation to {}'.format(file_path))
             self.translator = QTranslator()
-            self.translator.load(locale)
+            self.translator.load(file_path)
             QCoreApplication.installTranslator(self.translator)
+        else:
+            # LOGGER.info('Translation not found: {}'.format(locale))
+            pass
+
 
     def initGui(self):
         QgsApplication.processingRegistry().addProvider(self.provider)

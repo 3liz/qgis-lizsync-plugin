@@ -18,7 +18,7 @@ __copyright__ = '(C) 2019 by 3liz'
 # This will get replaced with a git SHA1 when you do a git archive
 
 __revision__ = '$Format:%H$'
-from ...qgis_plugin_tools.tools.i18n import tr
+from ..qgis_plugin_tools.tools.i18n import tr
 from qgis.core import QgsProcessingProvider
 from .algorithms.configure_plugin import ConfigurePlugin
 from .algorithms.create_database_structure import CreateDatabaseStructure
