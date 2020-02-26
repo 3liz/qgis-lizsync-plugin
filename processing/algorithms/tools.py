@@ -26,6 +26,7 @@ from qgis.core import (
 import netrc
 import re
 import time
+from ...qgis_plugin_tools.tools.i18n import tr
 
 def plugin_path(*args):
     """Get the path to plugin root folder.
@@ -42,9 +43,6 @@ def plugin_path(*args):
         path = os.path.abspath(os.path.join(path, item))
 
     return path
-
-def tr(string):
-    return QCoreApplication.translate('Processing', string)
 
 def check_internet():
     # return True
@@ -410,10 +408,10 @@ def ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, excludedirs
             if auth is not None:
                 ftplogin, account, ftppass = auth
         except (netrc.NetrcParseError, IOError):
-            m = self.tr('Could not retrieve password from ~/.netrc file')
+            m = tr('Could not retrieve password from ~/.netrc file')
             return False, m
         if not ftppass:
-            m = self.tr('Could not retrieve password from ~/.netrc file or is empty')
+            m = tr('Could not retrieve password from ~/.netrc file or is empty')
             return False, m
         try:
             cmd = []

@@ -34,6 +34,7 @@ from .tools import *
 import zipfile
 import tempfile
 from platform import system as psys
+from ...qgis_plugin_tools.tools.i18n import tr
 
 class PackageCentralDatabase(QgsProcessingAlgorithm):
     """
@@ -54,16 +55,16 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         return 'package_master_database'
 
     def displayName(self):
-        return self.tr('Create a package from the central database')
+        return tr('Create a package from the central database')
 
     def group(self):
-        return self.tr('02 Package and deploy database data')
+        return tr('02 Package and deploy database data')
 
     def groupId(self):
         return 'lizsync_package'
 
     def shortHelpString(self):
-        short_help = self.tr(
+        short_help = tr(
             ' Package data from the central database, for future deployement on one or several clone(s).'
             '<br>'
             '<br>'
@@ -76,9 +77,6 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
             ' and obviously data must be downloaded from the central database'
         )
         return short_help
-
-    def tr(self, string):
-        return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
         return PackageCentralDatabase()
@@ -96,7 +94,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         connection_name_central = ls.variable('postgresql:central/name')
         db_param_a = QgsProcessingParameterString(
             self.CONNECTION_NAME_CENTRAL,
-            self.tr('PostgreSQL connection to the central database'),
+            tr('PostgreSQL connection to the central database'),
             defaultValue=connection_name_central,
             optional=False
         )
@@ -112,7 +110,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFile(
                 self.POSTGRESQL_BINARY_PATH,
-                self.tr('PostgreSQL binary path'),
+                tr('PostgreSQL binary path'),
                 defaultValue=postgresql_binary_path,
                 behavior=QgsProcessingParameterFile.Folder,
                 optional=False
@@ -123,7 +121,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.SCHEMAS,
-                self.tr('List of schemas to package, separated by commas. (schemas public, lizsync & audit are never processed)'),
+                tr('List of schemas to package, separated by commas. (schemas public, lizsync & audit are never processed)'),
                 defaultValue='test',
                 optional=False
             )
@@ -139,7 +137,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFileDestination(
                 self.ZIP_FILE,
-                self.tr('Output archive file (ZIP)'),
+                tr('Output archive file (ZIP)'),
                 fileFilter='zip',
                 optional=False,
                 defaultValue=database_archive_file
@@ -151,13 +149,13 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         self.addOutput(
             QgsProcessingOutputNumber(
                 self.OUTPUT_STATUS,
-                self.tr('Output status')
+                tr('Output status')
             )
         )
         self.addOutput(
             QgsProcessingOutputString(
                 self.OUTPUT_STRING,
-                self.tr('Output message')
+                tr('Output message')
             )
         )
 
@@ -169,14 +167,14 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
 
         # Check if needed schema and metadata has been created
-        feedback.pushInfo(self.tr('CHECK IF LIZSYNC HAS BEEN INSTALLED AND DATABASE INITIALIZED'))
+        feedback.pushInfo(tr('CHECK IF LIZSYNC HAS BEEN INSTALLED AND DATABASE INITIALIZED'))
         status, tests = check_lizsync_installation_status(
             connection_name_central,
             ['structure', 'server id', 'uid columns', 'audit triggers'],
             parameters[self.SCHEMAS]
         )
         if not status:
-            msg = self.tr('Some needed configuration are missing in the central database. Please correct them before proceeding.')
+            msg = tr('Some needed configuration are missing in the central database. Please correct them before proceeding.')
             feedback.pushInfo(msg)
             for name,test in tests.items():
                 if not test['status']:
@@ -187,7 +185,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
                     feedback.pushInfo(item_msg)
             return False, msg
         else:
-            msg = self.tr('Every test has passed successfully !')
+            msg = tr('Every test has passed successfully !')
         return True, msg
 
     def checkParameterValues(self, parameters, context):
@@ -206,18 +204,18 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
             )
         )
         if not has_bin_file:
-            return False, self.tr('The needed PostgreSQL binaries cannot be found in the specified path')
+            return False, tr('The needed PostgreSQL binaries cannot be found in the specified path')
 
         # Check that the connection name has been configured
         connection_name = ls.variable('postgresql:central/name')
         if not connection_name:
-            return False, self.tr('You must use the "Configure Lizsync plugin" alg to set the CENTRAL database connection name')
+            return False, tr('You must use the "Configure Lizsync plugin" alg to set the CENTRAL database connection name')
 
         # Check that it corresponds to an existing connection
         dbpluginclass = createDbPlugin( 'postgis' )
         connections = [c.connectionName() for c in dbpluginclass.connections()]
         if connection_name not in connections:
-            return False, self.tr('The configured connection name does not exists in QGIS')
+            return False, tr('The configured connection name does not exists in QGIS')
 
         return super(PackageCentralDatabase, self).checkParameterValues(parameters, context)
 
@@ -266,7 +264,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
 
         # 1/ 01_before.sql
         ####
-        feedback.pushInfo(self.tr('CREATE SCRIPT 01_before.sql'))
+        feedback.pushInfo(tr('CREATE SCRIPT 01_before.sql'))
         sql = 'BEGIN;'
 
         # Drop existing schemas
@@ -300,11 +298,11 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         # write content into temp file
         with open(sql_files['01_before.sql'], 'w') as f:
             f.write(sql)
-            feedback.pushInfo(self.tr('File 01_before.sql created'))
+            feedback.pushInfo(tr('File 01_before.sql created'))
 
         # 2/ 02_data.sql
         ####
-        feedback.pushInfo(self.tr('CREATE SCRIPT 02_data.sql'))
+        feedback.pushInfo(tr('CREATE SCRIPT 02_data.sql'))
         pstatus, pmessages = pg_dump(
             feedback,
             postgresql_binary_path,
@@ -321,7 +319,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
 
         # 3/ 03_after.sql
         ####
-        feedback.pushInfo(self.tr('CREATE SCRIPT 03_after.sql'))
+        feedback.pushInfo(tr('CREATE SCRIPT 03_after.sql'))
         sql = ''
 
         # Add audit trigger in all table in given schemas
@@ -344,12 +342,12 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         # write content into temp file
         with open(sql_files['03_after.sql'], 'w') as f:
             f.write(sql)
-            feedback.pushInfo(self.tr('File 03_after.sql created'))
+            feedback.pushInfo(tr('File 03_after.sql created'))
 
         # 4/ 04_lizsync.sql
         # Add lizsync schema structure
         # We get it from central database to be sure everything will be compatible
-        feedback.pushInfo(self.tr('CREATE SCRIPT 04_lizsync.sql'))
+        feedback.pushInfo(tr('CREATE SCRIPT 04_lizsync.sql'))
         pstatus, pmessages = pg_dump(
             feedback,
             postgresql_binary_path,
@@ -367,7 +365,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         # 5/ sync_schemas.txt
         # Add schemas into file
         ####
-        feedback.pushInfo(self.tr('ADD SCHEMAS TO FILE sync_schemas.txt'))
+        feedback.pushInfo(tr('ADD SCHEMAS TO FILE sync_schemas.txt'))
         schemas = [
             "{0}".format(a.strip())
             for a in parameters[self.SCHEMAS].split(',')
@@ -376,14 +374,14 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         schema_list =  ','.join(schemas)
         with open(sql_files['sync_schemas.txt'], 'w') as f:
             f.write(schema_list)
-            feedback.pushInfo(self.tr('File sync_schemas.txt created'))
+            feedback.pushInfo(tr('File sync_schemas.txt created'))
 
 
         # 6/ sync_id.txt
         # Add new sync history item in the central database
         # and get sync_id
         ####
-        feedback.pushInfo(self.tr('ADD NEW SYNC HISTORY ITEM IN CENTRAL DATABASE'))
+        feedback.pushInfo(tr('ADD NEW SYNC HISTORY ITEM IN CENTRAL DATABASE'))
         sql = '''
             INSERT INTO lizsync.history
             (
@@ -409,21 +407,21 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
             for a in data:
                 sync_id = a[0]
             if sync_id:
-                msg = self.tr('New synchronization history item has been added in the central database')
+                msg = tr('New synchronization history item has been added in the central database')
                 msg+= ' : syncid = {0}'.format(sync_id)
                 feedback.pushInfo(msg)
                 with open(sql_files['sync_id.txt'], 'w') as f:
                     f.write(sync_id)
-                    feedback.pushInfo(self.tr('File sync_id.txt created'))
+                    feedback.pushInfo(tr('File sync_id.txt created'))
             else:
-                m = self.tr('No synchronization item could be added !')
+                m = tr('No synchronization item could be added !')
                 m+= ' '
                 m+= msg
                 m+= ' '
                 m+= error_message
                 return returnError(output, m, feedback)
         else:
-            m = self.tr('No synchronization item could be added !')
+            m = tr('No synchronization item could be added !')
             m+= ' ' + error_message
             return returnError(output, m, feedback)
 
@@ -450,10 +448,10 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
                     )
                 except:
                     status = 0
-                    msg+= self.tr("Error while zipping file") + ': ' + fname
+                    msg+= tr("Error while zipping file") + ': ' + fname
                     m = msg
                     return returnError(output, m, feedback)
-        msg = self.tr('Package has been successfully created !')
+        msg = tr('Package has been successfully created !')
         feedback.pushInfo(msg)
 
         output = {

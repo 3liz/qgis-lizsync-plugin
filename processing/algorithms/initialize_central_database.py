@@ -33,6 +33,7 @@ import os
 from .tools import *
 import configparser
 from db_manager.db_plugins import createDbPlugin
+from ...qgis_plugin_tools.tools.i18n import tr
 
 class InitializeCentralDatabase(QgsProcessingAlgorithm):
     """
@@ -56,16 +57,16 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
         return 'initialize_central_database'
 
     def displayName(self):
-        return self.tr('Prepare the central database')
+        return tr('Prepare the central database')
 
     def group(self):
-        return self.tr('01 Installation')
+        return tr('01 Installation')
 
     def groupId(self):
         return 'lizsync_installation'
 
     def shortHelpString(self):
-        short_help = self.tr(
+        short_help = tr(
             ' Prepare the central server PostgreSQL database with the needed data for LizSync tool.'
             '<br>'
             '<br>'
@@ -82,9 +83,6 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
         )
         return short_help
 
-    def tr(self, string):
-        return QCoreApplication.translate('Processing', string)
-
     def createInstance(self):
         return InitializeCentralDatabase()
 
@@ -100,7 +98,7 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
         connection_name_central = ls.variable('postgresql:central/name')
         db_param_a = QgsProcessingParameterString(
             self.CONNECTION_NAME_CENTRAL,
-            self.tr('PostgreSQL connection to the central database'),
+            tr('PostgreSQL connection to the central database'),
             defaultValue=connection_name_central,
             optional=False
         )
@@ -114,7 +112,7 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterBoolean(
                 self.ADD_SERVER_ID,
-                self.tr('Add server id in metadata table'),
+                tr('Add server id in metadata table'),
                 defaultValue=True,
                 optional=False
             )
@@ -122,7 +120,7 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterBoolean(
                 self.ADD_UID_COLUMNS,
-                self.tr('Add unique identifiers in all tables'),
+                tr('Add unique identifiers in all tables'),
                 defaultValue=True,
                 optional=False
             )
@@ -130,7 +128,7 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterBoolean(
                 self.ADD_AUDIT_TRIGGERS,
-                self.tr('Add audit triggers in all tables'),
+                tr('Add audit triggers in all tables'),
                 defaultValue=True,
                 optional=False
             )
@@ -138,7 +136,7 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.SCHEMAS,
-                self.tr('Restrict to comma separated schema names. NB: schemas public, lizsync & audit are never processed'),
+                tr('Restrict to comma separated schema names. NB: schemas public, lizsync & audit are never processed'),
                 defaultValue='test',
                 optional=True
             )
@@ -149,12 +147,12 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
         self.addOutput(
             QgsProcessingOutputNumber(
                 self.OUTPUT_STATUS,
-                self.tr('Output status')
+                tr('Output status')
             )
         )
         self.addOutput(
             QgsProcessingOutputString(
-                self.OUTPUT_STRING, self.tr('Output message')
+                self.OUTPUT_STRING, tr('Output message')
             )
         )
 
@@ -163,13 +161,13 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
         # Check that the connection name has been configured
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         if not connection_name_central:
-            return False, self.tr('You must use the "Configure Lizsync plugin" alg to set the CENTRAL database connection name')
+            return False, tr('You must use the "Configure Lizsync plugin" alg to set the CENTRAL database connection name')
 
         # Check that it corresponds to an existing connection
         dbpluginclass = createDbPlugin( 'postgis' )
         connections = [c.connectionName() for c in dbpluginclass.connections()]
         if connection_name_central not in connections:
-            return False, self.tr('The configured connection name does not exists in QGIS')
+            return False, tr('The configured connection name does not exists in QGIS')
 
         # Check database content
         ok, msg = self.checkSchema(parameters, context)
@@ -192,7 +190,7 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
         if not ok:
             return ok, error_message
         ok = False
-        msg = self.tr("Schema lizsync does not exist in database !")
+        msg = tr("Schema lizsync does not exist in database !")
         for a in data:
             schema = a[0]
             if schema == 'lizsync':
@@ -224,7 +222,7 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
             parameters[self.SCHEMAS]
         )
         if status:
-            msg = self.tr('Everything is OK. No action needed')
+            msg = tr('Everything is OK. No action needed')
             return {
                 self.OUTPUT_STATUS: 1,
                 self.OUTPUT_STRING: msg
@@ -239,19 +237,19 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
         schemas_sql = ', '.join(schemas)
 
         # Check structure
-        feedback.pushInfo(self.tr('CHECK LIZSYNC STRUCTURE'))
+        feedback.pushInfo(tr('CHECK LIZSYNC STRUCTURE'))
         if not tests['structure']['status']:
-            m = self.tr(
+            m = tr(
                 'Lizsync has not been installed in the central database.'
                 ' Run the script "Create database structure"'
             )
             return returnError(output, m, feedback)
 
-        feedback.pushInfo(self.tr('Lizsync structure OK'))
+        feedback.pushInfo(tr('Lizsync structure OK'))
 
         # ADD SERVER ID IN METADATA TABLE
         if add_server_id and not tests['server id']['status']:
-            feedback.pushInfo(self.tr('ADD SERVER ID IN THE METADATA TABLE'))
+            feedback.pushInfo(tr('ADD SERVER ID IN THE METADATA TABLE'))
             server_name = 'central'
             sql = '''
             INSERT INTO lizsync.server_metadata (server_name)
@@ -268,16 +266,16 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
                 if rowCount == 1:
                     for a in data:
                         server_id = a[0]
-                        feedback.pushInfo(self.tr('Server id successfully added') + ' {0}'.format(server_id))
+                        feedback.pushInfo(tr('Server id successfully added') + ' {0}'.format(server_id))
             else:
-                m = self.tr('Error adding server name in server_metadata table.')
+                m = tr('Error adding server name in server_metadata table.')
                 m+= ' '
                 m+= error_message
                 return returnError(output, m, feedback)
 
         # Add UID columns for given schema names
         if add_uid_columns and not tests['uid columns']['status']:
-            feedback.pushInfo(self.tr('ADD UID COLUMNS IN ALL THE TABLES OF THE SPECIFIED SCHEMAS'))
+            feedback.pushInfo(tr('ADD UID COLUMNS IN ALL THE TABLES OF THE SPECIFIED SCHEMAS'))
             sql = '''
                 SELECT table_schema, table_name,
                 lizsync.add_uid_columns(table_schema, table_name)
@@ -301,13 +299,13 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
                             '{0}.{1}'.format(a[0], a[1])
                         )
                 if names:
-                    msg = self.tr('UID columns have been successfully added in the following tables:')
+                    msg = tr('UID columns have been successfully added in the following tables:')
                     feedback.pushInfo(msg)
                     for n in names:
                         feedback.pushInfo('* ' + n)
                     msg+= ', '.join(names)
                 else:
-                    msg = self.tr('No UID columns were missing.')
+                    msg = tr('No UID columns were missing.')
                     feedback.pushInfo(msg)
             else:
                 m = error_message
@@ -316,7 +314,7 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
 
         # ADD MISSING AUDIT TRIGGERS
         if add_audit_triggers and not tests['audit triggers']['status']:
-            feedback.pushInfo(self.tr('ADD AUDIT TRIGGERS IN ALL THE TABLES OF THE GIVEN SCHEMAS'))
+            feedback.pushInfo(tr('ADD AUDIT TRIGGERS IN ALL THE TABLES OF THE GIVEN SCHEMAS'))
             sql = '''
                 SELECT table_schema, table_name,
                 audit.audit_table((quote_ident(table_schema) || '.' || quote_ident(table_name))::text)
@@ -345,13 +343,13 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
                         '{0}.{1}'.format(a[0], a[1])
                     )
                 if names:
-                    msg = self.tr('Audit triggers have been successfully added in the following tables:')
+                    msg = tr('Audit triggers have been successfully added in the following tables:')
                     feedback.pushInfo(msg)
                     for n in names:
                         feedback.pushInfo('* ' + n)
                     msg+= ', '.join(names)
                 else:
-                    msg = self.tr('No audit triggers were missing.')
+                    msg = tr('No audit triggers were missing.')
                     feedback.pushInfo(msg)
             else:
                 m = error_message

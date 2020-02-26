@@ -33,6 +33,8 @@ from .tools import *
 from processing.tools import postgis
 import os, tempfile
 
+from ...qgis_plugin_tools.tools.i18n import tr
+
 class ConfigurePlugin(QgsProcessingAlgorithm):
     """
 
@@ -70,10 +72,10 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         return 'configure_plugin'
 
     def displayName(self):
-        return self.tr('Configure Lizsync plugin')
+        return tr('Configure Lizsync plugin')
 
     def group(self):
-        return self.tr('01 Installation')
+        return tr('01 Installation')
 
     def groupId(self):
         return 'lizsync_installation'
@@ -88,9 +90,6 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
             ' Every parameter will be used in the other algorithms, as default values for parameters.'
         )
         return short_help
-
-    def tr(self, string):
-        return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
         return ConfigurePlugin()
@@ -108,7 +107,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFile(
                 self.POSTGRESQL_BINARY_PATH,
-                self.tr('PostgreSQL binary path'),
+                tr('PostgreSQL binary path'),
                 defaultValue=postgresql_binary_path,
                 behavior=QgsProcessingParameterFile.Folder,
                 optional=False
@@ -121,7 +120,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFile(
                 self.WINSCP_BINARY_PATH,
-                self.tr('WinSCP binary path (Windows only)'),
+                tr('WinSCP binary path (Windows only)'),
                 defaultValue=winscp_binary_path,
                 behavior=QgsProcessingParameterFile.Folder,
                 optional=True
@@ -132,7 +131,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         connection_name_central = ls.variable('postgresql:central/name')
         db_param_a = QgsProcessingParameterString(
             self.CONNECTION_NAME_CENTRAL,
-            self.tr('PostgreSQL connection to the CENTRAL database'),
+            tr('PostgreSQL connection to the CENTRAL database'),
             defaultValue=connection_name_central,
             optional=False
         )
@@ -147,7 +146,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.CENTRAL_FTP_HOST,
-                self.tr('Central FTP Server host'),
+                tr('Central FTP Server host'),
                 defaultValue=central_ftp_host,
                 optional=False
             )
@@ -158,7 +157,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterNumber(
                 self.CENTRAL_FTP_PORT,
-                self.tr('Central FTP Server port'),
+                tr('Central FTP Server port'),
                 defaultValue=central_ftp_port,
                 optional=False
             )
@@ -167,7 +166,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.CENTRAL_FTP_LOGIN,
-                self.tr('Central FTP Server login'),
+                tr('Central FTP Server login'),
                 defaultValue=central_ftp_login,
                 optional=False
             )
@@ -176,7 +175,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.CENTRAL_FTP_PASSWORD,
-                self.tr('Central FTP Server password'),
+                tr('Central FTP Server password'),
                 defaultValue=central_ftp_password,
                 optional=True
             )
@@ -185,7 +184,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.CENTRAL_FTP_REMOTE_DIR,
-                self.tr('Central FTP Server remote directory'),
+                tr('Central FTP Server remote directory'),
                 defaultValue=central_ftp_remote_dir,
                 optional=False
             )
@@ -195,7 +194,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFile(
                 self.LOCAL_QGIS_PROJECT_FOLDER,
-                self.tr('Local desktop QGIS project folder'),
+                tr('Local desktop QGIS project folder'),
                 defaultValue=local_qgis_project_folder,
                 behavior=QgsProcessingParameterFile.Folder,
                 optional=False
@@ -206,7 +205,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         connection_name_clone = ls.variable('postgresql:clone/name')
         db_param_b = QgsProcessingParameterString(
             self.CONNECTION_NAME_CLONE,
-            self.tr('PostgreSQL connection to the CLONE database'),
+            tr('PostgreSQL connection to the CLONE database'),
             defaultValue=connection_name_clone,
             optional=False
         )
@@ -221,7 +220,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.CLONE_FTP_HOST,
-                self.tr('Clone FTP Server host'),
+                tr('Clone FTP Server host'),
                 defaultValue=clone_ftp_host,
                 optional=False
             )
@@ -232,7 +231,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterNumber(
                 self.CLONE_FTP_PORT,
-                self.tr('Clone FTP Server port'),
+                tr('Clone FTP Server port'),
                 defaultValue=clone_ftp_port,
                 optional=False
             )
@@ -241,7 +240,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.CLONE_FTP_LOGIN,
-                self.tr('Clone FTP Server login'),
+                tr('Clone FTP Server login'),
                 defaultValue=clone_ftp_login,
                 optional=False
             )
@@ -250,7 +249,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.CLONE_FTP_PASSWORD,
-                self.tr('Clone FTP Server password'),
+                tr('Clone FTP Server password'),
                 defaultValue=clone_ftp_password,
                 optional=True
             )
@@ -259,7 +258,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.CLONE_FTP_REMOTE_DIR,
-                self.tr('Clone FTP Server remote directory'),
+                tr('Clone FTP Server remote directory'),
                 defaultValue=clone_ftp_remote_dir,
                 optional=False
             )
@@ -269,7 +268,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFile(
                 self.CLONE_QGIS_PROJECT_FOLDER,
-                self.tr('Clone QGIS project folder'),
+                tr('Clone QGIS project folder'),
                 defaultValue=clone_qgis_project_folder,
                 behavior=QgsProcessingParameterFile.Folder,
                 optional=False
@@ -285,7 +284,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFileDestination(
                 self.ZIP_FILE,
-                self.tr('Database ZIP archive default path'),
+                tr('Database ZIP archive default path'),
                 fileFilter='zip',
                 optional=False,
                 defaultValue=database_archive_file
@@ -297,14 +296,14 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         self.addOutput(
             QgsProcessingOutputNumber(
                 self.OUTPUT_STATUS,
-                self.tr('Output status')
+                tr('Output status')
             )
         )
         # Add output for message
         self.addOutput(
             QgsProcessingOutputString(
                 self.OUTPUT_STRING,
-                self.tr('Output message')
+                tr('Output message')
             )
         )
 
@@ -338,59 +337,59 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
 
         # Set global variable
         ls.setVariable('binaries/postgresql', postgresql_binary_path)
-        feedback.pushInfo(self.tr('PostgreSQL local binary path') + ' = ' + postgresql_binary_path)
+        feedback.pushInfo(tr('PostgreSQL local binary path') + ' = ' + postgresql_binary_path)
         ls.setVariable('binaries/winscp', winscp_binary_path)
-        feedback.pushInfo(self.tr('WinSCP binary path (Windows only)') + ' = ' + winscp_binary_path)
+        feedback.pushInfo(tr('WinSCP binary path (Windows only)') + ' = ' + winscp_binary_path)
 
         ls.setVariable('postgresql:central/name', connection_name_central)
-        feedback.pushInfo(self.tr('PostgreSQL connection to central database') + ' = ' + connection_name_central)
+        feedback.pushInfo(tr('PostgreSQL connection to central database') + ' = ' + connection_name_central)
 
         ls.setVariable('ftp:central/host', ftp_central_host)
-        feedback.pushInfo(self.tr('Central FTP Server host') + ' = ' + ftp_central_host)
+        feedback.pushInfo(tr('Central FTP Server host') + ' = ' + ftp_central_host)
 
         ls.setVariable('ftp:central/port', ftp_central_port)
-        feedback.pushInfo(self.tr('Central FTP Server port') + ' = %s' % ftp_central_port)
+        feedback.pushInfo(tr('Central FTP Server port') + ' = %s' % ftp_central_port)
 
         ls.setVariable('ftp:central/user', ftp_central_user)
-        feedback.pushInfo(self.tr('Central FTP Server login') + ' = ' + ftp_central_user)
+        feedback.pushInfo(tr('Central FTP Server login') + ' = ' + ftp_central_user)
 
         ls.setVariable('ftp:central/password', ftp_central_password)
-        feedback.pushInfo(self.tr('Central FTP Server password') + ' = ' + ftp_central_password)
+        feedback.pushInfo(tr('Central FTP Server password') + ' = ' + ftp_central_password)
 
         ls.setVariable('ftp:central/remote_directory', ftp_central_remote_directory)
-        feedback.pushInfo(self.tr('Central FTP Server remote directory') + ' = ' + ftp_central_remote_directory)
+        feedback.pushInfo(tr('Central FTP Server remote directory') + ' = ' + ftp_central_remote_directory)
 
 
         ls.setVariable('postgresql:clone/name', connection_name_clone)
-        feedback.pushInfo(self.tr('PostgreSQL connection to local clone database') + ' = ' + connection_name_clone)
+        feedback.pushInfo(tr('PostgreSQL connection to local clone database') + ' = ' + connection_name_clone)
 
         ls.setVariable('ftp:clone/host', ftp_clone_host)
-        feedback.pushInfo(self.tr('Clone FTP Server host') + ' = ' + ftp_clone_host)
+        feedback.pushInfo(tr('Clone FTP Server host') + ' = ' + ftp_clone_host)
 
         ls.setVariable('ftp:clone/port', ftp_clone_port)
-        feedback.pushInfo(self.tr('clone FTP Server port') + ' = %s' % ftp_clone_port)
+        feedback.pushInfo(tr('clone FTP Server port') + ' = %s' % ftp_clone_port)
 
         ls.setVariable('ftp:clone/user', ftp_clone_user)
-        feedback.pushInfo(self.tr('Clone FTP Server login') + ' = ' + ftp_clone_user)
+        feedback.pushInfo(tr('Clone FTP Server login') + ' = ' + ftp_clone_user)
 
         ls.setVariable('ftp:clone/password', ftp_clone_password)
-        feedback.pushInfo(self.tr('Clone FTP Server login') + ' = ' + ftp_clone_password)
+        feedback.pushInfo(tr('Clone FTP Server login') + ' = ' + ftp_clone_password)
 
         ls.setVariable('ftp:clone/remote_directory', ftp_clone_remote_directory)
-        feedback.pushInfo(self.tr('Clone FTP Server remote directory') + ' = ' + ftp_clone_remote_directory)
+        feedback.pushInfo(tr('Clone FTP Server remote directory') + ' = ' + ftp_clone_remote_directory)
 
         ls.setVariable('local/qgis_project_folder', local_qgis_project_folder)
-        feedback.pushInfo(self.tr('Local Desktop QGIS project folder') + ' = ' + local_qgis_project_folder)
+        feedback.pushInfo(tr('Local Desktop QGIS project folder') + ' = ' + local_qgis_project_folder)
 
         ls.setVariable('clone/qgis_project_folder', clone_qgis_project_folder)
-        feedback.pushInfo(self.tr('Clone QGIS project folder') + ' = ' + clone_qgis_project_folder)
+        feedback.pushInfo(tr('Clone QGIS project folder') + ' = ' + clone_qgis_project_folder)
 
         ls.setVariable('general/database_archive_file', database_archive_file)
-        feedback.pushInfo(self.tr('Database ZIP archive default path') + ' = ' + database_archive_file)
+        feedback.pushInfo(tr('Database ZIP archive default path') + ' = ' + database_archive_file)
 
         ls.save()
 
-        msg = self.tr('Configuration has been saved')
+        msg = tr('Configuration has been saved')
         feedback.pushInfo(msg)
         status = 1
 

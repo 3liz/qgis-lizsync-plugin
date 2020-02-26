@@ -34,6 +34,7 @@ from datetime import date, datetime
 from ftplib import FTP
 from .tools import *
 import netrc
+from ...qgis_plugin_tools.tools.i18n import tr
 
 class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
     """
@@ -61,16 +62,16 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         return 'synchronize_media_subfolder_to_ftp'
 
     def displayName(self):
-        return self.tr('Synchronize the clone media subfolder to the central FTP server')
+        return tr('Synchronize the clone media subfolder to the central FTP server')
 
     def group(self):
-        return self.tr('03 Synchronize data and files')
+        return tr('03 Synchronize data and files')
 
     def groupId(self):
         return 'lizsync_sync'
 
     def shortHelpString(self):
-        short_help = self.tr(
+        short_help = tr(
             ' Send media files, such as new images, stored in the clone QGIS "media/upload/" folder,'
             ' TO the central FTP server remote directory "media/upload/"'
             '<br>'
@@ -81,9 +82,6 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
             ' Every file existing in the clone "media/upload/" folder but not in the central server "media/upload/" folder will be sent.'
         )
         return short_help
-
-    def tr(self, string):
-        return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
         return SynchronizeMediaSubfolderToFtp()
@@ -109,7 +107,7 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFile(
                 self.LOCAL_QGIS_PROJECT_FOLDER,
-                self.tr('Local QGIS project folder'),
+                tr('Local QGIS project folder'),
                 defaultValue=local_qgis_project_folder,
                 behavior=QgsProcessingParameterFile.Folder,
                 optional=False
@@ -119,7 +117,7 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.CENTRAL_FTP_HOST,
-                self.tr('Central FTP Server host'),
+                tr('Central FTP Server host'),
                 defaultValue=central_ftp_host,
                 optional=False
             )
@@ -128,7 +126,7 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterNumber(
                 self.CENTRAL_FTP_PORT,
-                self.tr('Central FTP Server port'),
+                tr('Central FTP Server port'),
                 defaultValue=central_ftp_port,
                 optional=False
             )
@@ -137,7 +135,7 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.CENTRAL_FTP_LOGIN,
-                self.tr('Central FTP Server login'),
+                tr('Central FTP Server login'),
                 defaultValue=central_ftp_login,
                 optional=False
             )
@@ -146,7 +144,7 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.CENTRAL_FTP_REMOTE_DIR,
-                self.tr('Central FTP Server remote directory'),
+                tr('Central FTP Server remote directory'),
                 defaultValue=central_ftp_remote_dir,
                 optional=False
             )
@@ -156,12 +154,12 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         # Add output for message
         self.addOutput(
             QgsProcessingOutputNumber(
-                self.OUTPUT_STATUS, self.tr('Output status')
+                self.OUTPUT_STATUS, tr('Output status')
             )
         )
         self.addOutput(
             QgsProcessingOutputString(
-                self.OUTPUT_STRING, self.tr('Output message')
+                self.OUTPUT_STRING, tr('Output message')
             )
         )
 
@@ -186,9 +184,9 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         }
 
         # Check internet
-        feedback.pushInfo(self.tr('Check internet connection'))
+        feedback.pushInfo(tr('Check internet connection'))
         if not check_internet():
-            m = self.tr('No internet connection')
+            m = tr('No internet connection')
             return returnError(output, m, feedback)
 
         # Parameters
@@ -205,42 +203,42 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
             if auth is not None:
                 ftpuser, account, ftppass = auth
         except (netrc.NetrcParseError, IOError):
-            m = self.tr('Could not retrieve password from ~/.netrc file')
+            m = tr('Could not retrieve password from ~/.netrc file')
             return returnError(output, m, feedback)
         if not ftppass:
-            m =self.tr('Could not retrieve password from ~/.netrc file or is empty')
+            m =tr('Could not retrieve password from ~/.netrc file or is empty')
             return returnError(output, m, feedback)
 
         msg = ''
 
         # Check localdir
-        feedback.pushInfo(self.tr('CHECK LOCAL PROJECT DIRECTORY'))
+        feedback.pushInfo(tr('CHECK LOCAL PROJECT DIRECTORY'))
         if not localdir or not os.path.isdir(localdir):
-            m = self.tr('QGIS project local directory not found')
+            m = tr('QGIS project local directory not found')
             return returnError(output, m, feedback)
         else:
-            m = self.tr('QGIS project local directory ok')
+            m = tr('QGIS project local directory ok')
 
         # Check if ftpdir exists
-        feedback.pushInfo(self.tr('CHECK REMOTE DIRECTORY') + ' %s' % ftpdir )
+        feedback.pushInfo(tr('CHECK REMOTE DIRECTORY') + ' %s' % ftpdir )
         ftp = FTP()
         ftp.connect(ftphost, ftpport)
         ftp.login(ftplogin, ftppass)
         try:
             ftp.cwd(ftpdir)
             #do the code for successfull cd
-            self.tr('Remote directory exists in the central server')
+            tr('Remote directory exists in the central server')
         except Exception:
             ftp.close()
-            m = self.tr('Remote directory does not exist')
+            m = tr('Remote directory does not exist')
             return returnError(output, m, feedback)
 
         # Check if media/upload exists locally
-        feedback.pushInfo(self.tr('START FTP DIRECTORY SYNCHRONIZATION TO SERVER') + ' %s' % ftpdir )
+        feedback.pushInfo(tr('START FTP DIRECTORY SYNCHRONIZATION TO SERVER') + ' %s' % ftpdir )
         localdir = localdir + '/media/upload'
         ftpdir = ftpdir + '/media/upload'
-        feedback.pushInfo(self.tr('Local directory') + ' %s' % localdir)
-        feedback.pushInfo(self.tr('FTP remote directory') + ' %s' % ftpdir)
+        feedback.pushInfo(tr('Local directory') + ' %s' % localdir)
+        feedback.pushInfo(tr('FTP remote directory') + ' %s' % ftpdir)
         if os.path.isdir(localdir):
             # Run FTP sync
             direction = 'to'
@@ -249,12 +247,12 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
                 m = msg
                 return returnError(output, m, feedback)
         else:
-            m = self.tr('Local directory does not exists. No synchronization needed.')
+            m = tr('Local directory does not exists. No synchronization needed.')
             feedback.pushInfo(m)
             msg = m
 
         status = 1
-        msg = self.tr('Media upload subfolder sucessfully synchronized to the central server')
+        msg = tr('Media upload subfolder sucessfully synchronized to the central server')
         output = {
             self.OUTPUT_STATUS: status,
             self.OUTPUT_STRING: msg

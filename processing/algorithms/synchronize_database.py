@@ -25,6 +25,7 @@ from qgis.core import (
 )
 import processing
 from .tools import *
+from ...qgis_plugin_tools.tools.i18n import tr
 
 class SynchronizeDatabase(QgsProcessingAlgorithm):
     """
@@ -39,9 +40,6 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
     OUTPUT_STATUS = 'OUTPUT_STATUS'
     OUTPUT_STRING = 'OUTPUT_STRING'
 
-    def tr(self, string):
-        return QCoreApplication.translate('Processing', string)
-
     def createInstance(self, config={}):
         return SynchronizeDatabase()
 
@@ -52,16 +50,16 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         return 'synchronize_database'
 
     def displayName(self):
-        return self.tr('Two-way database synchronization between central and clone databases')
+        return tr('Two-way database synchronization between central and clone databases')
 
     def group(self):
-        return self.tr('03 Synchronize data and files')
+        return tr('03 Synchronize data and files')
 
     def groupId(self):
         return 'lizsync_sync'
 
     def shortHelpString(self):
-        short_help = self.tr(
+        short_help = tr(
             ' This scripts run a two-way data synchronization between the central and clone database.'
             '<br>'
             '<br>'
@@ -92,7 +90,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         connection_name_central = ls.variable('postgresql:central/name')
         db_param_a = QgsProcessingParameterString(
             self.CONNECTION_NAME_CENTRAL,
-            self.tr('PostgreSQL connection to the central database'),
+            tr('PostgreSQL connection to the central database'),
             defaultValue=connection_name_central,
             optional=False
         )
@@ -107,7 +105,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         connection_name_clone = ls.variable('postgresql:clone/name')
         db_param_b = QgsProcessingParameterString(
             self.CONNECTION_NAME_CLONE,
-            self.tr('PostgreSQL connection to the clone database'),
+            tr('PostgreSQL connection to the clone database'),
             defaultValue=connection_name_clone,
             optional=False
         )
@@ -122,12 +120,12 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         # Add output for message
         self.addOutput(
             QgsProcessingOutputNumber(
-                self.OUTPUT_STATUS, self.tr('Output status')
+                self.OUTPUT_STATUS, tr('Output status')
             )
         )
         self.addOutput(
             QgsProcessingOutputString(
-                self.OUTPUT_STRING, self.tr('Output message')
+                self.OUTPUT_STRING, tr('Output message')
             )
         )
 
@@ -142,11 +140,11 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
         if not check_internet():
-            m = self.tr('No internet connection')
+            m = tr('No internet connection')
             return returnError(output, m, feedback)
 
         # Send some information to the user
-        feedback.pushInfo(self.tr('Internet connection OK'))
+        feedback.pushInfo(tr('Internet connection OK'))
 
         # Compute the number of steps to display within the progress bar
         total = 100.0 / 2
@@ -171,7 +169,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             return returnError(output, m, feedback)
         for a in data:
             central_id = a[0]
-            feedback.pushInfo(self.tr('Server id') +' = %s' % central_id)
+            feedback.pushInfo(tr('Server id') +' = %s' % central_id)
 
         # Get clone database server id
         sql = '''
@@ -189,7 +187,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             return returnError(output, m, feedback)
         for a in data:
             clone_id = a[0]
-            feedback.pushInfo(self.tr('Clone id') + ' = %s' % clone_id)
+            feedback.pushInfo(tr('Clone id') + ' = %s' % clone_id)
 
 
         # CENTRAL -> CLONE
@@ -282,7 +280,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             actions.append(a[2])
         if rowCount > 0:
             feedback.pushInfo(
-                self.tr('Number of features to synchronize') + ' = {0}'.format(rowCount)
+                tr('Number of features to synchronize') + ' = {0}'.format(rowCount)
             )
             # Calculate min and max event ids
             min_event_id = min(ids)
@@ -336,7 +334,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                 m = error_message+ ' '+ sql
                 return returnError(output, m, feedback)
             feedback.pushInfo(
-                self.tr('SQL queries have been replayed from the central to the clone database')
+                tr('SQL queries have been replayed from the central to the clone database')
             )
 
             # Modify central server audit logged actions
@@ -362,7 +360,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                 m = error_message+ ' '+ sql
                 return returnError(output, m, feedback)
             feedback.pushInfo(
-                self.tr('Logged actions sync_data has been updated in the central database with the clone id')
+                tr('Logged actions sync_data has been updated in the central database with the clone id')
             )
 
             # Modify central server synchronization item
@@ -382,13 +380,13 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                 m = error_message+ ' '+ sql
                 return returnError(output, m, feedback)
             feedback.pushInfo(
-                self.tr('History sync_status has been updated to "done" in the central database')
+                tr('History sync_status has been updated to "done" in the central database')
             )
 
         else:
             # No data to sync
             feedback.pushInfo(
-                self.tr('No data to synchronize from the central database')
+                tr('No data to synchronize from the central database')
             )
 
         feedback.setProgress(int(1 * total))
@@ -420,7 +418,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             return returnError(output, m, feedback)
         if rowCount > 0:
             feedback.pushInfo(
-                self.tr('Number of features to synchronize') + ' = {0}'.format(rowCount)
+                tr('Number of features to synchronize') + ' = {0}'.format(rowCount)
             )
             for a in data:
                 actions.append(a[0])
@@ -454,7 +452,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             for a in data:
                 sync_id = a[0]
                 feedback.pushInfo(
-                    self.tr('New history item has been created in the central database')
+                    tr('New history item has been created in the central database')
                 )
 
             # Replay SQL queries to central server db
@@ -517,6 +515,6 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
 
         output = {
             self.OUTPUT_STATUS: 1,
-            self.OUTPUT_STRING: self.tr('Two-way database synchronization done')
+            self.OUTPUT_STRING: tr('Two-way database synchronization done')
         }
         return output

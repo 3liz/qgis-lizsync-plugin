@@ -31,6 +31,7 @@ from pathlib import Path
 import processing
 from .tools import *
 from platform import system as psys
+from ...qgis_plugin_tools.tools.i18n import tr
 
 class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
     """
@@ -53,10 +54,10 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         return 'deploy_database_server_package'
 
     def displayName(self):
-        return self.tr('Deploy a database package to the clone')
+        return tr('Deploy a database package to the clone')
 
     def group(self):
-        return self.tr('02 Package and deploy database data')
+        return tr('02 Package and deploy database data')
 
     def groupId(self):
         return 'lizsync_package'
@@ -69,9 +70,6 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
             ' contains data from the central PostgreSQL database.'
         )
         return short_help
-
-    def tr(self, string):
-        return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
         return DeployDatabaseServerPackage()
@@ -89,7 +87,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         connection_name_central = ls.variable('postgresql:central/name')
         db_param_a = QgsProcessingParameterString(
             self.CONNECTION_NAME_CENTRAL,
-            self.tr('PostgreSQL connection to the central database'),
+            tr('PostgreSQL connection to the central database'),
             defaultValue=connection_name_central,
             optional=False
         )
@@ -104,7 +102,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         connection_name_clone = ls.variable('postgresql:clone/name')
         db_param_b = QgsProcessingParameterString(
             self.CONNECTION_NAME_CLONE,
-            self.tr('PostgreSQL connection to the clone database'),
+            tr('PostgreSQL connection to the clone database'),
             defaultValue=connection_name_clone,
             optional=False
         )
@@ -120,7 +118,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFile(
                 self.POSTGRESQL_BINARY_PATH,
-                self.tr('PostgreSQL binary path'),
+                tr('PostgreSQL binary path'),
                 defaultValue=postgresql_binary_path,
                 behavior=QgsProcessingParameterFile.Folder,
                 optional=False
@@ -136,7 +134,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFile(
                 self.ZIP_FILE,
-                self.tr('Database ZIP archive path'),
+                tr('Database ZIP archive path'),
                 defaultValue=database_archive_file,
                 behavior=QgsProcessingParameterFile.File,
                 optional=True,
@@ -148,12 +146,12 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         # Add output for message
         self.addOutput(
             QgsProcessingOutputNumber(
-                self.OUTPUT_STATUS, self.tr('Output status')
+                self.OUTPUT_STATUS, tr('Output status')
             )
         )
         self.addOutput(
             QgsProcessingOutputString(
-                self.OUTPUT_STRING, self.tr('Output message')
+                self.OUTPUT_STRING, tr('Output message')
             )
         )
 
@@ -171,7 +169,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
             )
         )
         if not has_bin_file:
-            return False, self.tr('The needed PostgreSQL binaries cannot be found in the specified path')
+            return False, tr('The needed PostgreSQL binaries cannot be found in the specified path')
 
         # Check output zip path
         package_file = parameters[self.ZIP_FILE]
@@ -184,7 +182,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
 
         # Check ZIP archive content
         if not ok:
-            return False, self.tr("The ZIP archive does not exists in the specified path") + ": {0}".format(package_file)
+            return False, tr("The ZIP archive does not exists in the specified path") + ": {0}".format(package_file)
         parameters[self.ZIP_FILE] = package_file
 
         return super(DeployDatabaseServerPackage, self).checkParameterValues(parameters, context)
@@ -205,30 +203,30 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
 
         # Check archive
         if not os.path.exists(package_file):
-            m = self.tr('Package not found') + ' : %s' % package_file
+            m = tr('Package not found') + ' : %s' % package_file
             return returnError(output, m, feedback)
 
         # Check internet
         if not check_internet():
-            m = self.tr('No internet connection')
+            m = tr('No internet connection')
             return returnError(output, m, feedback)
 
         msg = ''
         # Uncompress package
-        feedback.pushInfo(self.tr('UNCOMPRESS PACKAGE') + ' {0}'.format(package_file))
+        feedback.pushInfo(tr('UNCOMPRESS PACKAGE') + ' {0}'.format(package_file))
         import zipfile
         dir_path = os.path.dirname(os.path.abspath(package_file))
         try:
             with zipfile.ZipFile(package_file) as t:
                 zip = t.extractall(dir_path)
-                feedback.pushInfo(self.tr('Package uncompressed successfully'))
+                feedback.pushInfo(tr('Package uncompressed successfully'))
         except:
-            m = self.tr('Package extraction error')
+            m = tr('Package extraction error')
             return returnError(output, m, feedback)
 
         # CLONE DATABASE
         # Get existing data to avoid recreating server_id for this machine
-        feedback.pushInfo(self.tr('GET EXISTING METADATA TO AVOID RECREATING SERVER_ID FOR THIS CLONE'))
+        feedback.pushInfo(tr('GET EXISTING METADATA TO AVOID RECREATING SERVER_ID FOR THIS CLONE'))
         clone_id = None
         clone_name = None
         sql = '''
@@ -245,7 +243,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
             for a in data:
                 if a[0] == 'server_metadata':
                     has_sync = True
-                    feedback.pushInfo(self.tr('Clone database already has sync metadata table'))
+                    feedback.pushInfo(tr('Clone database already has sync metadata table'))
         else:
             m = error_message
             return returnError(output, m, feedback)
@@ -264,39 +262,39 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
                 for a in data:
                     clone_id = a[0]
                     clone_name = a[1]
-                    feedback.pushInfo(self.tr('Clone metadata are already set'))
-                    feedback.pushInfo(self.tr('* server id') + ' = {0}'.format(clone_id))
-                    feedback.pushInfo(self.tr('* server name') + ' = {0}'.format(clone_name))
+                    feedback.pushInfo(tr('Clone metadata are already set'))
+                    feedback.pushInfo(tr('* server id') + ' = {0}'.format(clone_id))
+                    feedback.pushInfo(tr('* server name') + ' = {0}'.format(clone_name))
             else:
                 m = error_message
                 return returnError(output, m, feedback)
 
         # Get synchronized schemas
-        feedback.pushInfo(self.tr('GET THE LIST OF SYNCHRONIZED SCHEMAS FROM THE FILE sync_schemas.txt'))
+        feedback.pushInfo(tr('GET THE LIST OF SYNCHRONIZED SCHEMAS FROM THE FILE sync_schemas.txt'))
         sync_schemas = ''
         with open(os.path.join(dir_path, 'sync_schemas.txt')) as f:
                 sync_schemas = f.readline().strip()
         if sync_schemas == '':
-            m = self.tr('No schema to syncronize')
+            m = tr('No schema to syncronize')
             return returnError(output, m, feedback)
 
-        feedback.pushInfo(self.tr('Schema list found in sync_schemas.txt') + ' %s' % sync_schemas )
+        feedback.pushInfo(tr('Schema list found in sync_schemas.txt') + ' %s' % sync_schemas )
 
         # CLONE DATABASE
         # Run SQL scripts from archive with PSQL command
-        feedback.pushInfo(self.tr('RUN SQL SCRIPT FROM THE DECOMPRESSED ZIP FILE'))
+        feedback.pushInfo(tr('RUN SQL SCRIPT FROM THE DECOMPRESSED ZIP FILE'))
         a_sql = os.path.join(dir_path, '01_before.sql')
         b_sql = os.path.join(dir_path, '02_data.sql')
         c_sql = os.path.join(dir_path, '03_after.sql')
         d_sql = os.path.join(dir_path, '04_lizsync.sql')
         if not os.path.exists(a_sql) or not os.path.exists(b_sql) or not os.path.exists(c_sql):
-            m = self.tr('SQL files not found')
+            m = tr('SQL files not found')
             return returnError(output, m, feedback)
 
         # Build clone database connection parameters for psql
         status, uri, error_message = getUriFromConnectionName(connection_name_clone)
         if not uri:
-            m = self.tr('Error getting database connection information')
+            m = tr('Error getting database connection information')
             return returnError(output, m, feedback)
 
         if uri.service():
@@ -322,7 +320,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
             pgbin = '"' + pgbin + '"'
         for i in (a_sql, b_sql, c_sql, d_sql):
             try:
-                feedback.pushInfo(self.tr('Loading file') + ' {0} ....'.format(i))
+                feedback.pushInfo(tr('Loading file') + ' {0} ....'.format(i))
                 cmd = [
                     pgbin
                 ] + cmdo + [
@@ -346,7 +344,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
                 # Delete SQL scripts
                 os.remove(i)
             except:
-                m = self.tr('Error loading file') + ' {0}'.format(i)
+                m = tr('Error loading file') + ' {0}'.format(i)
                 return returnError(output, m, feedback)
 
             finally:
@@ -354,7 +352,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
 
         # CLONE DATABASE
         # Add server_id in lizsync.server_metadata if needed
-        feedback.pushInfo(self.tr('ADDING THE SERVER ID IN THE CLONE metadata table'))
+        feedback.pushInfo(tr('ADDING THE SERVER ID IN THE CLONE metadata table'))
         if clone_id and clone_name:
             sql = '''
             DELETE FROM lizsync.server_metadata;
@@ -380,18 +378,18 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
             for a in data:
                 clone_id = a[0]
                 clone_name = a[1]
-                feedback.pushInfo(self.tr('Server metadata added in the clone database'))
-                feedback.pushInfo(self.tr('* server id') + ' = {0}'.format(clone_id))
-                feedback.pushInfo(self.tr('* server name') + ' = {0}'.format(clone_name))
+                feedback.pushInfo(tr('Server metadata added in the clone database'))
+                feedback.pushInfo(tr('* server id') + ' = {0}'.format(clone_id))
+                feedback.pushInfo(tr('* server name') + ' = {0}'.format(clone_name))
         else:
-            m = self.tr('Error while adding server id in clone metadata table')
+            m = tr('Error while adding server id in clone metadata table')
             return returnError(output, m, feedback)
 
 
         # CENTRAL DATABASE
         # Add an item in lizsync.synchronized_schemas
         # to know afterward wich schemas to use when performing sync
-        feedback.pushInfo(self.tr('ADDING THE LIST OF SYNCHRONIZED SCHEMAS FOR THIS CLONE IN THE CENTRAL DATABASE '))
+        feedback.pushInfo(tr('ADDING THE LIST OF SYNCHRONIZED SCHEMAS FOR THIS CLONE IN THE CENTRAL DATABASE '))
         sql = '''
             DELETE FROM lizsync.synchronized_schemas
             WHERE server_id = '{0}';
@@ -409,15 +407,15 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
             sql
         )
         if ok:
-            msg = self.tr('List of synchronized schemas added in central database for this clone')
+            msg = tr('List of synchronized schemas added in central database for this clone')
             feedback.pushInfo(msg)
         else:
-            m = self.tr('Error while adding the synchronized schemas in the central database')
+            m = tr('Error while adding the synchronized schemas in the central database')
             return returnError(output, m, feedback)
 
         # CENTRAL DATABASE - Add clone Id in the lizsync.history line
         # corresponding to this deployed package
-        feedback.pushInfo(self.tr('ADD CLONE ID IN THE CENTRAL DATABASE HISTORY ITEM FOR THIS ARCHIVE DEPLOYEMENT'))
+        feedback.pushInfo(tr('ADD CLONE ID IN THE CENTRAL DATABASE HISTORY ITEM FOR THIS ARCHIVE DEPLOYEMENT'))
         with open(os.path.join(dir_path, 'sync_id.txt')) as f:
             sync_id = f.readline().strip()
             sql = '''
@@ -435,15 +433,15 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
                 sql
             )
             if ok:
-                msg = self.tr('History item has been successfully updated for this archive deployement in the central database')
+                msg = tr('History item has been successfully updated for this archive deployement in the central database')
                 feedback.pushInfo(msg)
             else:
-                m = self.tr('Error while updating the history item for this archive deployement')
+                m = tr('Error while updating the history item for this archive deployement')
                 return returnError(output, m, feedback)
 
         output = {
             self.OUTPUT_STATUS: 1,
-            self.OUTPUT_STRING: self.tr('The central database ZIP package has been successfully deployed to the clone')
+            self.OUTPUT_STRING: tr('The central database ZIP package has been successfully deployed to the clone')
         }
         return output
 

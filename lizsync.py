@@ -42,11 +42,19 @@ cmd_folder = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
 
+from .qgis_plugin_tools.tools.i18n import setup_translation
 
 class LizsyncPlugin:
 
     def __init__(self):
         self.provider = LizsyncProvider()
+
+        locale = setup_translation()
+
+        if locale:
+            self.translator = QTranslator()
+            self.translator.load(locale)
+            QCoreApplication.installTranslator(self.translator)
 
     def initGui(self):
         QgsApplication.processingRegistry().addProvider(self.provider)

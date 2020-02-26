@@ -34,6 +34,7 @@ from ftplib import FTP
 import netrc
 import re
 from .tools import *
+from ...qgis_plugin_tools.tools.i18n import tr
 
 class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
     """
@@ -64,16 +65,16 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         return 'send_projects_and_files_to_clone_ftp'
 
     def displayName(self):
-        return self.tr('Send local QGIS projects and files to the clone FTP server')
+        return tr('Send local QGIS projects and files to the clone FTP server')
 
     def group(self):
-        return self.tr('03 Synchronize data and files')
+        return tr('03 Synchronize data and files')
 
     def groupId(self):
         return 'lizsync_sync'
 
     def shortHelpString(self):
-        short_help = self.tr(
+        short_help = tr(
             ' Send QGIS projects and files to the clone FTP server remote directory.'
             '<br>'
             '<br>'
@@ -92,9 +93,6 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         )
         return short_help
 
-    def tr(self, string):
-        return QCoreApplication.translate('Processing', string)
-
     def createInstance(self):
         return SendProjectsAndFilesToCloneFtp()
 
@@ -110,7 +108,7 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         connection_name_central = ls.variable('postgresql:central/name')
         db_param_a = QgsProcessingParameterString(
             self.CONNECTION_NAME_CENTRAL,
-            self.tr('PostgreSQL connection to the central database'),
+            tr('PostgreSQL connection to the central database'),
             defaultValue=connection_name_central,
             optional=False
         )
@@ -125,7 +123,7 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         connection_name_clone = ls.variable('postgresql:clone/name')
         db_param_b = QgsProcessingParameterString(
             self.CONNECTION_NAME_CLONE,
-            self.tr('PostgreSQL connection to the local database'),
+            tr('PostgreSQL connection to the local database'),
             defaultValue=connection_name_clone,
             optional=False
         )
@@ -140,7 +138,7 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterFile(
                 self.LOCAL_QGIS_PROJECT_FOLDER,
-                self.tr('Local desktop QGIS project folder'),
+                tr('Local desktop QGIS project folder'),
                 defaultValue=local_qgis_project_folder,
                 behavior=QgsProcessingParameterFile.Folder,
                 optional=False
@@ -151,7 +149,7 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.CLONE_FTP_HOST,
-                self.tr('Clone FTP Server host'),
+                tr('Clone FTP Server host'),
                 defaultValue=clone_ftp_host,
                 optional=False
             )
@@ -160,7 +158,7 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterNumber(
                 self.CLONE_FTP_PORT,
-                self.tr('Clone FTP Server port'),
+                tr('Clone FTP Server port'),
                 defaultValue=clone_ftp_port,
                 optional=False
             )
@@ -169,7 +167,7 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.CLONE_FTP_LOGIN,
-                self.tr('Clone FTP Server login'),
+                tr('Clone FTP Server login'),
                 defaultValue=clone_ftp_login,
                 optional=False
             )
@@ -178,7 +176,7 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.CLONE_FTP_REMOTE_DIR,
-                self.tr('Clone FTP Server remote directory'),
+                tr('Clone FTP Server remote directory'),
                 defaultValue=clone_ftp_remote_dir,
                 optional=False
             )
@@ -187,7 +185,7 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.FTP_EXCLUDE_REMOTE_SUBDIRS,
-                self.tr('List of sub-directory to exclude from synchro, separated by commas.'),
+                tr('List of sub-directory to exclude from synchro, separated by commas.'),
                 defaultValue='data',
                 optional=True
             )
@@ -198,12 +196,12 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         # Add output for message
         self.addOutput(
             QgsProcessingOutputNumber(
-                self.OUTPUT_STATUS, self.tr('Output status')
+                self.OUTPUT_STATUS, tr('Output status')
             )
         )
         self.addOutput(
             QgsProcessingOutputString(
-                self.OUTPUT_STRING, self.tr('Output message')
+                self.OUTPUT_STRING, tr('Output message')
             )
         )
 
@@ -229,9 +227,9 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         }
 
         # Check internet
-        feedback.pushInfo(self.tr('CHECK INTERNET CONNECTION'))
+        feedback.pushInfo(tr('CHECK INTERNET CONNECTION'))
         if not check_internet():
-            m = self.tr('No internet connection')
+            m = tr('No internet connection')
             return returnError(output, m, feedback)
 
         # Parameters
@@ -248,39 +246,39 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
             if auth is not None:
                 ftplogin, account, ftppass = auth
         except (netrc.NetrcParseError, IOError):
-            m = self.tr('Could not retrieve password from ~/.netrc file')
+            m = tr('Could not retrieve password from ~/.netrc file')
             return returnError(output, m, feedback)
         if not ftppass:
-            m = self.tr('Could not retrieve password from ~/.netrc file or is empty')
+            m = tr('Could not retrieve password from ~/.netrc file or is empty')
             return returnError(output, m, feedback)
 
         msg = ''
 
         # Check localdir
-        feedback.pushInfo(self.tr('CHECK LOCAL PROJECT DIRECTORY'))
+        feedback.pushInfo(tr('CHECK LOCAL PROJECT DIRECTORY'))
         if not localdir or not os.path.isdir(localdir):
-            m = self.tr('QGIS project local directory not found')
+            m = tr('QGIS project local directory not found')
             return returnError(output, m, feedback)
         else:
-            feedback.pushInfo(self.tr('QGIS project local directory ok'))
+            feedback.pushInfo(tr('QGIS project local directory ok'))
 
         # Check if ftpdir exists
-        feedback.pushInfo(self.tr('CHECK REMOTE DIRECTORY') + ' %s' % ftpdir )
+        feedback.pushInfo(tr('CHECK REMOTE DIRECTORY') + ' %s' % ftpdir )
         ftp = FTP()
         ftp.connect(ftphost, ftpport)
         ftp.login(ftplogin, ftppass)
         try:
             ftp.cwd(ftpdir)
             #do the code for successfull cd
-            self.tr('Remote directory exists in the central server')
+            tr('Remote directory exists in the central server')
         except Exception:
             ftp.close()
-            m = self.tr('Remote directory does not exist')
+            m = tr('Remote directory does not exist')
             return returnError(output, m, feedback)
 
         # Run FTP sync
-        feedback.pushInfo(self.tr('Local directory') + ' %s' % localdir)
-        feedback.pushInfo(self.tr('FTP directory') + ' %s' % ftpdir)
+        feedback.pushInfo(tr('Local directory') + ' %s' % localdir)
+        feedback.pushInfo(tr('FTP directory') + ' %s' % ftpdir)
         direction = 'to' # we send data TO FTP
         excludedirs = parameters[self.FTP_EXCLUDE_REMOTE_SUBDIRS].strip()
         ok, msg = ftp_sync(ftphost, ftpport, ftplogin, localdir, ftpdir, direction, excludedirs, feedback)
@@ -290,7 +288,7 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
 
 
         status = 1
-        msg = self.tr("Synchronization successfull")
+        msg = tr("Synchronization successfull")
         output = {
             self.OUTPUT_STATUS: status,
             self.OUTPUT_STRING: msg

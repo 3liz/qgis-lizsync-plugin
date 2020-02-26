@@ -29,6 +29,7 @@ from qgis.core import (
     QgsProcessingOutputString
 )
 from .tools import *
+from ...qgis_plugin_tools.tools.i18n import tr
 
 class CreateDatabaseStructure(QgsProcessingAlgorithm):
     """
@@ -50,10 +51,10 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         return 'create_database_structure'
 
     def displayName(self):
-        return self.tr('Install Lizsync tools on the central database')
+        return tr('Install Lizsync tools on the central database')
 
     def group(self):
-        return self.tr('01 Installation')
+        return tr('01 Installation')
 
     def groupId(self):
         return 'lizsync_installation'
@@ -75,9 +76,6 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         )
         return short_help
 
-    def tr(self, string):
-        return QCoreApplication.translate('Processing', string)
-
     def createInstance(self):
         return CreateDatabaseStructure()
 
@@ -93,7 +91,7 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         connection_name_central = ls.variable('postgresql:central/name')
         db_param_a = QgsProcessingParameterString(
             self.CONNECTION_NAME_CENTRAL,
-            self.tr('PostgreSQL connection to the central database'),
+            tr('PostgreSQL connection to the central database'),
             defaultValue=connection_name_central,
             optional=False
         )
@@ -107,7 +105,7 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterBoolean(
                 self.OVERRIDE_AUDIT,
-                self.tr('Drop audit schema and all data ?'),
+                tr('Drop audit schema and all data ?'),
                 defaultValue=False,
                 optional=False
             )
@@ -115,7 +113,7 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterBoolean(
                 self.OVERRIDE_LIZSYNC,
-                self.tr('Drop lizsync schema and all data ?'),
+                tr('Drop lizsync schema and all data ?'),
                 defaultValue=False,
                 optional=False
             )
@@ -126,12 +124,12 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         self.addOutput(
             QgsProcessingOutputNumber(
                 self.OUTPUT_STATUS,
-                self.tr('Output status')
+                tr('Output status')
             )
         )
         self.addOutput(
             QgsProcessingOutputString(
-                self.OUTPUT_STRING, self.tr('Output message')
+                self.OUTPUT_STRING, tr('Output message')
             )
         )
 
@@ -140,13 +138,13 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         # Check that the connection name has been configured
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         if not connection_name_central:
-            return False, self.tr('You must use the "Configure Lizsync plugin" alg to set the central database connection name')
+            return False, tr('You must use the "Configure Lizsync plugin" alg to set the central database connection name')
 
         # Check that it corresponds to an existing connection
         dbpluginclass = createDbPlugin( 'postgis' )
         connections = [c.connectionName() for c in dbpluginclass.connections()]
         if connection_name_central not in connections:
-            return False, self.tr('The configured connection name does not exists in QGIS')
+            return False, tr('The configured connection name does not exists in QGIS')
 
         # Check audit schema
         ok, msg = self.checkSchema('audit', parameters, context)
@@ -183,13 +181,13 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         if schema_name == 'lizsync':
             override = parameters[self.OVERRIDE_LIZSYNC]
 
-        msg = schema_name.upper() + ' - ' + self.tr('Schema does not exists. Continue')
+        msg = schema_name.upper() + ' - ' + tr('Schema does not exists. Continue')
         for a in data:
             schema = a[0]
             if schema == schema_name and not override:
                 ok = False
                 msg = schema_name.upper() + ' - '
-                msg+= self.tr("Schema already exists in database ! If you REALLY want to drop and recreate it (and loose all data), check the *Overwrite* checkbox")
+                msg+= tr("Schema already exists in database ! If you REALLY want to drop and recreate it (and loose all data), check the *Overwrite* checkbox")
         return ok, msg
 
     def processAlgorithm(self, parameters, context, feedback):
@@ -211,7 +209,7 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
         }
         for s, override in schemas.items():
             if override:
-                feedback.pushInfo(self.tr("Trying to drop schema") + ' ' + s.upper())
+                feedback.pushInfo(tr("Trying to drop schema") + ' ' + s.upper())
                 sql = '''
                     DROP SCHEMA IF EXISTS {} CASCADE;
                 '''.format(
@@ -223,7 +221,7 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
                     sql
                 )
                 if ok:
-                    feedback.pushInfo(self.tr("* Schema has been droped") + ' - ' + s.upper())
+                    feedback.pushInfo(tr("* Schema has been droped") + ' - ' + s.upper())
                 else:
                     feedback.pushInfo(error_message)
                     status = 0
@@ -263,7 +261,7 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
                     sql
                 )
                 if ok:
-                    feedback.pushInfo(self.tr('SQL file successfully played'))
+                    feedback.pushInfo(tr('SQL file successfully played'))
                 else:
                     m = error_message
                     return returnError(output, m, feedback)
@@ -284,13 +282,13 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
             sql
         )
         if ok:
-            feedback.pushInfo(self.tr('Version added in the lizsync metadata table'))
+            feedback.pushInfo(tr('Version added in the lizsync metadata table'))
         else:
             m = error_message
             return returnError(output, m, feedback)
 
         output = {
             self.OUTPUT_STATUS: 1,
-            self.OUTPUT_STRING: self.tr('Lizsync database structure has been successfully created.')
+            self.OUTPUT_STRING: tr('Lizsync database structure has been successfully created.')
         }
         return output

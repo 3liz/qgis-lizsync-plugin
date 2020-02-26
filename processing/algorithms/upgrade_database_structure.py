@@ -31,7 +31,7 @@ from qgis.core import (
 )
 
 from .tools import *
-
+from ...qgis_plugin_tools.tools.i18n import tr
 
 class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
     """
@@ -51,16 +51,16 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
         return 'upgrade_database_structure'
 
     def displayName(self):
-        return self.tr('Upgrade LizSync tools in the central database')
+        return tr('Upgrade LizSync tools in the central database')
 
     def group(self):
-        return self.tr('01 Installation')
+        return tr('01 Installation')
 
     def groupId(self):
         return 'lizsync_installation'
 
     def shortHelpString(self):
-        short_help = self.tr(
+        short_help = tr(
             ' Upgrade the Lizsync tables and functions in the central database.'
             '<br>'
             '<br>'
@@ -68,9 +68,6 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
             ' to upgrade your central database to the new plugin version.'
         )
         return short_help
-
-    def tr(self, string):
-        return QCoreApplication.translate('Processing', string)
 
     def createInstance(self):
         return UpgradeDatabaseStructure()
@@ -87,7 +84,7 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
         connection_name_central = ls.variable('postgresql:central/name')
         db_param_a = QgsProcessingParameterString(
             self.CONNECTION_NAME_CENTRAL,
-            self.tr('PostgreSQL connection to the central database'),
+            tr('PostgreSQL connection to the central database'),
             defaultValue=connection_name_central,
             optional=False
         )
@@ -102,7 +99,7 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterBoolean(
                 self.RUNIT,
-                self.tr('Check this box to upgrade. No action will be done otherwise'),
+                tr('Check this box to upgrade. No action will be done otherwise'),
                 defaultValue=False,
                 optional=False
             )
@@ -113,13 +110,13 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
         self.addOutput(
             QgsProcessingOutputNumber(
                 self.OUTPUT_STATUS,
-                self.tr('Output status')
+                tr('Output status')
             )
         )
         self.addOutput(
             QgsProcessingOutputString(
                 self.OUTPUT_STRING,
-                self.tr('Output message')
+                tr('Output message')
             )
         )
 
@@ -130,20 +127,20 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
         # Check if runit is checked
         runit = self.parameterAsBool(parameters, self.RUNIT, context)
         if not runit:
-            msg = self.tr('You must check the box to run the upgrade !')
+            msg = tr('You must check the box to run the upgrade !')
             ok = False
             return ok, msg
 
         # Check that the connection name has been configured
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         if not connection_name_central:
-            return False, self.tr('You must use the "Configure Lizsync plugin" alg to set the central database connection name')
+            return False, tr('You must use the "Configure Lizsync plugin" alg to set the central database connection name')
 
         # Check that it corresponds to an existing connection
         dbpluginclass = createDbPlugin( 'postgis' )
         connections = [c.connectionName() for c in dbpluginclass.connections()]
         if connection_name_central not in connections:
-            return False, self.tr('The configured connection name does not exists in QGIS')
+            return False, tr('The configured connection name does not exists in QGIS')
 
         # Check database content
         ok, msg = self.checkSchema(parameters, context)
@@ -169,7 +166,7 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
         if not ok:
             return ok, error_message
         ok = False
-        msg = self.tr("Schema lizsync does not exist in database !")
+        msg = tr("Schema lizsync does not exist in database !")
         for a in data:
             schema = a[0]
             if schema == 'lizsync':
@@ -193,7 +190,7 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
         # Drop schema if needed
         runit = self.parameterAsBool(parameters, self.RUNIT, context)
         if not runit:
-            m = self.tr('You must check the box to run the upgrade !')
+            m = tr('You must check the box to run the upgrade !')
             return returnError(output, m, feedback)
 
         # get database version
@@ -214,10 +211,10 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
         for a in data:
             db_version = a[0]
         if not db_version:
-            error_message = self.tr('No installed version found in the database !')
+            error_message = tr('No installed version found in the database !')
             m = error_message
             return returnError(output, m, feedback)
-        feedback.pushInfo(self.tr('Database structure version') + ' = %s' % db_version)
+        feedback.pushInfo(tr('Database structure version') + ' = %s' % db_version)
 
         # get plugin version
         alg_dir = os.path.dirname(__file__)
@@ -225,13 +222,13 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
         config = configparser.ConfigParser()
         config.read(os.path.join(plugin_dir, 'metadata.txt'))
         plugin_version = config['general']['version']
-        feedback.pushInfo(self.tr('Plugin version') + ' = %s' % plugin_version)
+        feedback.pushInfo(tr('Plugin version') + ' = %s' % plugin_version)
 
         # Return if nothing to do
         if db_version == plugin_version:
             return {
                 self.OUTPUT_STATUS: 1,
-                self.OUTPUT_STRING: self.tr('The database version already matches the plugin version. No upgrade needed.')
+                self.OUTPUT_STRING: tr('The database version already matches the plugin version. No upgrade needed.')
             }
 
 
@@ -290,6 +287,6 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
 
         output = {
             self.OUTPUT_STATUS: 1,
-            self.OUTPUT_STRING: self.tr('Lizsync database structure has been successfully upgraded.')
+            self.OUTPUT_STRING: tr('Lizsync database structure has been successfully upgraded.')
         }
         return output
