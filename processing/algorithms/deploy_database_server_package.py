@@ -304,10 +304,10 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
             AND sync_time > (
                 SELECT sync_time
                 FROM lizsync.history
-                WHERE sync_id = '{sync_id}'
+                WHERE sync_id::text = '{sync_id}'
             )
-            AND server_from = (
-                SELECT server_id
+            AND server_from::text = (
+                SELECT server_id::text
                 FROM lizsync.server_metadata
                 LIMIT 1
             )

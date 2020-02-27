@@ -277,8 +277,8 @@ class GetProjectsAndFilesFromCentralFtp(QgsProcessingAlgorithm):
             myenv = { **os.environ }
             run_command(cmd, myenv, feedback)
 
-        import time
-        time.sleep(1)
+        # import time
+        # time.sleep(1)
 
         # Run FTP sync
         feedback.pushInfo(tr('Local directory') + ' %s' % localdir)

@@ -21,7 +21,9 @@ import os, subprocess
 from platform import system as psys
 
 from qgis.core import (
-    QgsApplication
+    QgsApplication,
+    QgsProcessingException,
+    QgsDataSourceUri
 )
 import netrc
 import re
@@ -58,7 +60,12 @@ def check_internet():
 
 def getUriFromConnectionName(connection_name, must_connect=True):
 
-    # Create plugin class and try to connect
+    # In UserLand context, use directly information
+    # given in LizSync.ini file
+    if os.path.isdir('/storage/internal/geopoppy') and psys().lower().startswith('linux'):
+        return getUriFromConnectionNameUserland(connection_name, must_connect)
+
+    # Otherwise check QGIS QGIS3.ini settings for connection name
     status = True
     uri = None
     error_message = ''
@@ -83,6 +90,51 @@ def getUriFromConnectionName(connection_name, must_connect=True):
         return status, uri, error_message
 
     uri = db.uri()
+    return status, uri, ''
+
+def getUriFromConnectionNameUserland(connection_name, must_connect=True):
+    # Use LizSync.ini content to find all connection parameters
+    ls = lizsyncConfig()
+    status = True
+    uri = None
+    error_message = ''
+    connection = None
+    c_list = ('central', 'clone')
+    for c in c_list:
+        c_name = ls.variable('postgresql:%s/name' % c)
+        if c_name == connection_name:
+            uri = QgsDataSourceUri()
+            if ls.variable('postgresql:%s/service' % c):
+                uri.setConnection(
+                    ls.variable('postgresql:%s/service' % c),
+                    '', '', ''
+                )
+            else:
+                if ls.variable('postgresql:%s/host' % c) \
+                and ls.variable('postgresql:%s/port' % c) \
+                and ls.variable('postgresql:%s/dbname' % c) \
+                and ls.variable('postgresql:%s/user' % c) \
+                and ls.variable('postgresql:%s/password' % c):
+                    uri.setConnection(
+                        ls.variable('postgresql:%s/host' % c),
+                        ls.variable('postgresql:%s/port' % c),
+                        ls.variable('postgresql:%s/dbname' % c),
+                        ls.variable('postgresql:%s/user' % c),
+                        ls.variable('postgresql:%s/password' % c)
+                    )
+                else:
+                    continue
+            if must_connect:
+                try:
+                    connector = PostGisDBConnector(uri)
+                    return status, uri, ''
+                except:
+                    error_message = tr('Cannot connect to database')
+                    ok = False
+            else:
+                return True, uri, ''
+            break
+
     return status, uri, ''
 
 def fetchDataFromSqlQuery(connection_name, sql):
@@ -563,8 +615,8 @@ def pg_dump(feedback, postgresql_binary_path, connection_name, output_file_name,
 def setQgisProjectOffline(qgis_directory, connection_name_central, connection_name_clone, feedback):
 
     # Get uri from connection names
-    status_central, uri_central, error_message_central = getUriFromConnectionName(connection_name_central)
-    status_clone, uri_clone, error_message_clone = getUriFromConnectionName(connection_name_clone)
+    status_central, uri_central, error_message_central = getUriFromConnectionName(connection_name_central, False)
+    status_clone, uri_clone, error_message_clone = getUriFromConnectionName(connection_name_clone, False)
     if not status_central:
         m = error_message_central
         return False, m
@@ -670,12 +722,12 @@ def returnError(output, msg, feedback):
     if output_string in output:
         output[output_string] = msg
     # raise Exception(msg)
-    # commented because it does not work with py-qgis-wps
+    # raise QgsProcessingException(msg)
 
     return output
 
 
-from configparser import SafeConfigParser
+from configparser import ConfigParser
 from shutil import copyfile
 class lizsyncConfig:
 
@@ -701,7 +753,7 @@ class lizsyncConfig:
             copyfile(template_config_file, config_file)
 
         # Read config
-        config = SafeConfigParser()
+        config = ConfigParser()
         self.config_file =config_file
         config.read(self.config_file)
         self.config = config

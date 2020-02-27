@@ -1,6 +1,8 @@
 ## Create test databases and fill
 
 ```bash
+dropdb lizsync_central
+dropdb lizsync_clone_a
 createdb lizsync_central
 createdb lizsync_clone_a
 ```
