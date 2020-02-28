@@ -252,7 +252,7 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         if os.path.isdir(localdir):
             # Run FTP sync
             direction = 'to'
-            ok, msg = ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, '', feedback)
+            ok, msg = ftp_sync(ftphost, ftpport, ftplogin, ftppass, localdir, ftpdir, direction, '', feedback)
             if not ok:
                 m = msg
                 return returnError(output, m, feedback)
