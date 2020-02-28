@@ -277,7 +277,7 @@ class GetProjectsAndFilesFromCentralFtp(QgsProcessingAlgorithm):
             cmd = [
                 'rm',
                 '-v',
-                '{}/*.qgs'.format(
+                '{}/*.qgs*'.format(
                     os.path.abspath(localdir)
                 )
             ]
