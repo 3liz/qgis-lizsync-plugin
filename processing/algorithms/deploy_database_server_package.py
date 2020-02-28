@@ -131,16 +131,27 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
                 tempfile.gettempdir(),
                 'central_database_package.zip'
             )
-        self.addParameter(
-            QgsProcessingParameterFile(
-                self.ZIP_FILE,
-                tr('Database ZIP archive path'),
-                defaultValue=database_archive_file,
-                behavior=QgsProcessingParameterFile.File,
-                optional=True,
-                extension='zip'
+        # Userland context
+        if os.path.isdir('/storage/internal/geopoppy') and psys().lower().startswith('linux'):
+            self.addParameter(
+                QgsProcessingParameterString(
+                    self.ZIP_FILE,
+                    tr('Database ZIP archive path'),
+                    defaultValue=database_archive_file,
+                    optional=True
+                )
             )
-        )
+        else:
+            self.addParameter(
+                QgsProcessingParameterFile(
+                    self.ZIP_FILE,
+                    tr('Database ZIP archive path'),
+                    defaultValue=database_archive_file,
+                    behavior=QgsProcessingParameterFile.File,
+                    optional=True,
+                    extension='zip'
+                )
+            )
 
         # OUTPUTS
         # Add output for message

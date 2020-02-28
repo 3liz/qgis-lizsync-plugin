@@ -1,4 +1,5 @@
-<?xml version="1.0" ?><!DOCTYPE TS><TS language="fr" version="2.0">
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE TS><TS version="2.0" language="fr" sourcelanguage="">
 <context>
     <name>@default</name>
     <message>
@@ -297,7 +298,7 @@
         <translation>Fichier SQL non trouvé</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="511"/>
+        <location filename="../../processing/algorithms/tools.py" line="578"/>
         <source>Error getting database connection information</source>
         <translation>Erreur de récupération des informations de connexion à la base de données</translation>
     </message>
@@ -457,67 +458,67 @@
         <translation>Vérification de la connexion internet</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="237"/>
+        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="240"/>
         <source>Could not retrieve password from ~/.netrc file</source>
         <translation>Le mot de passe n&apos;a pas pu être récupéré du fichier ~/.netrc</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="240"/>
+        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="243"/>
         <source>Could not retrieve password from ~/.netrc file or is empty</source>
         <translation>Le mot de passe n&apos;a pas pu être récupéré du fichier ~/.netrc ou est vide</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="247"/>
+        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="255"/>
         <source>CHECK LOCAL PROJECT DIRECTORY</source>
         <translation>VÉRIFICATION DU RÉPERTOIRE DE PROJETS LOCAL</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="249"/>
+        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="257"/>
         <source>QGIS project local directory not found</source>
         <translation>Le répertoire de projets QGIS local n&apos;a pas été trouvé</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="252"/>
+        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="260"/>
         <source>QGIS project local directory ok</source>
         <translation>Le répertoire de projets QGIS local existe bien</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="255"/>
+        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="263"/>
         <source>CHECK REMOTE DIRECTORY</source>
         <translation>VÉRIFICATION DU RÉPERTOIRE DISTANT</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="262"/>
+        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="270"/>
         <source>Remote directory exists in the central server</source>
         <translation>Le répertoire distant existe bien sur le serveur central</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="265"/>
+        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="273"/>
         <source>Remote directory does not exist</source>
         <translation>Le répertoire distant n&apos;existe pas</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/synchronize_media_subfolder_to_ftp.py" line="240"/>
+        <location filename="../../processing/algorithms/synchronize_media_subfolder_to_ftp.py" line="249"/>
         <source>START FTP DIRECTORY SYNCHRONIZATION TO SERVER</source>
         <translation>DÉMARRAGE DE LA SYNCHRONISATION FTP</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="287"/>
+        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="295"/>
         <source>Local directory</source>
         <translation>Répertoire local</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/synchronize_media_subfolder_to_ftp.py" line="244"/>
+        <location filename="../../processing/algorithms/synchronize_media_subfolder_to_ftp.py" line="253"/>
         <source>FTP remote directory</source>
         <translation>Répertoire FTP distant</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/synchronize_media_subfolder_to_ftp.py" line="253"/>
+        <location filename="../../processing/algorithms/synchronize_media_subfolder_to_ftp.py" line="262"/>
         <source>Local directory does not exists. No synchronization needed.</source>
         <translation>Le répertoire local n&apos;existe pas. Aucune synchronisation nécessaire.</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/synchronize_media_subfolder_to_ftp.py" line="258"/>
+        <location filename="../../processing/algorithms/synchronize_media_subfolder_to_ftp.py" line="267"/>
         <source>Media upload subfolder sucessfully synchronized to the central server</source>
         <translation>Le sous-répertoire upload a bien été synchronisé vers le serveur central</translation>
     </message>
@@ -667,117 +668,117 @@
         <translation>VÉRIFICATION DE LA CONNEXION INTERNET</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="288"/>
+        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="296"/>
         <source>FTP directory</source>
         <translation>Répertoire FTP</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/send_projects_and_files_to_clone_ftp.py" line="294"/>
+        <location filename="../../processing/algorithms/send_projects_and_files_to_clone_ftp.py" line="302"/>
         <source>Synchronization successfull</source>
         <translation>Synchronisation réussie</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="75"/>
+        <location filename="../../processing/algorithms/tools.py" line="82"/>
         <source>Cannot connect to database with</source>
         <translation>Impossible de se connecter à la base de données avec</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="83"/>
+        <location filename="../../processing/algorithms/tools.py" line="90"/>
         <source>Unable to get database from connection</source>
         <translation>Impossible de récupérer la base de données depuis la connexion</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="109"/>
+        <location filename="../../processing/algorithms/tools.py" line="166"/>
         <source>Cannot connect to database</source>
         <translation>Impossible de se connecter à la base de données</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="139"/>
+        <location filename="../../processing/algorithms/tools.py" line="196"/>
         <source>Unknown error occured while fetching data</source>
         <translation>Une erreur inconnue s&apos;est produire pendant la récupération des données</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="215"/>
+        <location filename="../../processing/algorithms/tools.py" line="272"/>
         <source>Lizsync structure has been installed</source>
         <translation>La structure Lizsync a bien été installée</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="227"/>
+        <location filename="../../processing/algorithms/tools.py" line="284"/>
         <source>The table lizsync.metadata has not been found</source>
         <translation>La table lizsync.metadata n&apos;a pas été trouvée</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="238"/>
+        <location filename="../../processing/algorithms/tools.py" line="295"/>
         <source>Server id is not empty</source>
         <translation>L&apos;id du serveur n&apos;est pas vide</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="247"/>
+        <location filename="../../processing/algorithms/tools.py" line="304"/>
         <source>The server id in lizsync.metadata is not set</source>
         <translation>L&apos;id du serveur dans la table lizsync.metadata n&apos;est pas défini</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="258"/>
+        <location filename="../../processing/algorithms/tools.py" line="315"/>
         <source>No missing uid columns</source>
         <translation>Aucun champ uid n&apos;est manquant</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="283"/>
+        <location filename="../../processing/algorithms/tools.py" line="340"/>
         <source>Some tables do not have the required uid column</source>
         <translation>Certaines tables n&apos;ont pas le champ uid requis</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="292"/>
+        <location filename="../../processing/algorithms/tools.py" line="349"/>
         <source>No missing audit triggers</source>
         <translation>Aucun trigger d&apos;audit n&apos;est manquant</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="317"/>
+        <location filename="../../processing/algorithms/tools.py" line="374"/>
         <source>Some tables are not monitored by the audit trigger tool</source>
         <translation>Certaines tables ne sont pas suivies par le trigger d&apos;audit</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="362"/>
+        <location filename="../../processing/algorithms/tools.py" line="419"/>
         <source>No FTP binary has been found in your system</source>
         <translation>Aucun exécutable FTP n&apos;a été trouvé sur votre système</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="363"/>
+        <location filename="../../processing/algorithms/tools.py" line="420"/>
         <source>FTP Binary has been found in your system</source>
         <translation>Les exécutables FTP ont été trouvé sur votre système</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="482"/>
+        <location filename="../../processing/algorithms/tools.py" line="549"/>
         <source>Error during FTP sync</source>
         <translation>Erreur lors de la synchronisation FTP</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="485"/>
+        <location filename="../../processing/algorithms/tools.py" line="552"/>
         <source>FTP sync done</source>
         <translation>Synchronisation FTP réalisée</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="505"/>
+        <location filename="../../processing/algorithms/tools.py" line="572"/>
         <source>PostgreSQL pg_dump tool cannot be found in specified path</source>
         <translation>L&apos;outil pg_dump de PostgreSQL n&apos;a pas été trouvé dans le chemin spécifié</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="562"/>
+        <location filename="../../processing/algorithms/tools.py" line="629"/>
         <source>Database has been successfull dumped</source>
         <translation>La base de données a bien été sauvegardée</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="565"/>
+        <location filename="../../processing/algorithms/tools.py" line="632"/>
         <source>Error dumping database</source>
         <translation>Erreur lors de la sauvegarde de la base de données</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="628"/>
+        <location filename="../../processing/algorithms/tools.py" line="695"/>
         <source>Process QGIS project file</source>
         <translation>Traitement du projet QGIS</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/tools.py" line="664"/>
+        <location filename="../../processing/algorithms/tools.py" line="731"/>
         <source>Overwrite QGIS project file with new data</source>
         <translation>Écrasement du projet QGIS avec les nouvelles données</translation>
     </message>
@@ -902,22 +903,22 @@
         <translation>Récupère les projets QGIS et les fichiers depuis le répertoire distant du serveur FTP et adapte les projets QGIS au clone en remplaçant les informations de connexion PostgreSQL par celles du clone. Une connexion internet est nécessaire pour utiliser cet algorithme</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="278"/>
+        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="286"/>
         <source>USELAND CONTEXT: Remove old QGIS project files to avoid bug</source>
         <translation>CONTEXTE USERLAND: Supprime les vieux projets QGIS</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="301"/>
+        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="309"/>
         <source>ADAPT QGIS PROJECTS FOR OFFLINE USE</source>
         <translation>ADAPTE LES PROJETS QGIS POUR UN USAGE LOCAL</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="308"/>
+        <location filename="../../processing/algorithms/get_projects_and_files_from_central_ftp.py" line="316"/>
         <source>QGIS projects and file successfully synchronized from the central FTP server</source>
         <translation>Les projets QGIS et les fichiers ont bien été synchronisés depuis le serveur FTP central</translation>
     </message>
     <message>
-        <location filename="../../processing/provider.py" line="63"/>
+        <location filename="../../processing/provider.py" line="67"/>
         <source>Lizsync</source>
         <translation>Lizsync</translation>
     </message>

@@ -134,15 +134,26 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
                 tempfile.gettempdir(),
                 'central_database_package.zip'
             )
-        self.addParameter(
-            QgsProcessingParameterFileDestination(
-                self.ZIP_FILE,
-                tr('Output archive file (ZIP)'),
-                fileFilter='zip',
-                optional=False,
-                defaultValue=database_archive_file
+        # Userland context
+        if os.path.isdir('/storage/internal/geopoppy') and psys().lower().startswith('linux'):
+            self.addParameter(
+                QgsProcessingParameterString(
+                    self.ZIP_FILE,
+                    tr('Database ZIP archive path'),
+                    defaultValue=database_archive_file,
+                    optional=True
+                )
             )
-        )
+        else:
+            self.addParameter(
+                QgsProcessingParameterFileDestination(
+                    self.ZIP_FILE,
+                    tr('Output archive file (ZIP)'),
+                    fileFilter='zip',
+                    optional=False,
+                    defaultValue=database_archive_file
+                )
+            )
 
         # OUTPUTS
         # Add output for message
@@ -212,10 +223,10 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
             return False, tr('You must use the "Configure Lizsync plugin" alg to set the CENTRAL database connection name')
 
         # Check that it corresponds to an existing connection
-        dbpluginclass = createDbPlugin( 'postgis' )
-        connections = [c.connectionName() for c in dbpluginclass.connections()]
-        if connection_name not in connections:
-            return False, tr('The configured connection name does not exists in QGIS')
+        # dbpluginclass = createDbPlugin( 'postgis' )
+        # connections = [c.connectionName() for c in dbpluginclass.connections()]
+        # if connection_name not in connections:
+            # return False, tr('The configured connection name does not exists in QGIS')
 
         return super(PackageCentralDatabase, self).checkParameterValues(parameters, context)
 

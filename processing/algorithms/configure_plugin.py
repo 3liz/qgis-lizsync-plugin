@@ -281,15 +281,27 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
                 tempfile.gettempdir(),
                 'central_database_package.zip'
             )
-        self.addParameter(
-            QgsProcessingParameterFileDestination(
-                self.ZIP_FILE,
-                tr('Database ZIP archive default path'),
-                fileFilter='zip',
-                optional=False,
-                defaultValue=database_archive_file
+        # Useland context: use only string
+        if os.path.isdir('/storage/internal/geopoppy') and psys().lower().startswith('linux'):
+            self.addParameter(
+                QgsProcessingParameterString(
+                    self.ZIP_FILE,
+                    tr('Database ZIP archive default path'),
+                    optional=False,
+                    defaultValue=database_archive_file
+                )
             )
-        )
+        else:
+            self.addParameter(
+                QgsProcessingParameterFileDestination(
+                    self.ZIP_FILE,
+                    tr('Database ZIP archive default path'),
+                    fileFilter='zip',
+                    optional=False,
+                    defaultValue=database_archive_file
+                )
+            )
+
 
         # OUTPUTS
         # Add output for status (integer)
