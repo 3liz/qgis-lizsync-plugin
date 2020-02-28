@@ -30,6 +30,7 @@ from .algorithms.synchronize_database import SynchronizeDatabase
 from .algorithms.get_projects_and_files_from_central_ftp import GetProjectsAndFilesFromCentralFtp
 from .algorithms.send_projects_and_files_to_clone_ftp import SendProjectsAndFilesToCloneFtp
 from .algorithms.synchronize_media_subfolder_to_ftp import SynchronizeMediaSubfolderToFtp
+import os
 
 class LizsyncProvider(QgsProcessingProvider):
 
@@ -43,15 +44,18 @@ class LizsyncProvider(QgsProcessingProvider):
     def loadAlgorithms(self):
 
         self.addAlgorithm(ConfigurePlugin())
-        self.addAlgorithm(CreateDatabaseStructure())
-        self.addAlgorithm(UpgradeDatabaseStructure())
-        self.addAlgorithm(InitializeCentralDatabase())
         self.addAlgorithm(PackageCentralDatabase())
         self.addAlgorithm(DeployDatabaseServerPackage())
         self.addAlgorithm(SynchronizeDatabase())
         self.addAlgorithm(GetProjectsAndFilesFromCentralFtp())
-        self.addAlgorithm(SendProjectsAndFilesToCloneFtp())
         self.addAlgorithm(SynchronizeMediaSubfolderToFtp())
+
+        # Userland context: do not load some algs
+        if not os.path.isdir('/storage/internal/geopoppy'):
+            self.addAlgorithm(CreateDatabaseStructure())
+            self.addAlgorithm(UpgradeDatabaseStructure())
+            self.addAlgorithm(InitializeCentralDatabase())
+            self.addAlgorithm(SendProjectsAndFilesToCloneFtp())
 
     def id(self):
         return 'lizsync'
