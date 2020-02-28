@@ -407,7 +407,7 @@ def checkFtpBinary():
         return False, tr('No FTP binary has been found in your system')
     return True, tr('FTP Binary has been found in your system')
 
-def ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, excludedirs, feedback):
+def ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, excludedirs, feedback):
 
     # LizSync config file from ini
     ls = lizsyncConfig()
@@ -417,7 +417,16 @@ def ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, excludedirs
         try:
             cmd = []
             cmd.append('lftp')
-            cmd.append('ftp://{0}@{1}:{2}'.format(ftpuser, ftphost, ftpport))
+            pass_str = ''
+            if ftppass:
+                pass_str = ':{}'.format(ftppass)
+            cmd.append('ftp://{ftpuser}{pass_str}@{ftphost}:{ftpport}'.format(
+                    ftpuser=ftpuser,
+                    pass_str=pass_str,
+                    ftphost=ftphost,
+                    ftpport=ftpport
+                )
+            )
             cmd.append('-e')
             cmd.append('"')
             cmd.append('set ftp:ssl-allow no; set ssl:verify-certificate no; ')
@@ -456,16 +465,6 @@ def ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, excludedirs
     # WINDOWS : USE WinSCP.com tool
     elif psys().lower().startswith('win'):
         try:
-            auth = netrc.netrc().authenticators(ftphost)
-            if auth is not None:
-                ftplogin, account, ftppass = auth
-        except (netrc.NetrcParseError, IOError):
-            m = tr('Could not retrieve password from ~/.netrc file')
-            return False, m
-        if not ftppass:
-            m = tr('Could not retrieve password from ~/.netrc file or is empty')
-            return False, m
-        try:
             cmd = []
             winscp_bin = os.path.join(
                 ls.variable('binaries/winscp'),
@@ -478,7 +477,16 @@ def ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, excludedirs
             cmd.append('"option batch off"')
             cmd.append('"option transfer binary"')
             cmd.append('"option confirm off"')
-            cmd.append('"open ftp://{}:{}@{}:{}"'.format(ftpuser, ftppass, ftphost, ftpport))
+            pass_str = ''
+            if ftppass:
+                pass_str = ':{}'.format(ftppass)
+            cmd.append('"open ftp://{ftpuser}{pass_str}@{ftphost}:{ftpport}"'.format(
+                    ftpuser=ftpuser,
+                    pass_str=pass_str,
+                    ftphost=ftphost,
+                    ftpport=ftpport
+                )
+            )
             cmd.append('"')
             cmd.append('synchronize')
             way = 'local'

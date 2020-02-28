@@ -236,21 +236,30 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         ftphost = parameters[self.CLONE_FTP_HOST]
         ftpport = parameters[self.CLONE_FTP_PORT]
         ftplogin = parameters[self.CLONE_FTP_LOGIN]
-        ftppass = ''
         localdir = parameters[self.LOCAL_QGIS_PROJECT_FOLDER]
         ftpdir = parameters[self.CLONE_FTP_REMOTE_DIR]
 
-        # Check FTP password
-        try:
-            auth = netrc.netrc().authenticators(ftphost)
-            if auth is not None:
-                ftplogin, account, ftppass = auth
-        except (netrc.NetrcParseError, IOError):
-            m = tr('Could not retrieve password from ~/.netrc file')
-            return returnError(output, m, feedback)
+        # Get FTP password
+        # First check if it is given in ini file
+        ls = lizsyncConfig()
+        ftppass = ls.variable('ftp:clone/password')
+        # If not given, search for it in ~/.netrc
         if not ftppass:
-            m = tr('Could not retrieve password from ~/.netrc file or is empty')
-            return returnError(output, m, feedback)
+            try:
+                auth = netrc.netrc().authenticators(ftphost)
+                if auth is not None:
+                    ftplogin, account, ftppass = auth
+            except (netrc.NetrcParseError, IOError):
+                m = tr('Could not retrieve password from ~/.netrc file')
+                return returnError(output, m, feedback)
+            if not ftppass:
+                m = tr('Could not retrieve password from ~/.netrc file or is empty')
+                return returnError(output, m, feedback)
+            else:
+                # Use None to force to use netrc file
+                # only for linux (lftp). we need to use password for winscp
+                if psys().lower().startswith('linux'):
+                    ftppass = None
 
         msg = ''
 
@@ -281,7 +290,7 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         feedback.pushInfo(tr('FTP directory') + ' %s' % ftpdir)
         direction = 'to' # we send data TO FTP
         excludedirs = parameters[self.FTP_EXCLUDE_REMOTE_SUBDIRS].strip()
-        ok, msg = ftp_sync(ftphost, ftpport, ftplogin, localdir, ftpdir, direction, excludedirs, feedback)
+        ok, msg = ftp_sync(ftphost, ftpport, ftplogin, ftppass, localdir, ftpdir, direction, excludedirs, feedback)
         if not ok:
             m = msg
             return returnError(output, m, feedback)

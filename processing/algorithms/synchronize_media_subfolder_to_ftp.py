@@ -193,21 +193,31 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         ftphost = parameters[self.CENTRAL_FTP_HOST]
         ftplogin = parameters[self.CENTRAL_FTP_LOGIN]
         ftpport = parameters[self.CENTRAL_FTP_PORT]
-        ftppass = ''
         ftpdir = parameters[self.CENTRAL_FTP_REMOTE_DIR]
         localdir = parameters[self.LOCAL_QGIS_PROJECT_FOLDER]
 
         # Check FTP password
-        try:
-            auth = netrc.netrc().authenticators(ftphost)
-            if auth is not None:
-                ftpuser, account, ftppass = auth
-        except (netrc.NetrcParseError, IOError):
-            m = tr('Could not retrieve password from ~/.netrc file')
-            return returnError(output, m, feedback)
+        # Get FTP password
+        # First check if it is given in ini file
+        ls = lizsyncConfig()
+        ftppass = ls.variable('ftp:central/password')
+        # If not given, search for it in ~/.netrc
         if not ftppass:
-            m =tr('Could not retrieve password from ~/.netrc file or is empty')
-            return returnError(output, m, feedback)
+            try:
+                auth = netrc.netrc().authenticators(ftphost)
+                if auth is not None:
+                    ftpuser, account, ftppass = auth
+            except (netrc.NetrcParseError, IOError):
+                m = tr('Could not retrieve password from ~/.netrc file')
+                return returnError(output, m, feedback)
+            if not ftppass:
+                m =tr('Could not retrieve password from ~/.netrc file or is empty')
+                return returnError(output, m, feedback)
+            else:
+                # Use None to force to use netrc file
+                # only for linux (lftp). we need to use password for winscp
+                if psys().lower().startswith('linux'):
+                    ftppass = None
 
         msg = ''
 
@@ -242,7 +252,7 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         if os.path.isdir(localdir):
             # Run FTP sync
             direction = 'to'
-            ok, msg = ftp_sync(ftphost, ftpport, ftpuser, localdir, ftpdir, direction, '', feedback)
+            ok, msg = ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, '', feedback)
             if not ok:
                 m = msg
                 return returnError(output, m, feedback)
