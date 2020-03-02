@@ -16,8 +16,8 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
--- FUNCTION get_event_sql(pevent_id bigint, puid_column text)
-COMMENT ON FUNCTION lizsync.get_event_sql(pevent_id bigint, puid_column text) IS '
+-- FUNCTION get_event_sql(pevent_id bigint, puid_column text, excluded_columns text[])
+COMMENT ON FUNCTION lizsync.get_event_sql(pevent_id bigint, puid_column text, excluded_columns text[]) IS '
 Get the SQL to use for replay from a audit log event
 
 Arguments:

@@ -152,6 +152,21 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         central_id = None
         clone_id = None
 
+        # Get the list of excluded columns
+        ls = lizsyncConfig()
+        var_excluded_columns = ls.variable('general/excluded_columns')
+        if var_excluded_columns:
+            ec = [
+                "'{0}'".format(a.strip())
+                for a in var_excluded_columns.split(',')
+                if a.strip() not in ('uid')
+            ]
+            excluded_columns = "ARRAY[{0}]::text[]".format(
+                ','.join(ec)
+            )
+        else:
+            excluded_columns = 'NULL'
+
         # Get central database server id
         sql = '''
             SELECT
@@ -229,40 +244,44 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             SELECT
                 event_id,
                 action_tstamp_tx::text AS action_tstamp_tx,
-                lizsync.get_event_sql(event_id, '{0}') AS action
+                Coalesce(
+                    lizsync.get_event_sql(event_id, '{uid_field}', {excluded_columns}),
+                    ''
+                ) AS action
             FROM audit.logged_actions,
             (
                 SELECT sync_schemas
                 FROM lizsync.synchronized_schemas
-                WHERE server_id = '{1}'
+                WHERE server_id = '{clone_id}'
                 LIMIT 1
             ) AS f
 
             WHERE True
 
             -- modifications do not come from clone database
-            AND (sync_data->>'origin' != '{1}' OR sync_data->>'origin' IS NULL)
+            AND (sync_data->>'origin' != '{clone_id}' OR sync_data->>'origin' IS NULL)
 
             -- modifications have not yet been replayed in the clone database
-            AND (NOT (sync_data->'replayed_by' ? '{1}') OR sync_data->'replayed_by' = jsonb_build_object() )
+            AND (NOT (sync_data->'replayed_by' ? '{clone_id}') OR sync_data->'replayed_by' = jsonb_build_object() )
 
             -- modifications sont situées après la dernière synchronisation
             -- MAX_ACTION_TSTAMP_TX Par ex: 2019-04-20 12:00:00+02
-            AND action_tstamp_tx > '{2}'
+            AND action_tstamp_tx > '{max_action_tstamp_tx}'
 
             -- et pour lesquelles l'ID est supérieur
             -- MAX_EVENT_ID
-            AND event_id > {3}
+            AND event_id > {max_event_id}
 
             -- et pour les schémas listés
             AND sync_schemas ? schema_name
 
             ORDER BY event_id;
         '''.format(
-            uid_field,
-            clone_id,
-            last_sync['max_action_tstamp_tx'],
-            last_sync['max_event_id']
+            uid_field=uid_field,
+            excluded_columns=excluded_columns,
+            clone_id=clone_id,
+            max_action_tstamp_tx=last_sync['max_action_tstamp_tx'],
+            max_event_id=last_sync['max_event_id']
         )
         ids = []
         max_action_tstamp_tx = None
@@ -399,14 +418,20 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         # no filter by date because clone date cannot be trusted
         # we choose to delete all audit logged_actions when sync is done
         # to start fresh
+
+        # build SQL
         sql = '''
             SELECT
-                lizsync.get_event_sql(event_id, '{0}') AS action
+                Coalesce(
+                    lizsync.get_event_sql(event_id, '{0}', {1}),
+                    ''
+                ) AS action
             FROM audit.logged_actions
             WHERE True
             ORDER BY event_id;
         '''.format(
-            uid_field
+            uid_field,
+            excluded_columns
         )
         actions = []
         header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
@@ -508,7 +533,9 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                 return returnError(output, m, feedback)
         else:
             # No data to sync
-            feedback.pushInfo('No data to synchronize from the clone database')
+            feedback.pushInfo(
+                tr('No data to synchronize from the clone database')
+            )
 
 
         feedback.setProgress(int(2 * total))

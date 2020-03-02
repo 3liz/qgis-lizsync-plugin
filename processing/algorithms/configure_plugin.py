@@ -64,6 +64,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
     CLONE_QGIS_PROJECT_FOLDER = 'CLONE_QGIS_PROJECT_FOLDER'
 
     ZIP_FILE = 'ZIP_FILE'
+    EXCLUDED_COLUMNS = 'EXCLUDED_COLUMNS'
 
     OUTPUT_STATUS = 'OUTPUT_STATUS'
     OUTPUT_STRING = 'OUTPUT_STRING'
@@ -302,6 +303,15 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
                 )
             )
 
+        excluded_columns = ls.variable('general/excluded_columns')
+        self.addParameter(
+            QgsProcessingParameterString(
+                self.EXCLUDED_COLUMNS,
+                tr('Excluded columns: list of columns that will never be synchronized'),
+                optional=True,
+                defaultValue=excluded_columns
+            )
+        )
 
         # OUTPUTS
         # Add output for status (integer)
@@ -343,6 +353,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         clone_qgis_project_folder = parameters[self.CLONE_QGIS_PROJECT_FOLDER]
 
         database_archive_file = parameters[self.ZIP_FILE]
+        excluded_columns = parameters[self.EXCLUDED_COLUMNS].strip()
 
         # LizSync config file from ini
         ls = lizsyncConfig()
@@ -398,6 +409,9 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
 
         ls.setVariable('general/database_archive_file', database_archive_file)
         feedback.pushInfo(tr('Database ZIP archive default path') + ' = ' + database_archive_file)
+
+        ls.setVariable('general/excluded_columns', excluded_columns)
+        feedback.pushInfo(tr('Excluded columns: list of columns that will never be synchronized') + ' = ' + excluded_columns)
 
         ls.save()
 

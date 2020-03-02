@@ -1,49 +1,8 @@
---
--- PostgreSQL database dump
---
+BEGIN;
 
--- Dumped from database version 9.6.16
--- Dumped by pg_dump version 9.6.16
+DROP FUNCTION IF EXISTS lizsync.get_event_sql(bigint, text);
+DROP FUNCTION IF EXISTS lizsync.get_event_sql(bigint, text, text[]);
 
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
-
--- add_uid_columns(text, text)
-CREATE FUNCTION lizsync.add_uid_columns(p_schema_name text, p_table_name text) RETURNS boolean
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-  query text;
-BEGIN
-
-    BEGIN
-        SELECT INTO query
-        concat(
-            ' ALTER TABLE ' || quote_ident(p_schema_name) || '.' || quote_ident(p_table_name) ||
-            ' ADD COLUMN uid uuid DEFAULT md5(random()::text || clock_timestamp()::text)::uuid ' ||
-            ' UNIQUE NOT NULL'
-        );
-        execute query;
-        RAISE NOTICE 'uid column created for % %', quote_ident(p_schema_name), quote_ident(p_table_name);
-        RETURN True;
-    EXCEPTION WHEN OTHERS THEN
-        RAISE NOTICE 'ERROR - uid column already exists';
-        RETURN False;
-    END;
-
-END;
-$$;
-
-
--- get_event_sql(bigint, text, text[])
 CREATE FUNCTION lizsync.get_event_sql(pevent_id bigint, puid_column text, excluded_columns text[]) RETURNS text
     LANGUAGE plpgsql
     AS $$
@@ -126,8 +85,6 @@ BEGIN
 END;
 $$;
 
-
--- FUNCTION get_event_sql(pevent_id bigint, puid_column text, excluded_columns text[])
 COMMENT ON FUNCTION lizsync.get_event_sql(pevent_id bigint, puid_column text, excluded_columns text[]) IS '
 Get the SQL to use for replay from a audit log event
 
@@ -137,7 +94,4 @@ Arguments:
 ';
 
 
---
--- PostgreSQL database dump complete
---
-
+COMMIT;
