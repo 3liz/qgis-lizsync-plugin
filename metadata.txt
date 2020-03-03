@@ -26,7 +26,7 @@ repository=https://github.com/3liz/qgis-lizsync-plugin
 
 # Uncomment the following line and add your changelog:
 changelog=
-  Version 0.2.4
+  Version 0.3.0
   * Package & restore - Add an optionnal SQL file to run in clone after deploy
   * Synchronization - Add new option to exclude columns from sync
   * Doc - update README for SQL generator
