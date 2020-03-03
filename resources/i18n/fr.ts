@@ -112,7 +112,7 @@
         <translation>Restreindre aux noms de schémas séparés par virgule. NB: les schémas public, lizsync &amp; audit ne sont jamais traités</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="223"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="248"/>
         <source>You must use the &quot;Configure Lizsync plugin&quot; alg to set the CENTRAL database connection name</source>
         <translation>Vous devez utiliser l&apos;algorithme &quot;Configurer le plugin LizSync&quot; pour définir le nom de la connexion à la base centrale</translation>
     </message>
@@ -192,7 +192,7 @@
         <translation>Charger l&apos;archive vers le clone</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="61"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="62"/>
         <source>02 Package and deploy database data</source>
         <translation>02 Récupérer et charger une archive de la base de données</translation>
     </message>
@@ -202,17 +202,17 @@
         <translation>Connexion PostgreSQL vers la base centrale</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/configure_plugin.py" line="108"/>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="109"/>
         <source>PostgreSQL binary path</source>
         <translation>Chemins binaires de PostgreSQL</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="139"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="164"/>
         <source>Database ZIP archive path</source>
         <translation>Chemin vers l&apos;archive ZIP de base de données</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="218"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="243"/>
         <source>The needed PostgreSQL binaries cannot be found in the specified path</source>
         <translation>Les exécutables de PostgreSQL n&apos;ont pas été trouvés dans le chemin spécifié</translation>
     </message>
@@ -262,12 +262,12 @@
         <translation>Les métadonnées du clone sont déjà définies</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="459"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="468"/>
         <source>* server id</source>
         <translation>* id du serveur</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="460"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="469"/>
         <source>* server name</source>
         <translation>* nom du serveur</translation>
     </message>
@@ -302,62 +302,62 @@
         <translation>Erreur de récupération des informations de connexion à la base de données</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="400"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="409"/>
         <source>Loading file</source>
         <translation>Chargement du fichier</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="424"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="433"/>
         <source>Error loading file</source>
         <translation>Erreur de chargement du fichier</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="432"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="441"/>
         <source>ADDING THE SERVER ID IN THE CLONE metadata table</source>
         <translation>AJOUT DE L&apos;ID DANS LA TABLE DE METADONNÉES DU CLONE</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="458"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="467"/>
         <source>Server metadata added in the clone database</source>
         <translation>Les métadonnées ont été ajoutées dans la base clone</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="462"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="471"/>
         <source>Error while adding server id in clone metadata table</source>
         <translation>Erreur lors de l&apos;ajout de l&apos;id dans la table de métadonnées</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="469"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="478"/>
         <source>ADDING THE LIST OF SYNCHRONIZED SCHEMAS FOR THIS CLONE IN THE CENTRAL DATABASE </source>
         <translation>AJOUT DE LA LISTE DES SCHÉMAS SYNCHRONISÉS POUR CE CLONE SUR LE SERVEUR CENTRAL</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="487"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="496"/>
         <source>List of synchronized schemas added in central database for this clone</source>
         <translation>La liste des schémas synchronisés a été ajoutée sur le serveur central pour ce clone</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="490"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="499"/>
         <source>Error while adding the synchronized schemas in the central database</source>
         <translation>Erreur lors de l&apos;ajout des schémas synchronisés sur la base centrale</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="495"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="504"/>
         <source>ADD CLONE ID IN THE CENTRAL DATABASE HISTORY ITEM FOR THIS ARCHIVE DEPLOYEMENT</source>
         <translation>AJOUT DE L&apos;ID DU CLONE DANS LA TABLE D&apos;HISTORIQUE DU SERVEUR CENTRAL POUR CE CHARGEMENT D&apos;ARCHIVE</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="514"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="523"/>
         <source>History item has been successfully updated for this archive deployement in the central database</source>
         <translation>L&apos;item d&apos;historique a bien été mis à jour sur la base centrale pour ce chargement d&apos;archive</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="517"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="526"/>
         <source>Error while updating the history item for this archive deployement</source>
         <translation>Erreur lors de la mise à jour de l&apos;item d&apos;historique pour ce chargement d&apos;archive</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="522"/>
+        <location filename="../../processing/algorithms/deploy_database_server_package.py" line="531"/>
         <source>The central database ZIP package has been successfully deployed to the clone</source>
         <translation>L&apos;archive ZIP a bien été chargée sur la base clone</translation>
     </message>
@@ -522,102 +522,102 @@
         <translation>Le sous-répertoire upload a bien été synchronisé vers le serveur central</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="58"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="59"/>
         <source>Create a package from the central database</source>
         <translation>Créer une archive de données depuis la base centrale</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="121"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="122"/>
         <source>List of schemas to package, separated by commas. (schemas public, lizsync &amp; audit are never processed)</source>
         <translation>Lister les schémas à sauvegarder, séparés par virgule. (Les schémas public, lizsync &amp; audit ne sont jamais traités)</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="148"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="173"/>
         <source>Output archive file (ZIP)</source>
         <translation>Archive ZIP exportée</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="181"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="206"/>
         <source>CHECK IF LIZSYNC HAS BEEN INSTALLED AND DATABASE INITIALIZED</source>
         <translation>VÉRIFICATION DE L&apos;INSTALLATION DE LIZSYNC ET DE L&apos;INITIALISATION DE LA BASE DE DONNÉES</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="188"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="213"/>
         <source>Some needed configuration are missing in the central database. Please correct them before proceeding.</source>
         <translation>Certaines configurations nécessaires sont manquantes sur la base centrale. Veuillez les mettre en oeuvre avant de continuer.</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="199"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="224"/>
         <source>Every test has passed successfully !</source>
         <translation>Tous les tests sont ok !</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="279"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="304"/>
         <source>CREATE SCRIPT 01_before.sql</source>
         <translation>CRÉATION DU SCRIPT 01_before.sql</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="313"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="338"/>
         <source>File 01_before.sql created</source>
         <translation>Fichier 01_before.sql créé</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="317"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="342"/>
         <source>CREATE SCRIPT 02_data.sql</source>
         <translation>CRÉATION DU SCRIPT 02_data.sql</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="334"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="359"/>
         <source>CREATE SCRIPT 03_after.sql</source>
         <translation>CRÉATION DU SCRIPT 03_after.sql</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="359"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="384"/>
         <source>File 03_after.sql created</source>
         <translation>Fichier 03_after.sql créé</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="364"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="389"/>
         <source>CREATE SCRIPT 04_lizsync.sql</source>
         <translation>CRÉATION DU SCRIPT 04_lizsync.sql</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="382"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="407"/>
         <source>ADD SCHEMAS TO FILE sync_schemas.txt</source>
         <translation>AJOUT DES SCHÉMAS AU FICHIER sync_schemas.txt</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="391"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="416"/>
         <source>File sync_schemas.txt created</source>
         <translation>Fichier sync_schemas.txt créé</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="398"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="423"/>
         <source>ADD NEW SYNC HISTORY ITEM IN CENTRAL DATABASE</source>
         <translation>AJOUT D&apos;UN NOUVEL ITEM D&apos;HISTORIQUE SUR LA BASE CENTRALE</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="426"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="451"/>
         <source>New synchronization history item has been added in the central database</source>
         <translation>Le nouvel item d&apos;historique a bien été ajouté sur la base centrale</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="431"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="456"/>
         <source>File sync_id.txt created</source>
         <translation>Fichier sync_id.txt créé</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="440"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="465"/>
         <source>No synchronization item could be added !</source>
         <translation>Aucun item d&apos;historique n&apos;a pu être ajouté !</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="468"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="499"/>
         <source>Error while zipping file</source>
         <translation>Erreur de création du fichier ZIP</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="471"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="502"/>
         <source>Package has been successfully created !</source>
         <translation>L&apos;archive a bien été créée !</translation>
     </message>
@@ -632,27 +632,27 @@
         <translation>Connexion PostgreSQL à la base de données clone</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/configure_plugin.py" line="195"/>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="196"/>
         <source>Local desktop QGIS project folder</source>
         <translation>Répertoire de projets QGIS local</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/configure_plugin.py" line="390"/>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="416"/>
         <source>Clone FTP Server host</source>
         <translation>Clone - Hôte du serveur FTP</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/configure_plugin.py" line="232"/>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="233"/>
         <source>Clone FTP Server port</source>
         <translation>Clone - Port du serveur FTP</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/configure_plugin.py" line="399"/>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="425"/>
         <source>Clone FTP Server login</source>
         <translation>Clone - Utilisateur du serveur FTP</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/configure_plugin.py" line="402"/>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="428"/>
         <source>Clone FTP Server remote directory</source>
         <translation>Clone - Répertoire distant</translation>
     </message>
@@ -782,32 +782,32 @@
         <translation>Écrasement du projet QGIS avec les nouvelles données</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/configure_plugin.py" line="76"/>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="77"/>
         <source>Configure Lizsync plugin</source>
         <translation>Configurer le plugin Lizsync</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/configure_plugin.py" line="365"/>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="391"/>
         <source>WinSCP binary path (Windows only)</source>
         <translation>Chemin vers les exécutables WinSCP (pour Windows seulement)</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/configure_plugin.py" line="133"/>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="134"/>
         <source>PostgreSQL connection to the CENTRAL database</source>
         <translation>Connexion PostgreSQL à la base de données CENTRALE</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/configure_plugin.py" line="380"/>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="406"/>
         <source>Central FTP Server password</source>
         <translation>Central - Mot de passe FTP</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/configure_plugin.py" line="207"/>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="208"/>
         <source>PostgreSQL connection to the CLONE database</source>
         <translation>Connexion PostgreSQL à la base de données CLONE</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/configure_plugin.py" line="250"/>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="251"/>
         <source>Clone FTP Server password</source>
         <translation>Clone - Mot de passe FTP</translation>
     </message>
@@ -817,37 +817,37 @@
         <translation>Clone - Répertoire des projets QGIS</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/configure_plugin.py" line="411"/>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="440"/>
         <source>Database ZIP archive default path</source>
         <translation>Chemin par défaut de l&apos;archive ZIP</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/configure_plugin.py" line="363"/>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="389"/>
         <source>PostgreSQL local binary path</source>
         <translation>Chemin vers les exécutables PostgreSQL</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/configure_plugin.py" line="368"/>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="394"/>
         <source>PostgreSQL connection to central database</source>
         <translation>Connexion PostgreSQL à la base centrale</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/configure_plugin.py" line="387"/>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="413"/>
         <source>PostgreSQL connection to local clone database</source>
         <translation>Connexion PostgreSQL à la base clone</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/configure_plugin.py" line="393"/>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="419"/>
         <source>clone FTP Server port</source>
         <translation>Clone - Port FTP</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/configure_plugin.py" line="405"/>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="431"/>
         <source>Local Desktop QGIS project folder</source>
         <translation>Répertoire local des projets QGIS</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/configure_plugin.py" line="418"/>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="447"/>
         <source>Configuration has been saved</source>
         <translation>La configuration a été sauvegardée</translation>
     </message>
@@ -980,7 +980,7 @@ Ces fichiers media peuvent par exemple avoir été ajouté par les outils d&apos
 Chaque fichier existant sur le clone mais pas sur le serveur sera envoyé.</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="67"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="68"/>
         <source> Package data from the central database, for future deployement on one or several clone(s).
 
  This script backups all data from the given list of schemas to a ZIP archive, named by default &quot;central_database_package.zip&quot;.
@@ -1071,7 +1071,7 @@ Attention ! Si vous cochez la case &quot;écraser&quot;, vous perdrez toutes les
         <translation>Charger une archive ZIP, générée précédemment via l&apos;algorithme &quot;Créer une archive de données depuis la base centrale&quot;, vers le clone choisi. Cette archive ZIP, nommée par défaut &quot;central_database_package&quot;, contient les données sauvegardées depuis la base PostgreSQL centrale.</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/configure_plugin.py" line="85"/>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="86"/>
         <source> Configure the LizSync plugin
 
  You must run this script before any other script.
@@ -1087,9 +1087,14 @@ Chaque valeur sera utilisée dans les autres algorithmes, comme valeur par défa
         <translation>Aucune donnée à synchroniser depuis la base clone</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/configure_plugin.py" line="414"/>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="443"/>
         <source>Excluded columns: list of columns that will never be synchronized</source>
         <translation>Colonnes à exclure : liste de colonnes qui ne seront jamais synchronisées</translation>
+    </message>
+    <message>
+        <location filename="../../processing/algorithms/configure_plugin.py" line="437"/>
+        <source>Additionnal SQL file to run in the clone after the ZIP deployement</source>
+        <translation>Fichier SQL optionnel à lancer sur le clone après chargement de l&apos;archive</translation>
     </message>
 </context>
 </TS>
