@@ -53,6 +53,8 @@ reg.addProvider(LizsyncProvider())
 # Get parameters
 input_alg = sys.argv[1]
 parameters = sys.argv[2]
+print(input_alg)
+print(parameters)
 input_params = json.loads(parameters)
 
 # Run Alg

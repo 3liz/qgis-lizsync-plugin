@@ -363,6 +363,12 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         if not os.path.exists(a_sql) or not os.path.exists(b_sql) or not os.path.exists(c_sql):
             m = tr('SQL files not found')
             return returnError(output, m, feedback)
+        sql_files = [a_sql, b_sql, c_sql, d_sql]
+
+        # Add addionnal SQL file if present
+        last_sql = os.path.join(dir_path, '99_last.sql')
+        if os.path.exists(last_sql):
+            sql_files.append(last_sql)
 
         # Build clone database connection parameters for psql
         status, uri, error_message = getUriFromConnectionName(connection_name_clone)
@@ -382,6 +388,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
                 '-U {0}'.format(uri.username()),
             ]
 
+        # Build psql command to run
         pgbin = 'psql'
         if psys().lower().startswith('win'):
             pgbin+= '.exe'
@@ -391,7 +398,9 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         )
         if psys().lower().startswith('win'):
             pgbin = '"' + pgbin + '"'
-        for i in (a_sql, b_sql, c_sql, d_sql):
+
+        # Run SQL files
+        for i in sql_files:
             try:
                 feedback.pushInfo(tr('Loading file') + ' {0} ....'.format(i))
                 cmd = [

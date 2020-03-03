@@ -4,3 +4,4 @@ UPDATE "test"."montpellier_sub_districts" SET libsquart = 'La gambette' WHERE li
 DELETE FROM "test"."montpellier_sub_districts" WHERE libsquart = 'Gares';
 UPDATE "test"."pluviometers" SET nom = 'le dix-huit' WHERE nom = 'pluvio18';
 UPDATE "test"."pluviometers" SET geom = '01010000206A0800009E6D82E3057527418D1435F092F65741' WHERE nom = 'pluvio3';
+INSERT INTO "test"."pluviometers" (id, nom, geom) VALUES (98, 'pluvio98', ST_SetSRID(ST_MakePoint(771164, 6281875),2154));

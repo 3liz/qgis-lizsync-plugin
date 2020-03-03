@@ -48,6 +48,7 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
     SCHEMAS = 'SCHEMAS'
     POSTGRESQL_BINARY_PATH = 'POSTGRESQL_BINARY_PATH'
     ZIP_FILE = 'ZIP_FILE'
+    ADDITIONNAL_SQL_FILE = 'ADDITIONNAL_SQL_FILE'
     OUTPUT_STATUS = 'OUTPUT_STATUS'
     OUTPUT_STRING = 'OUTPUT_STRING'
 
@@ -126,6 +127,30 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
                 optional=False
             )
         )
+
+        # Additionnal SQL file to run on the clone
+        additionnal_sql_file = ls.variable('general/additionnal_sql_file')
+        # Userland context
+        if os.path.isdir('/storage/internal/geopoppy') and psys().lower().startswith('linux'):
+            self.addParameter(
+                QgsProcessingParameterString(
+                    self.ADDITIONNAL_SQL_FILE,
+                    tr('Additionnal SQL file to run in the clone after the ZIP deployement'),
+                    defaultValue=additionnal_sql_file,
+                    optional=True
+                )
+            )
+        else:
+            self.addParameter(
+                QgsProcessingParameterFile(
+                    self.ADDITIONNAL_SQL_FILE,
+                    tr('Additionnal SQL file to run in the clone after the ZIP deployement'),
+                    defaultValue=additionnal_sql_file,
+                    behavior=QgsProcessingParameterFile.File,
+                    optional=True,
+                    extension='sql'
+                )
+            )
 
         # Output zip file destination
         database_archive_file = ls.variable('general/database_archive_file')
@@ -435,6 +460,12 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
             m = tr('No synchronization item could be added !')
             m+= ' ' + error_message
             return returnError(output, m, feedback)
+
+
+        # Additionnal SQL file to run
+        additionnal_sql_file = parameters[self.ADDITIONNAL_SQL_FILE]
+        if os.path.isfile(additionnal_sql_file):
+            sql_files['99_last.sql'] = additionnal_sql_file
 
         # Create ZIP archive
         try:
