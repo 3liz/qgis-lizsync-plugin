@@ -112,7 +112,7 @@
         <translation>Restreindre aux noms de schémas séparés par virgule. NB: les schémas public, lizsync &amp; audit ne sont jamais traités</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="248"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="253"/>
         <source>You must use the &quot;Configure Lizsync plugin&quot; alg to set the CENTRAL database connection name</source>
         <translation>Vous devez utiliser l&apos;algorithme &quot;Configurer le plugin LizSync&quot; pour définir le nom de la connexion à la base centrale</translation>
     </message>
@@ -207,12 +207,12 @@
         <translation>Chemins binaires de PostgreSQL</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="164"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="169"/>
         <source>Database ZIP archive path</source>
         <translation>Chemin vers l&apos;archive ZIP de base de données</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="243"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="248"/>
         <source>The needed PostgreSQL binaries cannot be found in the specified path</source>
         <translation>Les exécutables de PostgreSQL n&apos;ont pas été trouvés dans le chemin spécifié</translation>
     </message>
@@ -527,97 +527,97 @@
         <translation>Créer une archive de données depuis la base centrale</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="122"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="127"/>
         <source>List of schemas to package, separated by commas. (schemas public, lizsync &amp; audit are never processed)</source>
         <translation>Lister les schémas à sauvegarder, séparés par virgule. (Les schémas public, lizsync &amp; audit ne sont jamais traités)</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="173"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="178"/>
         <source>Output archive file (ZIP)</source>
         <translation>Archive ZIP exportée</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="206"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="211"/>
         <source>CHECK IF LIZSYNC HAS BEEN INSTALLED AND DATABASE INITIALIZED</source>
         <translation>VÉRIFICATION DE L&apos;INSTALLATION DE LIZSYNC ET DE L&apos;INITIALISATION DE LA BASE DE DONNÉES</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="213"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="218"/>
         <source>Some needed configuration are missing in the central database. Please correct them before proceeding.</source>
         <translation>Certaines configurations nécessaires sont manquantes sur la base centrale. Veuillez les mettre en oeuvre avant de continuer.</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="224"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="229"/>
         <source>Every test has passed successfully !</source>
         <translation>Tous les tests sont ok !</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="304"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="309"/>
         <source>CREATE SCRIPT 01_before.sql</source>
         <translation>CRÉATION DU SCRIPT 01_before.sql</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="338"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="343"/>
         <source>File 01_before.sql created</source>
         <translation>Fichier 01_before.sql créé</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="342"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="347"/>
         <source>CREATE SCRIPT 02_data.sql</source>
         <translation>CRÉATION DU SCRIPT 02_data.sql</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="359"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="364"/>
         <source>CREATE SCRIPT 03_after.sql</source>
         <translation>CRÉATION DU SCRIPT 03_after.sql</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="384"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="389"/>
         <source>File 03_after.sql created</source>
         <translation>Fichier 03_after.sql créé</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="389"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="394"/>
         <source>CREATE SCRIPT 04_lizsync.sql</source>
         <translation>CRÉATION DU SCRIPT 04_lizsync.sql</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="407"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="412"/>
         <source>ADD SCHEMAS TO FILE sync_schemas.txt</source>
         <translation>AJOUT DES SCHÉMAS AU FICHIER sync_schemas.txt</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="416"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="421"/>
         <source>File sync_schemas.txt created</source>
         <translation>Fichier sync_schemas.txt créé</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="423"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="428"/>
         <source>ADD NEW SYNC HISTORY ITEM IN CENTRAL DATABASE</source>
         <translation>AJOUT D&apos;UN NOUVEL ITEM D&apos;HISTORIQUE SUR LA BASE CENTRALE</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="451"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="456"/>
         <source>New synchronization history item has been added in the central database</source>
         <translation>Le nouvel item d&apos;historique a bien été ajouté sur la base centrale</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="456"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="461"/>
         <source>File sync_id.txt created</source>
         <translation>Fichier sync_id.txt créé</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="465"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="470"/>
         <source>No synchronization item could be added !</source>
         <translation>Aucun item d&apos;historique n&apos;a pu être ajouté !</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="499"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="504"/>
         <source>Error while zipping file</source>
         <translation>Erreur de création du fichier ZIP</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="502"/>
+        <location filename="../../processing/algorithms/package_central_database.py" line="507"/>
         <source>Package has been successfully created !</source>
         <translation>L&apos;archive a bien été créée !</translation>
     </message>
@@ -980,19 +980,6 @@ Ces fichiers media peuvent par exemple avoir été ajouté par les outils d&apos
 Chaque fichier existant sur le clone mais pas sur le serveur sera envoyé.</translation>
     </message>
     <message>
-        <location filename="../../processing/algorithms/package_central_database.py" line="68"/>
-        <source> Package data from the central database, for future deployement on one or several clone(s).
-
- This script backups all data from the given list of schemas to a ZIP archive, named by default &quot;central_database_package.zip&quot;.
-
- An internet connection is needed because a synchronization item must be written to the central database &quot;lizsync.history&quot; table during the process. and obviously data must be downloaded from the central database</source>
-        <translation>Récupère des données depuis la base de données centrale, pour un futur chargement sur un ou plusieurs clone(s).
-
-Ce script sauvegarde toutes les données de la liste de schémas spécifiée vers une archive ZIP, nommée par défaut &quot;central_database_package.zip&quot;.
-
-Une connexion internet est nécessaire pour pouvoir créer un item d&apos;historique de synchronisation sur la base centrale dans la table &quot;lizsync.history&quot;, et naturellement pour pouvoir télécharger les données de la base de données centrale.</translation>
-    </message>
-    <message>
         <location filename="../../processing/algorithms/send_projects_and_files_to_clone_ftp.py" line="77"/>
         <source> Send QGIS projects and files to the clone FTP server remote directory.
 
@@ -1095,6 +1082,23 @@ Chaque valeur sera utilisée dans les autres algorithmes, comme valeur par défa
         <location filename="../../processing/algorithms/configure_plugin.py" line="437"/>
         <source>Additionnal SQL file to run in the clone after the ZIP deployement</source>
         <translation>Fichier SQL optionnel à lancer sur le clone après chargement de l&apos;archive</translation>
+    </message>
+    <message>
+        <location filename="../../processing/algorithms/package_central_database.py" line="68"/>
+        <source> Package data from the central database, for future deployement on one or several clone(s).
+
+ This script backups all data from the given list of schemas to a ZIP archive, named by default &quot;central_database_package.zip&quot;.
+
+ You can add an optionnal SQL file to run in the clone after the deployment of the archive. This file must contain valid PostgreSQL queries and can be used to drop some triggers in the clone or remove some constraints. For example &quot;DELETE FROM pg_trigger WHERE tgname = 'name_of_trigger';&quot;
+
+ An internet connection is needed because a synchronization item must be written to the central database &quot;lizsync.history&quot; table during the process. and obviously data must be downloaded from the central database</source>
+        <translation>Récupère des données depuis la base de données centrale, pour un futur chargement sur un ou plusieurs clone(s).
+
+Ce script sauvegarde toutes les données de la liste de schémas spécifiée vers une archive ZIP, nommée par défaut &quot;central_database_package.zip&quot;.
+
+Vous pouvez ajouter un fichier SQL optionnel qui sera lancé sur le clone après chargement des données de l&apos;archive. Ce fichier doit contenir des requêtes PostgreSQL valides, et peut être utilisé pour supprimer certains triggers ou enlever des contraintes. Par exemple &quot;DELETE FROM pg_trigger WHERE tgname = &apos;nom_du_trigger&apos;;&quot;
+
+Une connexion internet est nécessaire pour pouvoir créer un item d&apos;historique de synchronisation sur la base centrale dans la table &quot;lizsync.history&quot;, et naturellement pour pouvoir télécharger les données de la base de données centrale.</translation>
     </message>
 </context>
 </TS>
