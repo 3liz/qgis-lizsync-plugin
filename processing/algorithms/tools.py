@@ -585,7 +585,7 @@ def pg_dump(feedback, postgresql_binary_path, connection_name, output_file_name,
         '--no-acl',
         '--no-owner',
         '-Fp',
-        '-f {0}'.format(output_file_name)
+        '-f "{0}"'.format(output_file_name)
     ]
 
     # Add given schemas

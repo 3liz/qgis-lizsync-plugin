@@ -38,5 +38,8 @@ psql service=lizsync_clone_a -f clone_a_database_edition_sample.sql
 # Test data for pluviometers
 psql service=lizsync_clone_a -c "SELECT * FROM test.pluviometers WHERE id > 30"
 psql service=lizsync_central -c "SELECT * FROM test.pluviometers WHERE id > 30"
+
+# Run Two-way database synchronization
+python3 ../../processing/standalone_processing_runner.py "lizsync:synchronize_database" '{"CONNECTION_NAME_CENTRAL": "lizsync_central", "CONNECTION_NAME_CLONE": "lizsync_clone_a"}'
 ```
 

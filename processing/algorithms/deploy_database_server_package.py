@@ -407,7 +407,7 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
                     pgbin
                 ] + cmdo + [
                     '--no-password',
-                    '-f {0}'.format(i)
+                    '-f "{0}"'.format(i)
                 ]
                 # feedback.pushInfo('PSQL = %s' % ' '.join(cmd) )
                 # Add password if needed
