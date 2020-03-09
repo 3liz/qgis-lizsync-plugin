@@ -385,7 +385,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             # Modify central server synchronization item
             sql = '''
                 UPDATE lizsync.history
-                SET (sync_status) = ('done')
+                SET sync_status = 'done'
                 WHERE True
                 AND sync_id = '{0}'
             '''.format(
@@ -518,7 +518,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             # Modify central server synchronization item
             sql = '''
                 UPDATE lizsync.history
-                SET (sync_status) = ('done')
+                SET sync_status = 'done'
                 WHERE True
                 AND sync_id = '{0}'
             '''.format(
