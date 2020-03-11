@@ -377,8 +377,16 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         ftp_clone_remote_directory = parameters[self.CLONE_FTP_REMOTE_DIR]
         clone_qgis_project_folder = parameters[self.CLONE_QGIS_PROJECT_FOLDER]
 
-        database_archive_file = parameters[self.ZIP_FILE]
-        additionnal_sql_file = parameters[self.ADDITIONNAL_SQL_FILE]
+        database_archive_file = self.parameterAsString(
+            parameters,
+            self.ZIP_FILE,
+            context
+        )
+        additionnal_sql_file = self.parameterAsString(
+            parameters,
+            self.ADDITIONNAL_SQL_FILE,
+            context
+        )
         excluded_columns = parameters[self.EXCLUDED_COLUMNS].strip()
 
         # LizSync config file from ini

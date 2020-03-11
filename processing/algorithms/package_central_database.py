@@ -460,8 +460,12 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
 
 
         # Additionnal SQL file to run
-        additionnal_sql_file = parameters[self.ADDITIONNAL_SQL_FILE]
-        if os.path.isfile(additionnal_sql_file):
+        additionnal_sql_file = self.parameterAsString(
+            parameters,
+            self.ADDITIONNAL_SQL_FILE,
+            context
+        )
+        if additionnal_sql_file and os.path.isfile(additionnal_sql_file):
             sql_files['99_last.sql'] = additionnal_sql_file
 
         # Create ZIP archive
