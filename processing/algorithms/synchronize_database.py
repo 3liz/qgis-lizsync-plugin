@@ -129,6 +129,20 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             )
         )
 
+    def checkParameterValues(self, parameters, context):
+
+        # Check connections
+        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+        connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
+        ok, uri, msg = getUriFromConnectionName(connection_name_central, True)
+        if not ok:
+            return False, msg
+        ok, uri, msg = getUriFromConnectionName(connection_name_clone, True)
+        if not ok:
+            return False, msg
+
+        return super(SynchronizeDatabase, self).checkParameterValues(parameters, context)
+
     def processAlgorithm(self, parameters, context, feedback):
 
         output = {
@@ -139,9 +153,6 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         uid_field = 'uid'
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
-        if not check_internet():
-            m = tr('No internet connection')
-            return returnError(output, m, feedback)
 
         # Send some information to the user
         feedback.pushInfo(tr('Internet connection OK'))

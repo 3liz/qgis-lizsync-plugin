@@ -160,14 +160,17 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
 
         # Check that the connection name has been configured
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
-        if not connection_name_central:
-            return False, tr('You must use the "Configure Lizsync plugin" alg to set the CENTRAL database connection name')
 
         # Check that it corresponds to an existing connection
         dbpluginclass = createDbPlugin( 'postgis' )
         connections = [c.connectionName() for c in dbpluginclass.connections()]
         if connection_name_central not in connections:
             return False, tr('The configured connection name does not exists in QGIS')
+
+        # Check connection
+        ok, uri, msg = getUriFromConnectionName(connection_name_central, True)
+        if not ok:
+            return False, msg
 
         # Check database content
         ok, msg = self.checkSchema(parameters, context)

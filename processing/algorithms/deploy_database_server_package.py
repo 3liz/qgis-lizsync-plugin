@@ -196,6 +196,16 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
             return False, tr("The ZIP archive does not exists in the specified path") + ": {0}".format(package_file)
         parameters[self.ZIP_FILE] = package_file
 
+        # Check connections
+        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+        connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
+        ok, uri, msg = getUriFromConnectionName(connection_name_central, True)
+        if not ok:
+            return False, msg
+        ok, uri, msg = getUriFromConnectionName(connection_name_clone, True)
+        if not ok:
+            return False, msg
+
         return super(DeployDatabaseServerPackage, self).checkParameterValues(parameters, context)
 
     def processAlgorithm(self, parameters, context, feedback):
@@ -215,11 +225,6 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
         # Check archive
         if not os.path.exists(package_file):
             m = tr('Package not found') + ' : %s' % package_file
-            return returnError(output, m, feedback)
-
-        # Check internet
-        if not check_internet():
-            m = tr('No internet connection')
             return returnError(output, m, feedback)
 
         msg = ''
@@ -372,8 +377,9 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
 
         # Build clone database connection parameters for psql
         status, uri, error_message = getUriFromConnectionName(connection_name_clone)
-        if not uri:
+        if not status or not uri:
             m = tr('Error getting database connection information')
+            m+= ' ' + error_message
             return returnError(output, m, feedback)
 
         if uri.service():

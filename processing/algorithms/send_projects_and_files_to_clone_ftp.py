@@ -226,12 +226,6 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
             self.OUTPUT_STRING: msg
         }
 
-        # Check internet
-        feedback.pushInfo(tr('CHECK INTERNET CONNECTION'))
-        if not check_internet():
-            m = tr('No internet connection')
-            return returnError(output, m, feedback)
-
         # Parameters
         ftphost = parameters[self.CLONE_FTP_HOST]
         ftpport = parameters[self.CLONE_FTP_PORT]
@@ -239,50 +233,39 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         localdir = parameters[self.LOCAL_QGIS_PROJECT_FOLDER]
         ftpdir = parameters[self.CLONE_FTP_REMOTE_DIR]
 
-        # Get FTP password
-        # First check if it is given in ini file
-        ls = lizsyncConfig()
-        ftppass = ls.variable('ftp:clone/password')
-        # If not given, search for it in ~/.netrc
-        if not ftppass:
-            try:
-                auth = netrc.netrc().authenticators(ftphost)
-                if auth is not None:
-                    ftplogin, account, ftppass = auth
-            except (netrc.NetrcParseError, IOError):
-                m = tr('Could not retrieve password from ~/.netrc file')
-                return returnError(output, m, feedback)
-            if not ftppass:
-                m = tr('Could not retrieve password from ~/.netrc file or is empty')
-                return returnError(output, m, feedback)
-            else:
-                # Use None to force to use netrc file
-                # only for linux (lftp). we need to use password for winscp
-                if psys().lower().startswith('linux'):
-                    ftppass = None
-
-        msg = ''
-
         # Check localdir
         feedback.pushInfo(tr('CHECK LOCAL PROJECT DIRECTORY'))
         if not localdir or not os.path.isdir(localdir):
             m = tr('QGIS project local directory not found')
             return returnError(output, m, feedback)
         else:
-            feedback.pushInfo(tr('QGIS project local directory ok'))
+            m = tr('QGIS project local directory ok')
+            feedback.pushInfo(m)
+
+        # Check ftp
+        ok, password, msg = get_ftp_password(ftphost, ftpport, ftplogin)
+        if not ok:
+            return returnError(output, msg, feedback)
+        ok, msg = check_ftp_connection(ftphost, ftpport, ftplogin, password)
+        if not ok:
+            return returnError(output, msg, feedback)
 
         # Check if ftpdir exists
+        ok = True
         feedback.pushInfo(tr('CHECK REMOTE DIRECTORY') + ' %s' % ftpdir )
         ftp = FTP()
         ftp.connect(ftphost, ftpport)
-        ftp.login(ftplogin, ftppass)
+        ftp.login(ftplogin, password)
         try:
             ftp.cwd(ftpdir)
             #do the code for successfull cd
-            tr('Remote directory exists in the central server')
+            m = tr('Remote directory exists in the central server')
         except Exception:
-            ftp.close()
+            ok = False
             m = tr('Remote directory does not exist')
+        finally:
+            ftp.close()
+        if not ok:
             return returnError(output, m, feedback)
 
         # Run FTP sync
@@ -290,7 +273,7 @@ class SendProjectsAndFilesToCloneFtp(QgsProcessingAlgorithm):
         feedback.pushInfo(tr('FTP directory') + ' %s' % ftpdir)
         direction = 'to' # we send data TO FTP
         excludedirs = parameters[self.FTP_EXCLUDE_REMOTE_SUBDIRS].strip()
-        ok, msg = ftp_sync(ftphost, ftpport, ftplogin, ftppass, localdir, ftpdir, direction, excludedirs, feedback)
+        ok, msg = ftp_sync(ftphost, ftpport, ftplogin, password, localdir, ftpdir, direction, excludedirs, feedback)
         if not ok:
             m = msg
             return returnError(output, m, feedback)

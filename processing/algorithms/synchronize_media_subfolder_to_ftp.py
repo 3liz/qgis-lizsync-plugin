@@ -183,44 +183,6 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
             self.OUTPUT_STRING: msg
         }
 
-        # Check internet
-        feedback.pushInfo(tr('Check internet connection'))
-        if not check_internet():
-            m = tr('No internet connection')
-            return returnError(output, m, feedback)
-
-        # Parameters
-        ftphost = parameters[self.CENTRAL_FTP_HOST]
-        ftplogin = parameters[self.CENTRAL_FTP_LOGIN]
-        ftpport = parameters[self.CENTRAL_FTP_PORT]
-        ftpdir = parameters[self.CENTRAL_FTP_REMOTE_DIR]
-        localdir = parameters[self.LOCAL_QGIS_PROJECT_FOLDER]
-
-        # Check FTP password
-        # Get FTP password
-        # First check if it is given in ini file
-        ls = lizsyncConfig()
-        ftppass = ls.variable('ftp:central/password')
-        # If not given, search for it in ~/.netrc
-        if not ftppass:
-            try:
-                auth = netrc.netrc().authenticators(ftphost)
-                if auth is not None:
-                    ftpuser, account, ftppass = auth
-            except (netrc.NetrcParseError, IOError):
-                m = tr('Could not retrieve password from ~/.netrc file')
-                return returnError(output, m, feedback)
-            if not ftppass:
-                m =tr('Could not retrieve password from ~/.netrc file or is empty')
-                return returnError(output, m, feedback)
-            else:
-                # Use None to force to use netrc file
-                # only for linux (lftp). we need to use password for winscp
-                if psys().lower().startswith('linux'):
-                    ftppass = None
-
-        msg = ''
-
         # Check localdir
         feedback.pushInfo(tr('CHECK LOCAL PROJECT DIRECTORY'))
         if not localdir or not os.path.isdir(localdir):
@@ -229,18 +191,37 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         else:
             m = tr('QGIS project local directory ok')
 
+        # Parameters
+        ftphost = parameters[self.CENTRAL_FTP_HOST]
+        ftplogin = parameters[self.CENTRAL_FTP_LOGIN]
+        ftpport = parameters[self.CENTRAL_FTP_PORT]
+        ftpdir = parameters[self.CENTRAL_FTP_REMOTE_DIR]
+        localdir = parameters[self.LOCAL_QGIS_PROJECT_FOLDER]
+
+        # Check ftp
+        ok, password, msg = get_ftp_password(ftphost, ftpport, ftplogin)
+        if not ok:
+            return returnError(output, msg, feedback)
+        ok, msg = check_ftp_connection(ftphost, ftpport, ftplogin, password)
+        if not ok:
+            return returnError(output, msg, feedback)
+
         # Check if ftpdir exists
+        ok = True
         feedback.pushInfo(tr('CHECK REMOTE DIRECTORY') + ' %s' % ftpdir )
         ftp = FTP()
         ftp.connect(ftphost, ftpport)
-        ftp.login(ftplogin, ftppass)
+        ftp.login(ftplogin, password)
         try:
             ftp.cwd(ftpdir)
             #do the code for successfull cd
-            tr('Remote directory exists in the central server')
+            m = tr('Remote directory exists in the central server')
         except Exception:
-            ftp.close()
+            ok = False
             m = tr('Remote directory does not exist')
+        finally:
+            ftp.close()
+        if not ok:
             return returnError(output, m, feedback)
 
         # Check if media/upload exists locally
@@ -252,7 +233,7 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
         if os.path.isdir(localdir):
             # Run FTP sync
             direction = 'to'
-            ok, msg = ftp_sync(ftphost, ftpport, ftplogin, ftppass, localdir, ftpdir, direction, '', feedback)
+            ok, msg = ftp_sync(ftphost, ftpport, ftplogin, password, localdir, ftpdir, direction, '', feedback)
             if not ok:
                 m = msg
                 return returnError(output, m, feedback)

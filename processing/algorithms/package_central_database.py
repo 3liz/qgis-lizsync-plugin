@@ -87,7 +87,6 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
     def createInstance(self):
         return PackageCentralDatabase()
 
-
     def initAlgorithm(self, config):
         """
         Here we define the inputs and output of the algorithm, along
@@ -230,8 +229,6 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         return True, msg
 
     def checkParameterValues(self, parameters, context):
-        # LizSync config file from ini
-        ls = lizsyncConfig()
 
         # Check postgresql binary path
         postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
@@ -247,16 +244,11 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         if not has_bin_file:
             return False, tr('The needed PostgreSQL binaries cannot be found in the specified path')
 
-        # Check that the connection name has been configured
-        connection_name = ls.variable('postgresql:central/name')
-        if not connection_name:
-            return False, tr('You must use the "Configure Lizsync plugin" alg to set the CENTRAL database connection name')
-
-        # Check that it corresponds to an existing connection
-        # dbpluginclass = createDbPlugin( 'postgis' )
-        # connections = [c.connectionName() for c in dbpluginclass.connections()]
-        # if connection_name not in connections:
-            # return False, tr('The configured connection name does not exists in QGIS')
+        # Check connection
+        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+        ok, uri, msg = getUriFromConnectionName(connection_name_central, True)
+        if not ok:
+            return False, msg
 
         return super(PackageCentralDatabase, self).checkParameterValues(parameters, context)
 

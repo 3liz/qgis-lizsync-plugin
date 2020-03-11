@@ -121,8 +121,6 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
         )
 
     def checkParameterValues(self, parameters, context):
-        # LizSync config file from ini
-        ls = lizsyncConfig()
 
         # Check if runit is checked
         runit = self.parameterAsBool(parameters, self.RUNIT, context)
@@ -131,16 +129,17 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
             ok = False
             return ok, msg
 
-        # Check that the connection name has been configured
-        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
-        if not connection_name_central:
-            return False, tr('You must use the "Configure Lizsync plugin" alg to set the central database connection name')
-
         # Check that it corresponds to an existing connection
+        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         dbpluginclass = createDbPlugin( 'postgis' )
         connections = [c.connectionName() for c in dbpluginclass.connections()]
         if connection_name_central not in connections:
             return False, tr('The configured connection name does not exists in QGIS')
+
+        # Check connection
+        ok, uri, msg = getUriFromConnectionName(connection_name_central, True)
+        if not ok:
+            return False, msg
 
         # Check database content
         ok, msg = self.checkSchema(parameters, context)
@@ -155,9 +154,6 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
             FROM information_schema.schemata
             WHERE schema_name = 'lizsync';
         '''
-        # LizSync config file from ini
-        ls = lizsyncConfig()
-
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         [header, data, rowCount, ok, error_message] = fetchDataFromSqlQuery(
             connection_name_central,

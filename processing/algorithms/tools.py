@@ -29,6 +29,9 @@ import netrc
 import re
 import time
 from ...qgis_plugin_tools.tools.i18n import tr
+import psycopg2
+from processing.tools.postgis import uri_from_name
+import ftplib
 
 def plugin_path(*args):
     """Get the path to plugin root folder.
@@ -46,17 +49,101 @@ def plugin_path(*args):
 
     return path
 
-def check_internet():
+def check_internet(timeout=5):
     # return True
     import requests
     # url='https://www.google.com/'
     url='https://www.3liz.com/images/flavicon.png'
-    timeout=5
     try:
         _ = requests.get(url, timeout=timeout)
         return True
     except requests.ConnectionError:
         return False
+
+def get_ftp_password(host, port, login):
+    # Check FTP password
+    # Get FTP password
+    # First check if it is given in ini file
+    ls = lizsyncConfig()
+    password = ls.variable('ftp:central/password')
+    # If not given, search for it in ~/.netrc
+    if not password:
+        try:
+            auth = netrc.netrc().authenticators(host)
+            if auth is not None:
+                ftpuser, account, password = auth
+        except (netrc.NetrcParseError, IOError):
+            m = tr('Could not retrieve password from ~/.netrc file')
+            return False, None, m
+        if not password:
+            m =tr('Could not retrieve password from ~/.netrc file or is empty')
+            return False, None, m
+        else:
+            # Use None to force to use netrc file
+            # only for linux (lftp). we need to use password for winscp
+            if psys().lower().startswith('linux'):
+                password = None
+
+    return True, password, ''
+
+def check_ftp_connection(host, port, login, password=None, timeout=5):
+    '''
+    Check FTP connection with timeout
+    '''
+    status = True
+    msg = ''
+
+    if not password:
+        ok, password, msg = get_ftp_password(host, port, login)
+        if not ok:
+            return False, msg
+
+    try:
+        ftp = ftplib.FTP()
+        ftp.connect(host, port, timeout)
+        try:
+            ftp.login(login, password)
+        except ftplib.all_errors as error:
+            msg = tr('Error while connecting to FTP server')
+            msg+= ' ' + str(error)
+            return False, msg
+    except ftplib.all_errors as error:
+        msg = tr('Error while connecting to FTP server')
+        msg+= ' ' + str(error)
+        return False, msg
+    finally:
+        ftp.close()
+
+    return True, ''
+
+def check_postgresql_connection(uri, timeout=5):
+    '''
+    Check connection to PostgreSQL database with timeout
+    '''
+    # Try to connect
+    conn = None
+    try:
+        if uri.service():
+            conn = psycopg2.connect (
+                service=uri.service(),
+                connect_timeout=timeout
+            )
+        else:
+            conn = psycopg2.connect (
+                host=uri.host(), database=uri.database(),
+                user=uri.username(), password=uri.password(),
+                connect_timeout=timeout
+            )
+        status = True
+        msg = tr('Database connection OK')
+    except (Exception, psycopg2.DatabaseError) as error:
+        status = False
+        msg = str(error)
+    finally:
+        if conn:
+            conn.close()
+
+    return status, msg
 
 def getUriFromConnectionName(connection_name, must_connect=True):
 
@@ -67,30 +154,13 @@ def getUriFromConnectionName(connection_name, must_connect=True):
 
     # Otherwise check QGIS QGIS3.ini settings for connection name
     status = True
-    uri = None
-    error_message = ''
-    connection = None
-    try:
-        dbpluginclass = createDbPlugin( 'postgis', connection_name )
-        connection = dbpluginclass.connect()
-    except BaseError as e:
-        status = False
-        error_message = e.msg
-    except:
-        status = False
-        error_message = tr('Cannot connect to database with') + ' %s' % connection_name
+    uri = uri_from_name(connection_name)
 
-    if not connection and must_connect:
-        return status, uri, error_message
-
-    db = dbpluginclass.database()
-    if not db:
-        status = False
-        error_message = tr('Unable to get database from connection')
-        return status, uri, error_message
-
-    uri = db.uri()
-    return status, uri, ''
+    if must_connect:
+        ok, msg = check_postgresql_connection(uri)
+        return ok, uri, msg
+    else:
+        return status, uri, ''
 
 def getUriFromConnectionNameUserland(connection_name, must_connect=True):
     # Use LizSync.ini content to find all connection parameters
@@ -125,12 +195,8 @@ def getUriFromConnectionNameUserland(connection_name, must_connect=True):
                 else:
                     continue
             if must_connect:
-                try:
-                    connector = PostGisDBConnector(uri)
-                    return status, uri, ''
-                except:
-                    error_message = tr('Cannot connect to database')
-                    ok = False
+                ok, msg = check_postgresql_connection(uri)
+                return ok, uri, msg
             else:
                 return True, uri, ''
             break
@@ -148,9 +214,8 @@ def fetchDataFromSqlQuery(connection_name, sql):
     ok = True
 
     # Get URI
-    status, uri, error_message = getUriFromConnectionName(connection_name)
-
-    if not uri:
+    status, uri, error_message = getUriFromConnectionName(connection_name, True)
+    if not uri or not status:
         ok = False
         return header, data, rowCount, ok, error_message
     try:
@@ -559,9 +624,11 @@ def pg_dump(feedback, postgresql_binary_path, connection_name, output_file_name,
         return False, messages
 
     # Get connection parameters
-    status, uri, error_message = getUriFromConnectionName(connection_name)
-    if not uri:
+    # And check we can connect
+    status, uri, error_message = getUriFromConnectionName(connection_name, True)
+    if not uri or not status:
         messages.append(tr('Error getting database connection information'))
+        messages.append(error_message)
         return status, messages
 
     # Create pg_dump command
@@ -625,10 +692,10 @@ def setQgisProjectOffline(qgis_directory, connection_name_central, connection_na
     # Get uri from connection names
     status_central, uri_central, error_message_central = getUriFromConnectionName(connection_name_central, False)
     status_clone, uri_clone, error_message_clone = getUriFromConnectionName(connection_name_clone, False)
-    if not status_central:
+    if not status_central or not uri_central:
         m = error_message_central
         return False, m
-    if not status_clone:
+    if not status_clone or not uri_clone:
         m = error_message_clone
         return False, m
 
