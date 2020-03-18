@@ -123,11 +123,14 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
         )
 
         # List of schemas to package
+        postgresql_schemas = ls.variable('postgresql:central/schemas')
+        if not postgresql_schemas:
+            postgresql_schemas='test'
         self.addParameter(
             QgsProcessingParameterString(
                 self.SCHEMAS,
                 tr('List of schemas to package, separated by commas. (schemas public, lizsync & audit are never processed)'),
-                defaultValue='test',
+                defaultValue=postgresql_schemas,
                 optional=False
             )
         )

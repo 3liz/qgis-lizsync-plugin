@@ -48,6 +48,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
     WINSCP_BINARY_PATH = 'WINSCP_BINARY_PATH'
 
     CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
+    SCHEMAS = 'SCHEMAS'
     CENTRAL_FTP_HOST = 'CENTRAL_FTP_HOST'
     CENTRAL_FTP_PORT = 'CENTRAL_FTP_PORT'
     CENTRAL_FTP_LOGIN = 'CENTRAL_FTP_LOGIN'
@@ -143,6 +144,19 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
             }
         })
         self.addParameter(db_param_a)
+
+        # List of schemas to package
+        postgresql_schemas = ls.variable('postgresql:central/schemas')
+        if not postgresql_schemas:
+            postgresql_schemas='test'
+        self.addParameter(
+            QgsProcessingParameterString(
+                self.SCHEMAS,
+                tr('List of schemas to package, separated by commas. (schemas public, lizsync & audit are never processed)'),
+                defaultValue=postgresql_schemas,
+                optional=False
+            )
+        )
 
         central_ftp_host = ls.variable('ftp:central/host')
         self.addParameter(
@@ -362,6 +376,7 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
         postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
 
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+        postgresql_schemas = parameters[self.SCHEMAS]
         ftp_central_host = parameters[self.CENTRAL_FTP_HOST]
         ftp_central_port = parameters[self.CENTRAL_FTP_PORT]
         ftp_central_user = parameters[self.CENTRAL_FTP_LOGIN]
@@ -400,6 +415,9 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
 
         ls.setVariable('postgresql:central/name', connection_name_central)
         feedback.pushInfo(tr('PostgreSQL connection to central database') + ' = ' + connection_name_central)
+
+        ls.setVariable('postgresql:central/schemas', postgresql_schemas)
+        feedback.pushInfo(tr('List of schemas to package, separated by commas. (schemas public, lizsync & audit are never processed)') + ' = ' + postgresql_schemas)
 
         ls.setVariable('ftp:central/host', ftp_central_host)
         feedback.pushInfo(tr('Central FTP Server host') + ' = ' + ftp_central_host)
