@@ -1,20 +1,6 @@
-"""
-/***************************************************************************
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *                                                                         *
- ***************************************************************************/
-"""
-
-__author__ = '3liz'
-__date__ = '2019-02-15'
-__copyright__ = '(C) 2019 by 3liz'
-
-# This will get replaced with a git SHA1 when you do a git archive
-
+__copyright__ = 'Copyright 2020, 3Liz'
+__license__ = 'GPL version 3'
+__email__ = 'info@3liz.org'
 __revision__ = '$Format:%H$'
 
 import configparser
@@ -275,14 +261,32 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
                     connection_name,
                     sql
                 )
-                if ok:
-                    feedback.pushInfo('* ' + sf + ' -- SUCCESS !')
-                else:
+                if not ok:
                     m = error_message
                     return returnError(output, m, feedback)
 
+                feedback.pushInfo('* ' + sf + ' -- SUCCESS !')
+
+        # Everything is fine, we now update to the plugin version
+        sql = '''
+            UPDATE lizsync.sys_structure_metadonnee
+            SET (version, date_ajout)
+            = ( '{}', now()::timestamp(0) );
+        '''.format(plugin_version)
+
+        _, _, _, ok, error_message = fetchDataFromSqlQuery(
+            connection_name,
+            sql
+        )
+        if not ok:
+            m = error_message
+            return returnError(output, m, feedback)
+
+        msg = tr('Lizsync database structure has been successfully upgraded.')
+        feedback.pushInfo(msg)
+
         output = {
             self.OUTPUT_STATUS: 1,
-            self.OUTPUT_STRING: tr('Lizsync database structure has been successfully upgraded.')
+            self.OUTPUT_STRING: msg
         }
         return output
