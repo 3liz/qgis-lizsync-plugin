@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 
 # Drop and recreate test databases
 echo ""
@@ -47,6 +46,7 @@ echo "Edit data in both databases"
 echo "##########################"
 # Two SQL scripts are provided, which you can adapt beforehand:
 psql service=lizsync_central -f lizsync/install/test_data/central_database_edition_sample.sql
+sleep 2
 psql service=lizsync_clone_a -f lizsync/install/test_data/clone_a_database_edition_sample.sql
 
 # Test diffs between the 2 test databases:

@@ -8,6 +8,42 @@
 *                                                                         *
 ***************************************************************************
 """
+# Original
+
+# CENTRAL : Get central database server id
+# CLONE   : Get clone database server id
+# CENTRAL : Get last synchro made from the central database to this clone
+# CENTRAL : Get audit log since last sync, calculate min and max event ids
+# CENTRAL : Insert a new synchronization item in central db
+# CLONE   : Replay SQL queries in clone db (disable triggers)
+# CENTRAL : Modify central server audit logged actions (sync_data replayed by)
+# CENTRAL : Modify central server synchronization item central->clone
+# CLONE   : Get all clone audit log
+# CENTRAL : Insert a new synchronization item in central db
+# CENTRAL : Replay SQL queries to central server db (SET SESSION lyzsync.server_from, lyzsync.server_to, lyzsync.sync_id
+# CLONE   : Delete all data from clone audit logged_actions
+# CENTRAL : Modify central server synchronization item clone->central
+
+# Evolution
+
+# CENTRAL : Get central database server id
+# CLONE   : Get clone database server id
+# CENTRAL : Get last synchro made from the central database to this clone
+# CENTRAL : Get audit log since last sync, calculate min and max event ids
+# CENTRAL : Insert a new synchronization item in central
+
+# CLONE   : Get all clone audit log
+# CENTRAL : Insert a new synchronization item in central db
+
+# PYTHON  : Compare central and clone logs
+
+# CLONE   : Replay modified SQL queries in clone db (disable triggers)
+# CENTRAL : Modify central server audit logged actions (sync_data replayed by)
+# CENTRAL : Modify central server synchronization item
+
+# CENTRAL : Replay modified SQL queries to central server db (SET SESSION lyzsync.server_from, lyzsync.server_to, lyzsync.sync_id)
+# CLONE   : Delete all data from clone audit logged_actions
+# CENTRAL : Modify central server synchronization item clone->central
 
 __author__ = '3liz'
 __date__ = '2018-12-19'
@@ -141,6 +177,126 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
 
         return super(SynchronizeDatabase, self).checkParameterValues(parameters, context)
 
+    def getLastAuditLogs(self, source='central', central_id, clone_id, excluded_columns):
+        '''
+        Get logs from audit logged_actions table
+        '''
+        if source == 'central':
+            # Get last synchro made from the central database to this clone
+            # Get audit log since this last sync
+            # We also get the SQL to replay via the get_event_sql function
+            sql = '''
+                WITH
+                last_sync AS (
+                    SELECT
+                        max_action_tstamp_tx,
+                        max_event_id
+                    FROM lizsync.history
+                    WHERE True
+                    AND server_from = '{central_id}'
+                    AND '{clone_id}' = ANY (server_to)
+                    AND sync_status = 'done'
+                    ORDER BY sync_time DESC
+                    LIMIT 1
+                ),
+                schemas AS (
+                    SELECT sync_schemas
+                    FROM lizsync.synchronized_schemas
+                    WHERE server_id = '{clone_id}'
+                    LIMIT 1
+                )
+                SELECT
+                    event_id,
+                    action_tstamp_tx::text AS action_tstamp_tx,
+                    concat(schema_name, '.', table_name) AS ident,
+                    action,
+                    CASE
+                        WHEN sync_data->>'origin' IS NULL THEN 'central'
+                        ELSE 'clone'
+                    END AS origine,
+                    Coalesce(
+                        lizsync.get_event_sql(event_id, '{uid_field}', {excluded_columns}),
+                        ''
+                    ) AS action
+                FROM audit.logged_actions, last_sync, schemas
+
+                WHERE True
+
+                -- modifications do not come from clone database
+                AND (sync_data->>'origin' != '{clone_id}' OR sync_data->>'origin' IS NULL)
+
+                -- modifications have not yet been replayed in the clone database
+                AND (NOT (sync_data->'replayed_by' ? '{clone_id}') OR sync_data->'replayed_by' = jsonb_build_object() )
+
+                -- modifications sont situées après la dernière synchronisation
+                -- MAX_ACTION_TSTAMP_TX Par ex: 2019-04-20 12:00:00+02
+                AND action_tstamp_tx > last_sync.max_action_tstamp_tx
+
+                -- et pour lesquelles l'ID est supérieur
+                -- MAX_EVENT_ID
+                AND event_id > last_sync.max_event_id
+
+                -- et pour les schémas listés
+                AND sync_schemas ? schema_name
+
+                ORDER BY event_id;
+            '''.format(
+                central_id=central_id,
+                clone_id=clone_id,
+                uid_field='uid',
+                excluded_columns=excluded_columns
+            )
+            ids = []
+            max_action_tstamp_tx = None
+            actions = []
+            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+                connection_name_central,
+                sql
+            )
+        else:
+            # Get all logs from clone database
+            sql = '''
+                SELECT
+                    event_id,
+                    action_tstamp_tx::text AS action_tstamp_tx,
+                    concat(schema_name, '.', table_name) AS ident,
+                    action,
+                    'clone' AS origine,
+                    Coalesce(
+                        lizsync.get_event_sql(event_id, '{0}', {1}),
+                        ''
+                    ) AS action
+                FROM audit.logged_actions
+                WHERE True
+                ORDER BY event_id;
+            '''.format(
+                uid_field,
+                excluded_columns
+            )
+            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+                connection_name_clone,
+                sql
+            )
+        if not ok:
+            error_message += ' ' + sql
+
+        return data, rowCount, ok, error_message
+
+    def analyseAuditLogs(self, central_logs, clone_logs, feedback)
+        '''
+        Parse logs and compare central and clone logs
+        Find conflicts and return modified logs
+        '''
+
+
+        return central_logs, clone_logs
+
+    def replayLogs(self, target='central', feedback):
+        '''
+        Replay logs (raw or updated) to the target database
+        '''
+        return
+
     def processAlgorithm(self, parameters, context, feedback):
 
         output = {
@@ -214,98 +370,40 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             feedback.pushInfo(tr('Clone id') + ' = %s' % clone_id)
 
 
-        # CENTRAL -> CLONE
-        feedback.pushInfo('****** CENTRAL TO CLONE *******')
+        # Get audit logs since last synchronization
+        # from central
+        feedback.pushInfo(tr('Get central server audit log since last synchronization'))
+        central_logs, central_count, central_ok, central_error_message = self.getLastAuditLogs('central', feedback)
+        if not central_ok:
+            return returnError(output, central_error_message, feedback)
 
-        # Get last synchro
-        sql = '''
-            SELECT
-                max_action_tstamp_tx::text AS max_action_tstamp_tx,
-                max_event_id
-            FROM lizsync.history
-            WHERE True
-            AND server_from = '{0}'
-            AND '{1}' = ANY (server_to)
-            AND sync_status = 'done'
-            ORDER BY sync_time DESC
-            LIMIT 1
-        '''.format(
-            central_id,
-            clone_id
-        )
-        last_sync = None
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
-            connection_name_central,
-            sql
-        )
+        # from clone
+        feedback.pushInfo(tr('Get clone audit log since last synchronization'))
+        clone_logs, clone_count, clone_ok, clone_error_message = self.getLastAuditLogs('clone', feedback)
+        if not clone_ok:
+            return returnError(output, clone_error_message, feedback)
+
+        # Analyse logs and handle conflicts
+        feedback.pushInfo(tr('Analyse logs and handle conflicts'))
+        central_logs, clone_logs, ok, error_message = self.analyseAuditLogs(central_id, clone_id)
         if not ok:
-            m = error_message+ ' '+ sql
-            return returnError(output, m, feedback)
-        for a in data:
-            last_sync = {
-                'max_action_tstamp_tx': a[0],
-                'max_event_id': a[1]
-            }
+            return returnError(output, error_message, feedback)
 
-        # Get audit log since last sync
-        # We also get the SQL to replay via the get_event_sql function
-        sql = '''
-            SELECT
-                event_id,
-                action_tstamp_tx::text AS action_tstamp_tx,
-                Coalesce(
-                    lizsync.get_event_sql(event_id, '{uid_field}', {excluded_columns}),
-                    ''
-                ) AS action
-            FROM audit.logged_actions,
-            (
-                SELECT sync_schemas
-                FROM lizsync.synchronized_schemas
-                WHERE server_id = '{clone_id}'
-                LIMIT 1
-            ) AS f
 
-            WHERE True
 
-            -- modifications do not come from clone database
-            AND (sync_data->>'origin' != '{clone_id}' OR sync_data->>'origin' IS NULL)
-
-            -- modifications have not yet been replayed in the clone database
-            AND (NOT (sync_data->'replayed_by' ? '{clone_id}') OR sync_data->'replayed_by' = jsonb_build_object() )
-
-            -- modifications sont situées après la dernière synchronisation
-            -- MAX_ACTION_TSTAMP_TX Par ex: 2019-04-20 12:00:00+02
-            AND action_tstamp_tx > '{max_action_tstamp_tx}'
-
-            -- et pour lesquelles l'ID est supérieur
-            -- MAX_EVENT_ID
-            AND event_id > {max_event_id}
-
-            -- et pour les schémas listés
-            AND sync_schemas ? schema_name
-
-            ORDER BY event_id;
-        '''.format(
-            uid_field=uid_field,
-            excluded_columns=excluded_columns,
-            clone_id=clone_id,
-            max_action_tstamp_tx=last_sync['max_action_tstamp_tx'],
-            max_event_id=last_sync['max_event_id']
-        )
-        ids = []
-        max_action_tstamp_tx = None
-        actions = []
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
-            connection_name_central,
-            sql
-        )
-        if not ok:
-            m = error_message+ ' '+ sql
-            return returnError(output, m, feedback)
         for a in data:
             ids.append(int(a[0]))
             max_action_tstamp_tx = a[1]
-            actions.append(a[2])
+            actions.append(a[5])
+            # store object
+            central_to_clone.append(a)
+
+        feedback.pushInfo(
+            'CENTRAL : ' + tr('Get audit logs since last synchronization')
+        )
+
+        return returnError(output, 'FIN', feedback)
+
         if rowCount > 0:
             feedback.pushInfo(
                 tr('Number of features to synchronize') + ' = {0}'.format(rowCount)
@@ -391,7 +489,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                 tr('Logged actions sync_data has been updated in the central database with the clone id')
             )
 
-            # Modify central server synchronization item
+            # Modify central server synchronization item central->clone
             sql = '''
                 UPDATE lizsync.history
                 SET sync_status = 'done'
@@ -423,33 +521,32 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         # CLONE -> CENTRAL
         feedback.pushInfo('****** CLONE TO CENTRAL *******')
 
-        # Get all clone audit log
-        # no filter by date because clone date cannot be trusted
-        # we choose to delete all audit logged_actions when sync is done
-        # to start fresh
-
-        # build SQL
-        sql = '''
-            SELECT
-                Coalesce(
-                    lizsync.get_event_sql(event_id, '{0}', {1}),
-                    ''
-                ) AS action
-            FROM audit.logged_actions
-            WHERE True
-            ORDER BY event_id;
-        '''.format(
-            uid_field,
-            excluded_columns
-        )
-        actions = []
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
-            connection_name_clone,
-            sql
-        )
-        if not ok:
-            m = error_message+ ' '+ sql
-            return returnError(output, m, feedback)
+        # sql = '''
+            # SELECT
+                # event_id,
+                # action_tstamp_tx::text AS action_tstamp_tx,
+                # concat(schema_name, '.', table_name) AS ident,
+                # action,
+                # 'clone' AS origine,
+                # Coalesce(
+                    # lizsync.get_event_sql(event_id, '{0}', {1}),
+                    # ''
+                # ) AS action
+            # FROM audit.logged_actions
+            # WHERE True
+            # ORDER BY event_id;
+        # '''.format(
+            # uid_field,
+            # excluded_columns
+        # )
+        # actions = []
+        # header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            # connection_name_clone,
+            # sql
+        # )
+        # if not ok:
+            # m = error_message+ ' '+ sql
+            # return returnError(output, m, feedback)
         if rowCount > 0:
             feedback.pushInfo(
                 tr('Number of features to synchronize') + ' = {0}'.format(rowCount)
@@ -524,7 +621,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                 m = error_message+ ' '+ sql
                 return returnError(output, m, feedback)
 
-            # Modify central server synchronization item
+            # Modify central server synchronization item clone->central
             sql = '''
                 UPDATE lizsync.history
                 SET sync_status = 'done'
@@ -554,3 +651,4 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             self.OUTPUT_STRING: tr('Two-way database synchronization done')
         }
         return output
+
