@@ -1,5 +1,15 @@
 ## CHANGELOG
 
+### 20/03/2020 Version 0.3.1
+
+* Tests - move and rename bash script to run_test.sh
+* Config - Add list of schemas in saved configuration
+* Package - Use parameterAsString for Additionnal SQL file input
+* FTP & Database - Check connections before proceeding
+* Synchronize db - remove unwanted parenthesis in simple SET clause
+* Deploy package & tools - Quote zip archive file in psql/pg_dump command
+* Upgrade - rename SQL file for upgrade to 0.3.0
+
 ### 03/03/2020 Version 0.3.0
 
 * Package & restore - Add an optionnal SQL file to run in clone after deploy

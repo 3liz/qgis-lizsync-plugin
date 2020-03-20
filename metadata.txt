@@ -11,7 +11,7 @@ name=LizSync
 qgisMinimumVersion=3.4
 description=QGIS plugin with processing algs to configure and use the LizSync PostgreSQL synchronization tools.
 
-version=0.3.0
+version=0.3.1
 author=3liz
 email=info@3liz.com
 about=QGIS plugin with processing algs to configure and use the LizSync PostgreSQL synchronization tools.
@@ -26,6 +26,15 @@ repository=https://github.com/3liz/qgis-lizsync-plugin
 
 # Uncomment the following line and add your changelog:
 changelog=
+  Version 0.3.1
+  * Tests - move and rename bash script to run_test.sh
+  * Config - Add list of schemas in saved configuration
+  * Package - Use parameterAsString for Additionnal SQL file input
+  * FTP & Database - Check connections before proceeding
+  * Synchronize db - remove unwanted parenthesis in simple SET clause
+  * Deploy package & tools - Quote zip archive file in psql/pg_dump command
+  * Upgrade - rename SQL file for upgrade to 0.3.0
+
   Version 0.3.0
   * Package & restore - Add an optionnal SQL file to run in clone after deploy
   * Synchronization - Add new option to exclude columns from sync
@@ -52,7 +61,7 @@ changelog=
   
 
 # Tags are comma separated with spaces allowed
-tags=water network, france
+tags=PostgreSQL, synchronization, field, clone
 
 homepage=https://github.com/3liz/qgis-lizsync-plugin
 category=Analysis
