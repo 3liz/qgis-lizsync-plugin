@@ -3,7 +3,8 @@
 echo ""
 echo "Drop and recreate test databases"
 echo "##########################"
-dropdb lizsync_central && dropdb lizsync_clone_a && createdb lizsync_central && createdb lizsync_clone_a
+dropdb lizsync_central && dropdb lizsync_clone_a && dropdb lizsync_clone_b
+createdb lizsync_central && createdb lizsync_clone_a && createdb lizsync_clone_b
 
 # You then need to create 2 PostgreSQL services: lizsync_central and lizsync_clone_a
 # Import test data
@@ -36,9 +37,14 @@ python3 lizsync/processing/standalone_processing_runner.py "lizsync:package_mast
 
 # Deploy a database package to the clone
 echo ""
-echo "Deploy a database package to the clone"
+echo "Deploy a database package to the clone a"
 echo "##########################"
 python3 lizsync/processing/standalone_processing_runner.py "lizsync:deploy_database_server_package" '{"CONNECTION_NAME_CENTRAL":"lizsync_central","CONNECTION_NAME_CLONE":"lizsync_clone_a","POSTGRESQL_BINARY_PATH":"/usr/bin/","ZIP_FILE":"/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/qgis_3liz_fake_ftp_remote_server/test/archives/archive.zip"}'
+
+echo ""
+echo "Deploy a database package to the clone b"
+echo "##########################"
+python3 lizsync/processing/standalone_processing_runner.py "lizsync:deploy_database_server_package" '{"CONNECTION_NAME_CENTRAL":"lizsync_central","CONNECTION_NAME_CLONE":"lizsync_clone_b","POSTGRESQL_BINARY_PATH":"/usr/bin/","ZIP_FILE":"/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/qgis_3liz_fake_ftp_remote_server/test/archives/archive.zip"}'
 
 # Edit data in both databases
 echo ""
@@ -48,15 +54,19 @@ echo "##########################"
 psql service=lizsync_central -f lizsync/install/test_data/central_database_edition_sample.sql
 sleep 2
 psql service=lizsync_clone_a -f lizsync/install/test_data/clone_a_database_edition_sample.sql
+sleep 2
+psql service=lizsync_clone_b -f lizsync/install/test_data/clone_b_database_edition_sample.sql
 
-# Test diffs between the 2 test databases:
-#install/test_data/quick_diff.sh lizsync_central lizsync_clone_a
-
-# Test data for pluviometers
-#psql service=lizsync_clone_a -c "SELECT * FROM test.pluviometers WHERE id > 30"
-#psql service=lizsync_central -c "SELECT * FROM test.pluviometers WHERE id > 30"
 
 exit
+
+
+# Test diffs between the 2 test databases:
+install/test_data/quick_diff.sh lizsync_central lizsync_clone_a
+
+# Test data for pluviometers
+psql service=lizsync_clone_a -c "SELECT * FROM test.pluviometers WHERE id > 30"
+psql service=lizsync_central -c "SELECT * FROM test.pluviometers WHERE id > 30"
 
 # Run Two-way database synchronization
 echo ""

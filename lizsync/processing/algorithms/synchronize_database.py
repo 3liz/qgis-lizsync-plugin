@@ -1,53 +1,8 @@
-"""
-***************************************************************************
-*                                                                         *
-*   This program is free software; you can redistribute it and/or modify  *
-*   it under the terms of the GNU General Public License as published by  *
-*   the Free Software Foundation; either version 2 of the License, or     *
-*   (at your option) any later version.                                   *
-*                                                                         *
-***************************************************************************
-"""
-# Original
-
-# CENTRAL : Get central database server id
-# CLONE   : Get clone database server id
-# CENTRAL : Get last synchro made from the central database to this clone
-# CENTRAL : Get audit log since last sync, calculate min and max event ids
-# CENTRAL : Insert a new synchronization item in central db
-# CLONE   : Replay SQL queries in clone db (disable triggers)
-# CENTRAL : Modify central server audit logged actions (sync_data replayed by)
-# CENTRAL : Modify central server synchronization item central->clone
-# CLONE   : Get all clone audit log
-# CENTRAL : Insert a new synchronization item in central db
-# CENTRAL : Replay SQL queries to central server db (SET SESSION lyzsync.server_from, lyzsync.server_to, lyzsync.sync_id
-# CLONE   : Delete all data from clone audit logged_actions
-# CENTRAL : Modify central server synchronization item clone->central
-
-# Evolution
-
-# CENTRAL : Get central database server id
-# CLONE   : Get clone database server id
-# CENTRAL : Get last synchro made from the central database to this clone
-# CENTRAL : Get audit log since last sync, calculate min and max event ids
-# CENTRAL : Insert a new synchronization item in central
-
-# CLONE   : Get all clone audit log
-# CENTRAL : Insert a new synchronization item in central db
-
-# PYTHON  : Compare central and clone logs
-
-# CLONE   : Replay modified SQL queries in clone db (disable triggers)
-# CENTRAL : Modify central server audit logged actions (sync_data replayed by)
-# CENTRAL : Modify central server synchronization item
-
-# CENTRAL : Replay modified SQL queries to central server db (SET SESSION lyzsync.server_from, lyzsync.server_to, lyzsync.sync_id)
-# CLONE   : Delete all data from clone audit logged_actions
-# CENTRAL : Modify central server synchronization item clone->central
-
-__author__ = '3liz'
-__date__ = '2018-12-19'
-__copyright__ = '(C) 2018 by 3liz'
+# -*- coding: utf-8 -*-
+__copyright__ = 'Copyright 2020, 3Liz'
+__license__ = 'GPL version 3'
+__email__ = 'info@3liz.org'
+__revision__ = '$Format:%H$'
 
 from PyQt5.QtCore import QCoreApplication
 from qgis.core import (
@@ -60,6 +15,9 @@ from qgis.core import (
 import processing
 from .tools import *
 from ...qgis_plugin_tools.tools.i18n import tr
+import json
+import csv
+import os
 
 class SynchronizeDatabase(QgsProcessingAlgorithm):
     """
@@ -177,7 +135,57 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
 
         return super(SynchronizeDatabase, self).checkParameterValues(parameters, context)
 
-    def getLastAuditLogs(self, source='central', central_id, clone_id, excluded_columns):
+    def getDatabaseId(self, source, feedback):
+        '''
+        Get database server id
+        '''
+        connection_name = self.connection_name_central
+        if source == 'clone':
+            connection_name = self.connection_name_clone
+        sql = '''
+            SELECT
+                server_id
+            FROM lizsync.server_metadata
+            LIMIT 1;
+        '''
+        _, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            connection_name,
+            sql
+        )
+        if not ok:
+            m = error_message+ ' '+ sql
+            feedback.reportError(m)
+            return None
+        if rowCount != 1:
+            m = tr('No database server id found in the server_metadata table')
+            feedback.reportError(m)
+            return None
+        for a in data:
+            db_id = a[0]
+            feedback.pushInfo(tr('Server id') + ' for %s database = %s' % (source, db_id))
+        return db_id
+
+    def getExcludedColumns(self):
+        '''
+        Get the list of excluded columns from synchronization
+        '''
+        ls = lizsyncConfig()
+        var_excluded_columns = ls.variable('general/excluded_columns')
+        if var_excluded_columns:
+            ec = [
+                "'{0}'".format(a.strip())
+                for a in var_excluded_columns.split(',')
+                if a.strip() not in ('uid')
+            ]
+            excluded_columns = "ARRAY[{0}]::text[]".format(
+                ','.join(ec)
+            )
+        else:
+            excluded_columns = 'NULL'
+
+        return excluded_columns
+
+    def getLastAuditLogs(self, source):
         '''
         Get logs from audit logged_actions table
         '''
@@ -208,6 +216,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                 SELECT
                     event_id,
                     action_tstamp_tx::text AS action_tstamp_tx,
+                    extract(epoch from action_tstamp_tx)::integer AS action_tstamp_epoch,
                     concat(schema_name, '.', table_name) AS ident,
                     action,
                     CASE
@@ -215,10 +224,27 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                         ELSE 'clone'
                     END AS origine,
                     Coalesce(
-                        lizsync.get_event_sql(event_id, '{uid_field}', {excluded_columns}),
+                        lizsync.get_event_sql(
+                            event_id,
+                            '{uid_field}',
+                            array_cat(
+                                {excluded_columns},
+                                array_remove(akeys(changed_fields), s)
+                            )
+                        ),
                         ''
-                    ) AS action
-                FROM audit.logged_actions, last_sync, schemas
+                    ) AS action,
+                    s AS updated_field,
+                    row_data->'{uid_field}' AS uid,
+                    CASE
+                        WHEN sync_data->>'action_tstamp_tx' IS NOT NULL
+                        AND sync_data->>'origin' IS NOT NULL
+                            THEN extract(epoch from Cast(sync_data->>'action_tstamp_tx' AS TIMESTAMP WITH TIME ZONE))::integer
+                        ELSE extract(epoch from action_tstamp_tx)::integer
+                    END AS original_action_tstamp_tx
+                FROM audit.logged_actions
+                LEFT JOIN skeys(changed_fields) AS s ON TRUE,
+                last_sync, schemas
 
                 WHERE True
 
@@ -241,16 +267,13 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
 
                 ORDER BY event_id;
             '''.format(
-                central_id=central_id,
-                clone_id=clone_id,
-                uid_field='uid',
-                excluded_columns=excluded_columns
+                central_id=self.central_id,
+                clone_id=self.clone_id,
+                uid_field=self.uid_field,
+                excluded_columns=self.excluded_columns
             )
-            ids = []
-            max_action_tstamp_tx = None
-            actions = []
-            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
-                connection_name_central,
+            _, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+                self.connection_name_central,
                 sql
             )
         else:
@@ -259,22 +282,33 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                 SELECT
                     event_id,
                     action_tstamp_tx::text AS action_tstamp_tx,
+                    extract(epoch from action_tstamp_tx)::integer AS action_tstamp_epoch,
                     concat(schema_name, '.', table_name) AS ident,
                     action,
                     'clone' AS origine,
                     Coalesce(
-                        lizsync.get_event_sql(event_id, '{0}', {1}),
+                        lizsync.get_event_sql(
+                            event_id,
+                            '{uid_field}',
+                            array_cat(
+                                {excluded_columns},
+                                array_remove(akeys(changed_fields), s)
+                            )
+                        ),
                         ''
-                    ) AS action
+                    ) AS action,
+                    s AS updated_field,
+                    row_data->'{uid_field}' AS uid
                 FROM audit.logged_actions
+                LEFT JOIN skeys(changed_fields) AS s ON TRUE
                 WHERE True
                 ORDER BY event_id;
             '''.format(
-                uid_field,
-                excluded_columns
+                uid_field=self.uid_field,
+                excluded_columns=self.excluded_columns
             )
-            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
-                connection_name_clone,
+            _, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+                self.connection_name_clone,
                 sql
             )
         if not ok:
@@ -282,136 +316,129 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
 
         return data, rowCount, ok, error_message
 
-    def analyseAuditLogs(self, central_logs, clone_logs, feedback)
+    def analyseAuditLogs(self, central_logs, clone_logs, feedback):
         '''
         Parse logs and compare central and clone logs
         Find conflicts and return modified logs
         '''
+        # Rule to apply on UPDATE conflict
+        # same table, same uid, same column
+        # rule = 'clone'
+        # rule = 'central'
+        # rule = 'last_audited'
+        rule = 'last_modified'
 
-
-        return central_logs, clone_logs
-
-    def replayLogs(self, target='central', feedback):
-        '''
-        Replay logs (raw or updated) to the target database
-        '''
-        return
-
-    def processAlgorithm(self, parameters, context, feedback):
-
-        output = {
-            self.OUTPUT_STATUS: 1,
-            self.OUTPUT_STRING: ''
+        ids, conflicts = [], []
+        max_action_tstamp_tx, min_event_id, max_event_id = None, None, None
+        central_removed_logs_indexes = []
+        logs_indexes_to_remove = {
+            'central': [],
+            'clone': []
         }
 
-        uid_field = 'uid'
-        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
-        connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
+        if len(central_logs) > 0:
+            for ai, central in enumerate(central_logs):
+                ids.append(int(central[0]))
+                max_action_tstamp_tx = central[1]
+                # manage UPDATES
+                if central[4] == 'U':
+                    # Loop throuhg clone log
+                    for bi, clone in enumerate(clone_logs):
+                        # Search for conflicts
+                        if (
+                        # Update
+                        clone[4] == 'U' \
+                        # same table
+                        and central[3] == clone[3] \
+                        # same field
+                        and central[7] == clone[7] \
+                        # same feature (same uid)
+                        and central[8] == clone[8] \
+                        ):
+                            if rule =='clone':
+                                # Clone always wins
+                                looser  = 'central'
+                            elif rule == 'central':
+                                # Central always wins
+                                # BEWARE : central means also "synced from another clone"
+                                looser  = 'clone'
+                            elif rule == 'last_modified':
+                                # Compare original action_tstamp_tx
+                                looser = 'clone' if int(clone[2]) < int(central[9]) else 'central'
+                            elif rule == 'last_audited':
+                                # Compare clone action timestamp with central action timestamp
+                                # Beware central one can come from another clone sync
+                                looser = 'clone' if int(clone[2]) < int(central[2]) else 'central'
 
-        # Send some information to the user
-        feedback.pushInfo(tr('Internet connection OK'))
+                            # Keep conflict for further information
+                            conflict = {
+                                'table': central[3],
+                                'uid': central[8],
+                                'central': central[6],
+                                'clone': clone[6],
+                                'rejected': looser,
+                                'rule': rule
+        }
+                            conflicts.append(conflict)
 
-        # Compute the number of steps to display within the progress bar
-        total = 100.0 / 2
+                            # Add loose index for further deletion
+                            r = ai if looser == 'central' else bi
+                            logs_indexes_to_remove[looser].append(r)
 
-        central_id = None
-        clone_id = None
-
-        # Get the list of excluded columns
-        ls = lizsyncConfig()
-        var_excluded_columns = ls.variable('general/excluded_columns')
-        if var_excluded_columns:
-            ec = [
-                "'{0}'".format(a.strip())
-                for a in var_excluded_columns.split(',')
-                if a.strip() not in ('uid')
-            ]
-            excluded_columns = "ARRAY[{0}]::text[]".format(
-                ','.join(ec)
-            )
-        else:
-            excluded_columns = 'NULL'
-
-        # Get central database server id
-        sql = '''
-            SELECT
-                server_id
-            FROM lizsync.server_metadata
-            LIMIT 1;
-        '''
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
-            connection_name_central,
-            sql
-        )
-        if not ok:
-            feedback.pushInfo(sql)
-            m = error_message+ ' '+ sql
-            return returnError(output, m, feedback)
-        for a in data:
-            central_id = a[0]
-            feedback.pushInfo(tr('Server id') +' = %s' % central_id)
-
-        # Get clone database server id
-        sql = '''
-            SELECT
-                server_id
-            FROM lizsync.server_metadata
-            LIMIT 1;
-        '''
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
-            connection_name_clone,
-            sql
-        )
-        if not ok:
-            m = error_message+ ' '+ sql
-            return returnError(output, m, feedback)
-        for a in data:
-            clone_id = a[0]
-            feedback.pushInfo(tr('Clone id') + ' = %s' % clone_id)
-
-
-        # Get audit logs since last synchronization
-        # from central
-        feedback.pushInfo(tr('Get central server audit log since last synchronization'))
-        central_logs, central_count, central_ok, central_error_message = self.getLastAuditLogs('central', feedback)
-        if not central_ok:
-            return returnError(output, central_error_message, feedback)
-
-        # from clone
-        feedback.pushInfo(tr('Get clone audit log since last synchronization'))
-        clone_logs, clone_count, clone_ok, clone_error_message = self.getLastAuditLogs('clone', feedback)
-        if not clone_ok:
-            return returnError(output, clone_error_message, feedback)
-
-        # Analyse logs and handle conflicts
-        feedback.pushInfo(tr('Analyse logs and handle conflicts'))
-        central_logs, clone_logs, ok, error_message = self.analyseAuditLogs(central_id, clone_id)
-        if not ok:
-            return returnError(output, error_message, feedback)
-
-
-
-        for a in data:
-            ids.append(int(a[0]))
-            max_action_tstamp_tx = a[1]
-            actions.append(a[5])
-            # store object
-            central_to_clone.append(a)
-
-        feedback.pushInfo(
-            'CENTRAL : ' + tr('Get audit logs since last synchronization')
-        )
-
-        return returnError(output, 'FIN', feedback)
-
-        if rowCount > 0:
-            feedback.pushInfo(
-                tr('Number of features to synchronize') + ' = {0}'.format(rowCount)
-            )
             # Calculate min and max event ids
             min_event_id = min(ids)
             max_event_id = max(ids)
 
+            # Delete lines from logs based on conflict resolution
+            for i in sorted(logs_indexes_to_remove['central'], reverse=True):
+                del(central_logs[i])
+            for i in sorted(logs_indexes_to_remove['clone'], reverse=True):
+                del(clone_logs[i])
+
+            # Store conflicts
+            conflict_file = os.path.abspath(
+                os.path.join(
+                    QgsApplication.qgisSettingsDirPath(),
+                    'LizSync_conflicts.csv'
+            )
+        )
+            conflict_file_exists = os.path.isfile(conflict_file)
+            mode = 'w'
+            if conflict_file_exists:
+                mode = 'a'
+            fieldnames = ['table', 'uid', 'central', 'clone', 'rejected', 'rule']
+            with open(conflict_file, mode, newline='') as csvfile:
+                writer = csv.DictWriter(
+                    csvfile,
+                    fieldnames=fieldnames
+        )
+                if not conflict_file_exists:
+                    writer.writeheader()
+                for c in conflicts:
+                    writer.writerow(c)
+
+            # Set needed data
+            self.max_action_tstamp_tx = max_action_tstamp_tx
+            self.min_event_id = min_event_id
+            self.max_event_id = max_event_id
+            self.ids = ids
+
+        return central_logs, clone_logs, conflicts
+
+    def replayLogs(self, target, logs, feedback):
+        '''
+        Replay logs (raw or updated) to the target database
+        '''
+
+        feedback.pushInfo(
+            tr('Number of features to synchronize') + ' to {} = {}'.format(
+                target,
+                len(logs)
+        )
+
+            )
+
+        if target == 'clone':
             # Insert a new synchronization item in central db
             sql = '''
                 INSERT INTO lizsync.history (
@@ -427,17 +454,17 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                 RETURNING
                     sync_id
             '''.format(
-                central_id, clone_id,
-                min_event_id, max_event_id, max_action_tstamp_tx
+                self.central_id, self.clone_id,
+                self.min_event_id, self.max_event_id, self.max_action_tstamp_tx
             )
 
-            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
-                connection_name_central,
+            _, data, _, ok, error_message = fetchDataFromSqlQuery(
+                self.connection_name_central,
                 sql
             )
             if not ok:
                 m = error_message+ ' '+ sql
-                return returnError(output, m, feedback)
+                return False, m
             for a in data:
                 sync_id = a[0]
                 feedback.pushInfo(
@@ -446,19 +473,21 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
 
             # Replay SQL queries in clone db
             # We disable triggers to avoid adding more rows to the local audit logged_actions table
-            sql = '''
-                SET session_replication_role = replica;
+            # TODO : write SQL into file and use psql
+            sql = ' SET session_replication_role = replica;'
+            for a in logs:
+                sql+= '''
                 {0};
-                SET session_replication_role = DEFAULT;
-            '''.format( ';'.join(actions) )
+                '''.format(a[6])
+            sql+= ' SET session_replication_role = DEFAULT;'
             # feedback.pushInfo(sql)
-            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
-                connection_name_clone,
+            _, _, _, ok, error_message = fetchDataFromSqlQuery(
+                self.connection_name_clone,
                 sql
             )
             if not ok:
                 m = error_message+ ' '+ sql
-                return returnError(output, m, feedback)
+                return False, m
             feedback.pushInfo(
                 tr('SQL queries have been replayed from the central to the clone database')
             )
@@ -469,22 +498,22 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                 SET sync_data = jsonb_set(
                     sync_data,
                     '{{"replayed_by"}}',
-                    sync_data->'replayed_by' || jsonb_build_object('{0}', '{1}'),
+                    sync_data->'replayed_by' || jsonb_build_object('{clone_id}', '{sync_id}'),
                     true
                 )
-                WHERE event_id IN ({2})
+                WHERE event_id IN ({ids})
             '''.format(
-                clone_id,
-                sync_id,
-                ', '.join([str(i) for i in ids])
+                clone_id=self.clone_id,
+                sync_id=sync_id,
+                ids=', '.join([str(i) for i in self.ids])
             )
-            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
-                connection_name_central,
+            _, _, _, ok, error_message = fetchDataFromSqlQuery(
+                self.connection_name_central,
                 sql
             )
             if not ok:
                 m = error_message+ ' '+ sql
-                return returnError(output, m, feedback)
+                return False, m
             feedback.pushInfo(
                 tr('Logged actions sync_data has been updated in the central database with the clone id')
             )
@@ -498,61 +527,18 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             '''.format(
                 sync_id
             )
-            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
-                connection_name_central,
+            _, _, _, ok, error_message = fetchDataFromSqlQuery(
+                self.connection_name_central,
                 sql
             )
             if not ok:
                 m = error_message+ ' '+ sql
-                return returnError(output, m, feedback)
+                return False, m
             feedback.pushInfo(
                 tr('History sync_status has been updated to "done" in the central database')
             )
 
-        else:
-            # No data to sync
-            feedback.pushInfo(
-                tr('No data to synchronize from the central database')
-            )
-
-        feedback.setProgress(int(1 * total))
-
-
-        # CLONE -> CENTRAL
-        feedback.pushInfo('****** CLONE TO CENTRAL *******')
-
-        # sql = '''
-            # SELECT
-                # event_id,
-                # action_tstamp_tx::text AS action_tstamp_tx,
-                # concat(schema_name, '.', table_name) AS ident,
-                # action,
-                # 'clone' AS origine,
-                # Coalesce(
-                    # lizsync.get_event_sql(event_id, '{0}', {1}),
-                    # ''
-                # ) AS action
-            # FROM audit.logged_actions
-            # WHERE True
-            # ORDER BY event_id;
-        # '''.format(
-            # uid_field,
-            # excluded_columns
-        # )
-        # actions = []
-        # header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
-            # connection_name_clone,
-            # sql
-        # )
-        # if not ok:
-            # m = error_message+ ' '+ sql
-            # return returnError(output, m, feedback)
-        if rowCount > 0:
-            feedback.pushInfo(
-                tr('Number of features to synchronize') + ' = {0}'.format(rowCount)
-            )
-            for a in data:
-                actions.append(a[0])
+        if target == 'central':
 
             # Insert a new synchronization item in central db
             sql = '''
@@ -569,17 +555,17 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             RETURNING
                 sync_id
             '''.format(
-                clone_id,
-                central_id
+                self.clone_id,
+                self.central_id
             )
             sync_id = None
-            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
-                connection_name_central,
+            _, data, _, ok, error_message = fetchDataFromSqlQuery(
+                self.connection_name_central,
                 sql
             )
             if not ok:
                 m = error_message+ ' '+ sql
-                return returnError(output, m, feedback)
+                return False, m
             for a in data:
                 sync_id = a[0]
                 feedback.pushInfo(
@@ -589,37 +575,84 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             # Replay SQL queries to central server db
             # The session variables are used by the audit function
             # to fill the sync_data field
-            sql = '''
-            SET SESSION "lizsync.server_from" = '{0}';
-            SET SESSION "lizsync.server_to" = '{1}';
-            SET SESSION "lizsync.sync_id" = '{2}';
-            {3}
+            sql_session = 'SET SESSION "lizsync.server_from" = \'{}\';'.format(self.clone_id)
+            sql_session+= 'SET SESSION "lizsync.server_to" = \'{}\';'.format(self.central_id)
+            sql_session+= 'SET SESSION "lizsync.sync_id" = \'{}\';'.format(sync_id)
+
+            # Store SQL query to update central logs afterward with original log timestamp
+            sql_update_logs = ''
+
+            # Loop through logs and replay action
+            # We need to query one by one to be able to update the sync_data->action_tstamp_tx afterwards
+            # by searching action = sql
+            for log in logs:
+                # Add action SQL
+                sql = sql_session + '''{action};'''.format(
+                    action=log[6]
+                )
+                # Replay this SQL containing in the central server
+                _, _, _, ok, error_message = fetchDataFromSqlQuery(
+                    self.connection_name_central,
+                    sql
+                )
+                if not ok:
+                    m = error_message+ ' '+ sql
+                    return False, m
+
+                # Add UPDATE clause in SQL query which will be run afterwards
+                sql_update_logs+= '''
+                UPDATE audit.logged_actions
+                SET sync_data = sync_data || jsonb_build_object(
+                    'action_tstamp_tx',
+                    Cast('{timestamp}' AS TIMESTAMP WITH TIME ZONE)
+                )
+                WHERE True
+                AND sync_data->'replayed_by'->>'{central_id}' = '{sync_id}'
+                AND client_query = '{query}'
+                AND action = '{action}'
+                AND concat(schema_name, '.', table_name) = '{ident}';
             '''.format(
-                clone_id,
-                central_id,
-                sync_id,
-                ';'.join(actions)
+                    timestamp=log[1],
+                    central_id=self.central_id,
+                    sync_id=sync_id,
+                    query=sql.replace("'", "''"),
+                    action=log[4],
+                    ident=log[3]
             )
-            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
-                connection_name_central,
+            feedback.pushInfo(
+                tr('SQL queries have been replayed from the clone to the central database')
+            )
+
+            # Update central logs to keep original action timestamp
+            sql = sql_update_logs
+            _, _, _, ok, error_message = fetchDataFromSqlQuery(
+                self.connection_name_central,
                 sql
             )
             if not ok:
                 m = error_message+ ' '+ sql
-                return returnError(output, m, feedback)
+                return False, m
+
+            feedback.pushInfo(
+                tr('Logged actions sync_data has been updated in the central database with the original timestamp')
+            )
 
             # Delete all data from clone audit logged_actions
             sql = '''
             TRUNCATE audit.logged_actions
             RESTART IDENTITY;
             '''
-            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
-                connection_name_clone,
+            _, _, _, ok, error_message = fetchDataFromSqlQuery(
+                self.connection_name_clone,
                 sql
             )
             if not ok:
                 m = error_message+ ' '+ sql
-                return returnError(output, m, feedback)
+                return False, m
+
+            feedback.pushInfo(
+                tr('Logged actions has been deleted in clone database')
+            )
 
             # Modify central server synchronization item clone->central
             sql = '''
@@ -630,21 +663,92 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             '''.format(
                 sync_id
             )
-            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
-                connection_name_central,
+            _, _, _, ok, error_message = fetchDataFromSqlQuery(
+                self.connection_name_central,
                 sql
             )
             if not ok:
                 m = error_message+ ' '+ sql
-                return returnError(output, m, feedback)
+                return False, m
+
+            feedback.pushInfo(
+                tr('History sync_status has been updated to "done" in the central database')
+            )
+
+        return True, ''
+
+    def processAlgorithm(self, parameters, context, feedback):
+        '''
+        Run the needed steps for bi-directionnal database synchronization
+        '''
+        output = {
+            self.OUTPUT_STATUS: 1,
+            self.OUTPUT_STRING: ''
+        }
+
+        self.uid_field = 'uid'
+        self.excluded_columns = self.getExcludedColumns()
+        self.connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+        self.connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
+
+        # Compute the number of steps to display within the progress bar
+        total = 100.0 / 2
+
+        # Get database servers id
+        self.central_id = self.getDatabaseId('central', feedback)
+        self.clone_id = self.getDatabaseId('clone', feedback)
+        if not self.central_id or not self.clone_id:
+            return returnError(output, '', feedback)
+
+        # Get audit logs since last synchronization
+        # from central
+        feedback.pushInfo(tr('Get central server audit log since last synchronization'))
+        central_logs, central_count, central_ok, central_error = self.getLastAuditLogs('central')
+        if not central_ok:
+            return returnError(output, central_error, feedback)
+
+        # from clone
+        feedback.pushInfo(tr('Get clone audit log since last synchronization'))
+        clone_logs, clone_count, clone_ok, clone_error = self.getLastAuditLogs('clone')
+        if not clone_ok:
+            return returnError(output, clone_error, feedback)
+
+        # Analyse logs and handle conflicts
+        feedback.pushInfo(tr('Analyse logs and handle conflicts'))
+        central_logs, clone_logs, conflicts = self.analyseAuditLogs(
+            central_logs,
+            clone_logs,
+            feedback
+        )
+        print('****CONFLICTS****')
+        print(json.dumps(conflicts, sort_keys=True, indent=4) )
+
+        # Replay logs
+
+        # central > clone
+        feedback.pushInfo(tr('Replay central logs on clone database'))
+        if len(central_logs) > 0:
+            ok, msg = self.replayLogs('clone', central_logs, feedback)
+            if not ok:
+                return returnError(output, msg, feedback)
         else:
-            # No data to sync
+            feedback.pushInfo(
+                tr('No data to synchronize from the central database')
+            )
+
+        # clone > central
+        feedback.pushInfo(tr('Replay clone logs on central database'))
+        if len(clone_logs) > 0:
+            ok, msg = self.replayLogs('central', clone_logs, feedback)
+            if not ok:
+                return returnError(output, msg, feedback)
+        else:
             feedback.pushInfo(
                 tr('No data to synchronize from the clone database')
             )
 
 
-        feedback.setProgress(int(2 * total))
+        # feedback.setProgress(int(1 * total))
 
         output = {
             self.OUTPUT_STATUS: 1,

@@ -2,7 +2,7 @@ CENTRAL=$1
 CLONE=$2
 CENTRAL_FILE="/tmp/$CENTRAL.sql"
 CLONE_FILE="/tmp/$CLONE.sql"
-SCHEMA="test"
+SCHEMA=$3
 
 # SCHEMA
 echo "***********************"
