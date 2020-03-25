@@ -18,6 +18,11 @@ SET row_security = off;
 
 SET default_tablespace = '';
 
+-- conflicts conflicts_pkey
+ALTER TABLE ONLY lizsync.conflicts
+    ADD CONSTRAINT conflicts_pkey PRIMARY KEY (id);
+
+
 -- history history_pkey
 ALTER TABLE ONLY lizsync.history
     ADD CONSTRAINT history_pkey PRIMARY KEY (sync_id);

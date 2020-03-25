@@ -20,6 +20,39 @@ SET default_tablespace = '';
 
 SET default_with_oids = false;
 
+-- conflicts
+CREATE TABLE lizsync.conflicts (
+    id bigint NOT NULL,
+    conflict_time timestamp with time zone DEFAULT now() NOT NULL,
+    object_table text,
+    object_uid uuid,
+    clone_id uuid,
+    central_event_id bigint,
+    central_event_timestamp timestamp with time zone,
+    central_sql text,
+    clone_sql text,
+    rejected text,
+    rule_applied text
+);
+
+
+-- conflicts
+COMMENT ON TABLE lizsync.conflicts IS 'Store conflicts resolution made during bidirectionnal database synchronizations.';
+
+
+-- conflicts_id_seq
+CREATE SEQUENCE lizsync.conflicts_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+-- conflicts_id_seq
+ALTER SEQUENCE lizsync.conflicts_id_seq OWNED BY lizsync.conflicts.id;
+
+
 -- history
 CREATE TABLE lizsync.history (
     sync_id uuid DEFAULT (md5(((random())::text || (clock_timestamp())::text)))::uuid NOT NULL,
@@ -76,6 +109,10 @@ CREATE SEQUENCE lizsync.sys_structure_metadonnee_id_seq
 
 -- sys_structure_metadonnee_id_seq
 ALTER SEQUENCE lizsync.sys_structure_metadonnee_id_seq OWNED BY lizsync.sys_structure_metadonnee.id;
+
+
+-- conflicts id
+ALTER TABLE ONLY lizsync.conflicts ALTER COLUMN id SET DEFAULT nextval('lizsync.conflicts_id_seq'::regclass);
 
 
 -- sys_structure_metadonnee id

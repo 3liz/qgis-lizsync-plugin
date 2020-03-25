@@ -15,8 +15,6 @@ from qgis.core import (
 import processing
 from .tools import *
 from ...qgis_plugin_tools.tools.i18n import tr
-import json
-import csv
 import os
 
 class SynchronizeDatabase(QgsProcessingAlgorithm):
@@ -190,6 +188,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         Get logs from audit logged_actions table
         '''
         if source == 'central':
+
             # Get last synchro made from the central database to this clone
             # Get audit log since this last sync
             # We also get the SQL to replay via the get_event_sql function
@@ -372,13 +371,15 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
 
                             # Keep conflict for further information
                             conflict = {
+                                'event_id': central[0],
+                                'event_timestamp': central[1],
                                 'table': central[3],
                                 'uid': central[8],
-                                'central': central[6],
-                                'clone': clone[6],
+                                'central_sql': central[6],
+                                'clone_sql': clone[6],
                                 'rejected': looser,
-                                'rule': rule
-        }
+                                'rule_applied': rule
+                            }
                             conflicts.append(conflict)
 
                             # Add loose index for further deletion
@@ -395,28 +396,6 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             for i in sorted(logs_indexes_to_remove['clone'], reverse=True):
                 del(clone_logs[i])
 
-            # Store conflicts
-            conflict_file = os.path.abspath(
-                os.path.join(
-                    QgsApplication.qgisSettingsDirPath(),
-                    'LizSync_conflicts.csv'
-            )
-        )
-            conflict_file_exists = os.path.isfile(conflict_file)
-            mode = 'w'
-            if conflict_file_exists:
-                mode = 'a'
-            fieldnames = ['table', 'uid', 'central', 'clone', 'rejected', 'rule']
-            with open(conflict_file, mode, newline='') as csvfile:
-                writer = csv.DictWriter(
-                    csvfile,
-                    fieldnames=fieldnames
-        )
-                if not conflict_file_exists:
-                    writer.writeheader()
-                for c in conflicts:
-                    writer.writerow(c)
-
             # Set needed data
             self.max_action_tstamp_tx = max_action_tstamp_tx
             self.min_event_id = min_event_id
@@ -429,14 +408,12 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
         '''
         Replay logs (raw or updated) to the target database
         '''
-
         feedback.pushInfo(
             tr('Number of features to synchronize') + ' to {} = {}'.format(
                 target,
                 len(logs)
-        )
-
             )
+        )
 
         if target == 'clone':
             # Insert a new synchronization item in central db
@@ -457,7 +434,6 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                 self.central_id, self.clone_id,
                 self.min_event_id, self.max_event_id, self.max_action_tstamp_tx
             )
-
             _, data, _, ok, error_message = fetchDataFromSqlQuery(
                 self.connection_name_central,
                 sql
@@ -465,6 +441,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             if not ok:
                 m = error_message+ ' '+ sql
                 return False, m
+
             for a in data:
                 sync_id = a[0]
                 feedback.pushInfo(
@@ -488,6 +465,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             if not ok:
                 m = error_message+ ' '+ sql
                 return False, m
+
             feedback.pushInfo(
                 tr('SQL queries have been replayed from the central to the clone database')
             )
@@ -514,6 +492,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             if not ok:
                 m = error_message+ ' '+ sql
                 return False, m
+
             feedback.pushInfo(
                 tr('Logged actions sync_data has been updated in the central database with the clone id')
             )
@@ -534,6 +513,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             if not ok:
                 m = error_message+ ' '+ sql
                 return False, m
+
             feedback.pushInfo(
                 tr('History sync_status has been updated to "done" in the central database')
             )
@@ -611,14 +591,15 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                 AND client_query = '{query}'
                 AND action = '{action}'
                 AND concat(schema_name, '.', table_name) = '{ident}';
-            '''.format(
+                '''.format(
                     timestamp=log[1],
                     central_id=self.central_id,
                     sync_id=sync_id,
                     query=sql.replace("'", "''"),
                     action=log[4],
                     ident=log[3]
-            )
+                )
+
             feedback.pushInfo(
                 tr('SQL queries have been replayed from the clone to the central database')
             )
@@ -653,6 +634,7 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             feedback.pushInfo(
                 tr('Logged actions has been deleted in clone database')
             )
+
 
             # Modify central server synchronization item clone->central
             sql = '''
@@ -720,8 +702,6 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
             clone_logs,
             feedback
         )
-        print('****CONFLICTS****')
-        print(json.dumps(conflicts, sort_keys=True, indent=4) )
 
         # Replay logs
 
@@ -747,6 +727,48 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
                 tr('No data to synchronize from the clone database')
             )
 
+        # Store conflicts
+        if len(conflicts) > 0:
+            sql = '''
+            INSERT INTO lizsync.conflicts
+            ("object_table", "object_uid", "clone_id",
+            "central_event_id", "central_event_timestamp",
+            "central_sql", "clone_sql", "rejected", "rule_applied"
+            ) VALUES
+            '''
+            sep = ''
+            for c in conflicts:
+                sql+= sep + ''' (
+                '{table}', '{uid}', '{clone_id}',
+                {event_id}, '{event_timestamp}',
+                '{central_sql}', '{clone_sql}', '{rejected}', '{rule_applied}'
+                )
+                ''' .format(
+                    table=c['table'],
+                    uid=c['uid'],
+                    clone_id=self.clone_id,
+                    event_id=c['event_id'],
+                    event_timestamp=c['event_timestamp'],
+                    central_sql=c['central_sql'].replace("'", "''"),
+                    clone_sql=c['clone_sql'].replace("'", "''"),
+                    rejected=c['rejected'],
+                    rule_applied=c['rule_applied']
+                )
+                sep = ''',
+                '''
+            print(sql)
+
+            _, _, _, ok, error_message = fetchDataFromSqlQuery(
+                self.connection_name_central,
+                sql
+            )
+            if not ok:
+                m = error_message+ ' '+ sql
+                return returnError(output, m, feedback)
+
+            feedback.pushInfo(
+                tr('Conflict resolution items have been saved in central database into lizsync.conflicts table')
+            )
 
         # feedback.setProgress(int(1 * total))
 

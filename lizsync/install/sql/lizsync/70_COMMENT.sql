@@ -26,6 +26,54 @@ Arguments:
 ';
 
 
+-- conflicts
+COMMENT ON TABLE lizsync.conflicts IS 'Store conflicts resolution made during bidirectionnal database synchronizations.';
+
+
+-- conflicts.id
+COMMENT ON COLUMN lizsync.conflicts.id IS 'Automatic ID';
+
+
+-- conflicts.conflict_time
+COMMENT ON COLUMN lizsync.conflicts.conflict_time IS 'Timestamp of the conflict resolution. Not related to timestamp of logged actions';
+
+
+-- conflicts.object_table
+COMMENT ON COLUMN lizsync.conflicts.object_table IS 'Schema and table name of the conflicted object.';
+
+
+-- conflicts.object_uid
+COMMENT ON COLUMN lizsync.conflicts.object_uid IS 'UID of the conflicted object.';
+
+
+-- conflicts.clone_id
+COMMENT ON COLUMN lizsync.conflicts.clone_id IS 'UID of the source clone database.';
+
+
+-- conflicts.central_event_id
+COMMENT ON COLUMN lizsync.conflicts.central_event_id IS 'Event id of the conflicted central audit log';
+
+
+-- conflicts.central_event_timestamp
+COMMENT ON COLUMN lizsync.conflicts.central_event_timestamp IS 'Event action_tstamp_tx of the conflicted central audit log';
+
+
+-- conflicts.central_sql
+COMMENT ON COLUMN lizsync.conflicts.central_sql IS 'Central SQL action in conflict';
+
+
+-- conflicts.clone_sql
+COMMENT ON COLUMN lizsync.conflicts.clone_sql IS 'Clone SQL action in conflict';
+
+
+-- conflicts.rejected
+COMMENT ON COLUMN lizsync.conflicts.rejected IS 'Rejected object. If "clone", it means the central data has been kept instead';
+
+
+-- conflicts.rule_applied
+COMMENT ON COLUMN lizsync.conflicts.rule_applied IS 'Rule used when managing conflict';
+
+
 -- synchronized_schemas
 COMMENT ON TABLE lizsync.synchronized_schemas IS 'List of schemas to synchronize per slave server id. This list works as a white list. Only listed schemas will be synchronized for each server ids.';
 
