@@ -18,7 +18,7 @@ lizmap.cfg
 *.egg-info
 
 build/
-dist/
+# dist/ # needed for shemaspy
 
 TODO
 lizsync*zip
