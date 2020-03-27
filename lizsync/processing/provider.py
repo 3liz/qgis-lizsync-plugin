@@ -18,8 +18,14 @@ __copyright__ = '(C) 2019 by 3liz'
 # This will get replaced with a git SHA1 when you do a git archive
 
 __revision__ = '$Format:%H$'
-from ..qgis_plugin_tools.tools.i18n import tr
+
+import os
+
 from qgis.core import QgsProcessingProvider
+from qgis.PyQt.QtGui import QIcon
+
+from ..qgis_plugin_tools.tools.i18n import tr
+from ..qgis_plugin_tools.tools.resources import resources_path
 from .algorithms.configure_plugin import ConfigurePlugin
 from .algorithms.create_database_structure import CreateDatabaseStructure
 from .algorithms.upgrade_database_structure import UpgradeDatabaseStructure
@@ -30,16 +36,10 @@ from .algorithms.synchronize_database import SynchronizeDatabase
 from .algorithms.get_projects_and_files_from_central_ftp import GetProjectsAndFilesFromCentralFtp
 from .algorithms.send_projects_and_files_to_clone_ftp import SendProjectsAndFilesToCloneFtp
 from .algorithms.synchronize_media_subfolder_to_ftp import SynchronizeMediaSubfolderToFtp
-import os
+
 
 class LizsyncProvider(QgsProcessingProvider):
 
-    def unload(self):
-        """
-        Unloads the provider. Any tear-down steps required by the provider
-        should be implemented here.
-        """
-        pass
 
     def loadAlgorithms(self):
 
@@ -65,3 +65,6 @@ class LizsyncProvider(QgsProcessingProvider):
 
     def longName(self):
         return tr('Lizsync')
+
+    def icon(self):
+        return QIcon(resources_path('icons', 'icon.png'))

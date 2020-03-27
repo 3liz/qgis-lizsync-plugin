@@ -57,7 +57,7 @@ tags=PostgreSQL, synchronization, field, clone
 
 homepage=https://github.com/3liz/qgis-lizsync-plugin
 category=Analysis
-icon=icon.png
+icon=resources/icons/icon.png
 # experimental flag
 experimental=True
 

@@ -35,7 +35,7 @@ def classFactory(iface):  # pylint: disable=invalid-name
     :type iface: QgsInterface
     """
     #
-    from .lizsync import LizsyncPlugin
+    from .plugin import LizsyncPlugin
     return LizsyncPlugin()
 
 from typing import Any
