@@ -34,7 +34,7 @@ import os
 import sys
 import inspect
 
-from qgis.core import QgsProcessingAlgorithm, QgsApplication
+from qgis.core import QgsApplication
 from .processing.provider import LizsyncProvider
 
 cmd_folder = os.path.split(inspect.getfile(inspect.currentframe()))[0]
@@ -45,10 +45,11 @@ if cmd_folder not in sys.path:
 from qgis.PyQt.QtCore import QCoreApplication, QTranslator
 from .qgis_plugin_tools.tools.i18n import setup_translation
 
+
 class LizsyncPlugin:
 
     def __init__(self):
-        self.provider = LizsyncProvider()
+        self.provider = None
 
         locale, file_path = setup_translation()
         if file_path:
@@ -60,9 +61,12 @@ class LizsyncPlugin:
             # LOGGER.info('Translation not found: {}'.format(locale))
             pass
 
+    def initProcessing(self):
+        self.provider = LizsyncProvider()
+        QgsApplication.processingRegistry().addProvider(self.provider)
 
     def initGui(self):
-        QgsApplication.processingRegistry().addProvider(self.provider)
+        self.initProcessing()
 
     def unload(self):
         QgsApplication.processingRegistry().removeProvider(self.provider)
