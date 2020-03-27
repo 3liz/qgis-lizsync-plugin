@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<database name="qgistest" schema="lizsync" type="PostgreSQL - 11.7 (Ubuntu 11.7-2.pgdg19.10+1)">
+   <sequences>
+      <sequence increment="1" name="sys_structure_metadonnee_id_seq" startValue="1"/>
+   </sequences>
+   <tables>
+      <table name="history" remarks="" schema="lizsync" type="TABLE">
+         <column autoUpdated="false" defaultValue="(md5(((random())::text || (clock_timestamp())::text)))::uuid" digits="0" id="0" name="sync_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="now()" digits="6" id="1" name="sync_time" nullable="false" remarks="" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="server_from" nullable="false" remarks="" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="server_to" nullable="true" remarks="" size="2147483647" type="_text" typeCode="2003"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="min_event_id" nullable="true" remarks="" size="10" type="int4" typeCode="4">
+            <parent column="id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="lizsync" table="sys_structure_metadonnee"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="max_event_id" nullable="true" remarks="" size="10" type="int4" typeCode="4">
+            <parent column="id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="lizsync" table="sys_structure_metadonnee"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="6" name="max_action_tstamp_tx" nullable="true" remarks="" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="sync_type" nullable="false" remarks="" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="'pending'::text" digits="0" id="8" name="sync_status" nullable="false" remarks="" size="2147483647" type="text" typeCode="12"/>
+         <primaryKey column="sync_id" sequenceNumberInPK="1"/>
+         <index name="history_pkey" unique="true">
+            <column ascending="true" name="sync_id"/>
+         </index>
+      </table>
+      <table name="server_metadata" remarks="" schema="lizsync" type="TABLE">
+         <column autoUpdated="false" defaultValue="(md5(((random())::text || (clock_timestamp())::text)))::uuid" digits="0" id="0" name="server_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="(md5(((random())::text || (clock_timestamp())::text)))::uuid" digits="0" id="1" name="server_name" nullable="false" remarks="" size="2147483647" type="text" typeCode="12"/>
+         <primaryKey column="server_id" sequenceNumberInPK="1"/>
+         <index name="server_metadata_pkey" unique="true">
+            <column ascending="true" name="server_id"/>
+         </index>
+         <index name="server_metadata_server_name_key" unique="true">
+            <column ascending="true" name="server_name"/>
+         </index>
+      </table>
+      <table name="synchronized_schemas" remarks="List of schemas to synchronize per slave server id. This list works as a white list. Only listed schemas will be synchronized for each server ids." schema="lizsync" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="server_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="sync_schemas" nullable="false" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <primaryKey column="server_id" sequenceNumberInPK="1"/>
+         <index name="synchronized_schemas_pkey" unique="true">
+            <column ascending="true" name="server_id"/>
+         </index>
+      </table>
+      <table name="sys_structure_metadonnee" remarks="Database structure metadata used for migration by QGIS plugin" schema="lizsync" type="TABLE">
+         <column autoUpdated="true" defaultValue="nextval('lizsync.sys_structure_metadonnee_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="Unique ID" size="10" type="serial" typeCode="4">
+            <child column="max_event_id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="lizsync" table="history"/>
+            <child column="min_event_id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="lizsync" table="history"/>
+         </column>
+         <column autoUpdated="false" defaultValue="(now())::date" digits="0" id="1" name="date_ajout" nullable="false" remarks="Version addition date" size="13" type="date" typeCode="91"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="version" nullable="false" remarks="Lizsync schema version number. Ex: 0.1.0" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="description" nullable="true" remarks="Description of the version if needed" size="2147483647" type="text" typeCode="12"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="sys_structure_metadonnee_pkey" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+      </table>
+   </tables>
+</database>
