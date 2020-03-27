@@ -26,21 +26,17 @@ __author__ = '3liz'
 __date__ = '2018-12-19'
 __copyright__ = '(C) 2018 by 3liz'
 
+from typing import Any
+
 
 # noinspection PyPep8Naming
 def classFactory(iface):  # pylint: disable=invalid-name
-    """Load Lizsync class from file Lizsync.
 
-    :param iface: A QGIS interface instance.
-    :type iface: QgsInterface
-    """
-    #
     from .plugin import LizsyncPlugin
     return LizsyncPlugin()
 
-from typing import Any
+
 def WPSClassFactory(iface: 'WPSServerInterface') -> Any:
-    """ Load GeoVit
-    """
+
     from .processing.provider import LizsyncProvider
     iface.registerProvider(LizsyncProvider())
