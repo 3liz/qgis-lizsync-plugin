@@ -13,10 +13,7 @@ __author__ = '3liz'
 __date__ = '2018-12-19'
 __copyright__ = '(C) 2018 by 3liz'
 
-from PyQt5.QtCore import QCoreApplication
 from qgis.core import (
-    QgsProcessing,
-    QgsProcessingAlgorithm,
     QgsProcessingParameterString,
     QgsProcessingParameterNumber,
     QgsProcessingParameterFile,
@@ -24,18 +21,15 @@ from qgis.core import (
     QgsProcessingOutputNumber
 )
 
-import os, subprocess
-from pathlib import Path
-import processing
-from datetime import date, datetime
 from ftplib import FTP
-import netrc
-import re
 from .tools import *
 from platform import system as psys
-from ...qgis_plugin_tools.tools.i18n import tr
 
-class GetProjectsAndFilesFromCentralFtp(QgsProcessingAlgorithm):
+from ...qgis_plugin_tools.tools.i18n import tr
+from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
+
+
+class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
     """
     Synchronize local data from remote FTP
     via LFTP
@@ -79,9 +73,6 @@ class GetProjectsAndFilesFromCentralFtp(QgsProcessingAlgorithm):
             ' An internet connection is needed to use this algorithm'
         )
         return short_help
-
-    def createInstance(self):
-        return GetProjectsAndFilesFromCentralFtp()
 
     def initAlgorithm(self, config):
         """

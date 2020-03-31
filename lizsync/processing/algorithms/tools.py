@@ -13,41 +13,25 @@ __author__ = '3liz'
 __date__ = '2019-02-15'
 __copyright__ = '(C) 2019 by 3liz'
 
-from qgis.PyQt.QtCore import QCoreApplication
-from db_manager.db_plugins.plugin import BaseError
-from db_manager.db_plugins import createDbPlugin
-from db_manager.db_plugins.postgis.connector import PostGisDBConnector
-import os, subprocess
-from platform import system as psys
+import ftplib
+import os
+import netrc
+import psycopg2
+import re
+import subprocess
 
+from platform import system as psys
+from db_manager.db_plugins.plugin import BaseError
+from db_manager.db_plugins.postgis.connector import PostGisDBConnector
 from qgis.core import (
     QgsApplication,
-    QgsProcessingException,
     QgsDataSourceUri
 )
-import netrc
-import re
-import time
-from ...qgis_plugin_tools.tools.i18n import tr
-import psycopg2
 from processing.tools.postgis import uri_from_name
-import ftplib
 
-def plugin_path(*args):
-    """Get the path to plugin root folder.
+from ...qgis_plugin_tools.tools.i18n import tr
+from ...qgis_plugin_tools.tools.resources import plugin_path
 
-    :param args List of path elements e.g. ['img', 'logos', 'image.png']
-    :type args: str
-
-    :return: Absolute path to the resoure.
-    :rtype: str
-    """
-    path = os.path.dirname(os.path.dirname(__file__))
-    path = os.path.abspath(os.path.abspath(os.path.join(path, os.path.pardir)))
-    for item in args:
-        path = os.path.abspath(os.path.join(path, item))
-
-    return path
 
 def check_internet(timeout=5):
     # return True
@@ -59,6 +43,7 @@ def check_internet(timeout=5):
         return True
     except requests.ConnectionError:
         return False
+
 
 def get_ftp_password(host, port, login):
     # Check FTP password
@@ -85,6 +70,7 @@ def get_ftp_password(host, port, login):
                 password = None
 
     return True, password, ''
+
 
 def check_ftp_connection(host, port, login, password=None, timeout=5):
     '''
@@ -116,6 +102,7 @@ def check_ftp_connection(host, port, login, password=None, timeout=5):
 
     return True, ''
 
+
 def check_postgresql_connection(uri, timeout=5):
     '''
     Check connection to PostgreSQL database with timeout
@@ -145,6 +132,7 @@ def check_postgresql_connection(uri, timeout=5):
 
     return status, msg
 
+
 def getUriFromConnectionName(connection_name, must_connect=True):
 
     # In UserLand context, use directly information
@@ -161,6 +149,7 @@ def getUriFromConnectionName(connection_name, must_connect=True):
         return ok, uri, msg
     else:
         return status, uri, ''
+
 
 def getUriFromConnectionNameUserland(connection_name, must_connect=True):
     # Use LizSync.ini content to find all connection parameters
@@ -202,6 +191,7 @@ def getUriFromConnectionNameUserland(connection_name, must_connect=True):
             break
 
     return status, uri, ''
+
 
 def fetchDataFromSqlQuery(connection_name, sql):
 
@@ -270,6 +260,7 @@ def validateTimestamp(timestamp_text):
         msg = str(e)
     return valid, msg
 
+
 def getVersionInteger(f):
     '''
     Transform "0.1.2" into "000102"
@@ -308,6 +299,7 @@ def run_command(cmd, myenv, feedback):
                 feedback.pushInfo(output)
         rc = process.poll()
     return rc
+
 
 def check_lizsync_installation_status(connection_name, test_list=['structure', 'server id', 'uid columns', 'audit triggers'], schemas='test'):
     '''
@@ -471,6 +463,7 @@ def checkFtpBinary():
     if not test:
         return False, tr('No FTP binary has been found in your system')
     return True, tr('FTP Binary has been found in your system')
+
 
 def ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, excludedirs, feedback):
 

@@ -17,23 +17,19 @@ __copyright__ = '(C) 2018 by 3liz'
 
 __revision__ = '$Format:%H$'
 
-from PyQt5.QtCore import QCoreApplication
-from PyQt5.QtSql import QSqlDatabase, QSqlQuery
 from qgis.core import (
-    QgsProcessingAlgorithm,
     QgsProcessingParameterString,
     QgsProcessingParameterBoolean,
     QgsProcessingOutputNumber,
     QgsProcessingOutputString
 )
-import processing
-import os
 from .tools import *
-import configparser
 from db_manager.db_plugins import createDbPlugin
 from ...qgis_plugin_tools.tools.i18n import tr
+from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
 
-class InitializeCentralDatabase(QgsProcessingAlgorithm):
+
+class InitializeCentralDatabase(BaseProcessingAlgorithm):
     """
     Initialize central database
     Add server id, uid columns, audit triggers, etc.
@@ -80,9 +76,6 @@ class InitializeCentralDatabase(QgsProcessingAlgorithm):
             ' You can pass a list of PostgreSQL central database schemas and this alg will add the necessary data and tools'
         )
         return short_help
-
-    def createInstance(self):
-        return InitializeCentralDatabase()
 
     def initAlgorithm(self, config):
         """

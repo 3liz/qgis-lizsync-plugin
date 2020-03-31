@@ -17,9 +17,9 @@ __copyright__ = '(C) 2019 by 3liz'
 
 __revision__ = '$Format:%H$'
 
-from PyQt5.QtCore import QCoreApplication
+import tempfile
+
 from qgis.core import (
-    QgsProcessingAlgorithm,
     QgsProcessingParameterNumber,
     QgsProcessingParameterString,
     QgsProcessingParameterFile,
@@ -28,19 +28,14 @@ from qgis.core import (
     QgsProcessingOutputNumber
 )
 from .tools import *
-from processing.tools import postgis
-import os, tempfile
 
+
+from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
 from ...qgis_plugin_tools.tools.i18n import tr
+from ...qgis_plugin_tools.tools.resources import plugin_path
 
-class ConfigurePlugin(QgsProcessingAlgorithm):
-    """
 
-    """
-
-    # Constants used to refer to parameters and outputs. They will be
-    # used when calling the algorithm from another algorithm, or when
-    # calling from the QGIS console.
+class ConfigurePlugin(BaseProcessingAlgorithm):
 
     POSTGRESQL_BINARY_PATH = 'POSTGRESQL_BINARY_PATH'
     WINSCP_BINARY_PATH = 'WINSCP_BINARY_PATH'
@@ -91,9 +86,6 @@ class ConfigurePlugin(QgsProcessingAlgorithm):
             ' Every parameter will be used in the other algorithms, as default values for parameters.'
         )
         return short_help
-
-    def createInstance(self):
-        return ConfigurePlugin()
 
     def initAlgorithm(self, config):
         """

@@ -1,23 +1,19 @@
-# -*- coding: utf-8 -*-
 __copyright__ = 'Copyright 2020, 3Liz'
 __license__ = 'GPL version 3'
 __email__ = 'info@3liz.org'
 __revision__ = '$Format:%H$'
 
-from PyQt5.QtCore import QCoreApplication
 from qgis.core import (
-    QgsProcessing,
-    QgsProcessingAlgorithm,
     QgsProcessingParameterString,
     QgsProcessingOutputString,
     QgsProcessingOutputNumber
 )
-import processing
 from .tools import *
 from ...qgis_plugin_tools.tools.i18n import tr
-import os
+from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
 
-class SynchronizeDatabase(QgsProcessingAlgorithm):
+
+class SynchronizeDatabase(BaseProcessingAlgorithm):
     """
     """
     # Constants used to refer to parameters and outputs. They will be
@@ -29,12 +25,6 @@ class SynchronizeDatabase(QgsProcessingAlgorithm):
 
     OUTPUT_STATUS = 'OUTPUT_STATUS'
     OUTPUT_STRING = 'OUTPUT_STRING'
-
-    def createInstance(self, config={}):
-        return SynchronizeDatabase()
-
-    def __init__(self):
-        super().__init__()
 
     def name(self):
         return 'synchronize_database'

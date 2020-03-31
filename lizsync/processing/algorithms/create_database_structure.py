@@ -18,11 +18,9 @@ __copyright__ = '(C) 2018 by 3liz'
 __revision__ = '$Format:%H$'
 
 import configparser
-import os
 
 from db_manager.db_plugins import createDbPlugin
 from qgis.core import (
-    QgsProcessingAlgorithm,
     QgsProcessingParameterString,
     QgsProcessingParameterBoolean,
     QgsProcessingOutputNumber,
@@ -30,8 +28,10 @@ from qgis.core import (
 )
 from .tools import *
 from ...qgis_plugin_tools.tools.i18n import tr
+from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
 
-class CreateDatabaseStructure(QgsProcessingAlgorithm):
+
+class CreateDatabaseStructure(BaseProcessingAlgorithm):
     """
     Create Lizsync structure in Database
     """
@@ -75,9 +75,6 @@ class CreateDatabaseStructure(QgsProcessingAlgorithm):
 
         )
         return short_help
-
-    def createInstance(self):
-        return CreateDatabaseStructure()
 
     def initAlgorithm(self, config):
         """

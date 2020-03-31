@@ -13,29 +13,23 @@ __author__ = '3liz'
 __date__ = '2018-12-19'
 __copyright__ = '(C) 2018 by 3liz'
 
-from PyQt5.QtCore import QCoreApplication
-from db_manager.db_plugins import createDbPlugin
 from qgis.core import (
-    QgsProcessing,
-    QgsProcessingAlgorithm,
-    QgsProcessingUtils,
     QgsProcessingParameterString,
-    QgsProcessingParameterNumber,
     QgsProcessingParameterFile,
     QgsProcessingParameterFileDestination,
     QgsProcessingOutputString,
     QgsProcessingOutputNumber
 )
 
-import os
-from datetime import date, datetime
 from .tools import *
 import zipfile
 import tempfile
 from platform import system as psys
 from ...qgis_plugin_tools.tools.i18n import tr
+from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
 
-class PackageCentralDatabase(QgsProcessingAlgorithm):
+
+class PackageCentralDatabase(BaseProcessingAlgorithm):
     """
     Package central database into ZIP package
     """
@@ -82,9 +76,6 @@ class PackageCentralDatabase(QgsProcessingAlgorithm):
             ' and obviously data must be downloaded from the central database'
         )
         return short_help
-
-    def createInstance(self):
-        return PackageCentralDatabase()
 
     def initAlgorithm(self, config):
         """

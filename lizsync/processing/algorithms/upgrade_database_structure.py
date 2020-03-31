@@ -4,22 +4,21 @@ __email__ = 'info@3liz.org'
 __revision__ = '$Format:%H$'
 
 import configparser
-import os
 
 from db_manager.db_plugins import createDbPlugin
 from qgis.core import (
-    QgsProcessingAlgorithm,
     QgsProcessingParameterString,
     QgsProcessingParameterBoolean,
-    QgsProcessingParameterCrs,
     QgsProcessingOutputNumber,
     QgsProcessingOutputString
 )
 
 from .tools import *
+from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
 from ...qgis_plugin_tools.tools.i18n import tr
 
-class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
+
+class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
     """
     Upgrade database by comparing metadata in database
     and plugin version in metadata.txt
@@ -54,9 +53,6 @@ class UpgradeDatabaseStructure(QgsProcessingAlgorithm):
             ' to upgrade your central database to the new plugin version.'
         )
         return short_help
-
-    def createInstance(self):
-        return UpgradeDatabaseStructure()
 
     def initAlgorithm(self, config):
         """

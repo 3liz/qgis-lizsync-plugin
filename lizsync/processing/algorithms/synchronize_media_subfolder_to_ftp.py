@@ -13,11 +13,7 @@ __author__ = '3liz'
 __date__ = '2018-12-19'
 __copyright__ = '(C) 2018 by 3liz'
 
-from PyQt5.QtCore import QCoreApplication
 from qgis.core import (
-    QgsProcessing,
-    QgsProcessingAlgorithm,
-    QgsProcessingUtils,
     QgsProcessingParameterString,
     QgsProcessingParameterNumber,
     QgsProcessingParameterFile,
@@ -26,16 +22,14 @@ from qgis.core import (
     QgsProcessingParameterDefinition
 )
 
-import os, subprocess
-from pathlib import Path
-import processing
-from datetime import date, datetime
+from datetime import datetime
 from ftplib import FTP
 from .tools import *
-import netrc
 from ...qgis_plugin_tools.tools.i18n import tr
+from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
 
-class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
+
+class SynchronizeMediaSubfolderToFtp(BaseProcessingAlgorithm):
     """
     Synchronize clone media/upload data to remote FTP
     via LFTP
@@ -81,9 +75,6 @@ class SynchronizeMediaSubfolderToFtp(QgsProcessingAlgorithm):
             ' Every file existing in the clone "media/upload/" folder but not in the central server "media/upload/" folder will be sent.'
         )
         return short_help
-
-    def createInstance(self):
-        return SynchronizeMediaSubfolderToFtp()
 
     def initAlgorithm(self, config):
         """

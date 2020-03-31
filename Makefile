@@ -3,11 +3,6 @@ LOCALES = "en fr"
 # Name of the plugin, for the ZIP file
 PLUGINNAME = lizsync
 
-help:
-	$(MAKE) -C qgis_plugin_tools help
-
-pylint:
-	$(MAKE) -C qgis_plugin_tools pylint --ignore=
 
 docker_test:
 	$(MAKE) -C qgis_plugin_tools docker_test PLUGINNAME=$(PLUGINNAME)

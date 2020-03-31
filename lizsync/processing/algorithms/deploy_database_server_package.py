@@ -13,26 +13,21 @@ __author__ = '3liz'
 __date__ = '2018-12-19'
 __copyright__ = '(C) 2018 by 3liz'
 
-from PyQt5.QtCore import QCoreApplication
+import tempfile
+
 from qgis.core import (
-    QgsProcessing,
-    QgsProcessingAlgorithm,
-    QgsProcessingUtils,
     QgsProcessingParameterString,
-    QgsProcessingParameterNumber,
     QgsProcessingParameterFile,
     QgsProcessingOutputString,
     QgsProcessingOutputNumber
 )
-from PyQt5.QtSql import QSqlDatabase, QSqlQuery
-import os, subprocess, tempfile, zipfile
-from pathlib import Path
-import processing
 from .tools import *
 from platform import system as psys
 from ...qgis_plugin_tools.tools.i18n import tr
+from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
 
-class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
+
+class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
     """
     Exectute SQL on PostgreSQL database
     given host, port, dbname, user and password
@@ -69,9 +64,6 @@ class DeployDatabaseServerPackage(QgsProcessingAlgorithm):
             ' contains data from the central PostgreSQL database.'
         )
         return short_help
-
-    def createInstance(self):
-        return DeployDatabaseServerPackage()
 
     def initAlgorithm(self, config):
         """
