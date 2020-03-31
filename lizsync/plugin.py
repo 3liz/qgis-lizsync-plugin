@@ -49,7 +49,7 @@ class LizsyncPlugin:
     def __init__(self):
         self.provider = None
 
-        locale, file_path = setup_translation()
+        locale, file_path = setup_translation(file_pattern="lizsync_{}.qm")
         if file_path:
             # LOGGER.info('Translation to {}'.format(file_path))
             self.translator = QTranslator()
