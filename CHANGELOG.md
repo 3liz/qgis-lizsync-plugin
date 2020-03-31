@@ -1,5 +1,18 @@
 ## CHANGELOG
 
+### 31/03/2020 Version 0.3.2
+
+* Add qgis-plugin-ci configuration to the plugin
+* Fix some scripts after moving lizsync directory
+* Database Synchronization - Store automatic conflict resolution into table lizsync.conflicts
+* Database synchronization - Resolve UPDATE conflicts by a given rule
+* Synchronization - Some code refactoring
+* Doc - Add docs folder for GitHub pages
+* Remove UTF8 encoding in Python files
+* Refactor code about loading Processing provider
+* Move the plugin to its own folder
+* Remove unused files
+
 ### 20/03/2020 Version 0.3.1
 
 * Tests - move and rename bash script to run_test.sh
