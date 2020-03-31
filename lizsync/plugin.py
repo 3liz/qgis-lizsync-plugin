@@ -42,6 +42,7 @@ if cmd_folder not in sys.path:
 
 from qgis.PyQt.QtCore import QCoreApplication, QTranslator
 from .qgis_plugin_tools.tools.i18n import setup_translation
+from .qgis_plugin_tools.tools.resources import plugin_path
 
 
 class LizsyncPlugin:
@@ -49,7 +50,8 @@ class LizsyncPlugin:
     def __init__(self):
         self.provider = None
 
-        locale, file_path = setup_translation(file_pattern="lizsync_{}.qm")
+        locale, file_path = setup_translation(
+            folder=plugin_path("i18n"), file_pattern="lizsync_{}.qm")
         if file_path:
             # LOGGER.info('Translation to {}'.format(file_path))
             self.translator = QTranslator()

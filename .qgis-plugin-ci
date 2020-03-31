@@ -1,3 +1,9 @@
 plugin_path: lizsync
 github_organization_slug: 3liz
 project_slug: qgis-lizsync-plugin
+transifex_organization: 3liz-1
+transifex_project_slug: lizsync
+transifex_resource: lizsync
+transifex_coordinator: etrimaille
+translation_languages:
+  - fr
