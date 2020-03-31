@@ -1,5 +1,7 @@
 # Lizsync
 
+[![Build Status](https://travis-ci.org/3liz/qgis-lizsync-plugin.svg?branch=master)](https://travis-ci.org/3liz/qgis-lizsync-plugin)
+
 ## Présentation
 
 ## Documentation
@@ -27,5 +29,3 @@ Michaël Douchin (3liz)  @mdouchin
 ## Licence
 
 GPL V2
-
-
