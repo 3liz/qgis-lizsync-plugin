@@ -4,6 +4,7 @@ __email__ = 'info@3liz.org'
 __revision__ = '$Format:%H$'
 
 import configparser
+import os
 
 from db_manager.db_plugins import createDbPlugin
 from qgis.core import (
@@ -13,7 +14,13 @@ from qgis.core import (
     QgsProcessingOutputString
 )
 
-from .tools import *
+from .tools import (
+    lizsyncConfig,
+    getVersionInteger,
+    getUriFromConnectionName,
+    fetchDataFromSqlQuery,
+    returnError,
+)
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
 from ...qgis_plugin_tools.tools.i18n import tr
 

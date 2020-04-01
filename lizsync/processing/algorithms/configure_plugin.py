@@ -17,6 +17,7 @@ __copyright__ = '(C) 2019 by 3liz'
 
 __revision__ = '$Format:%H$'
 
+import os
 import tempfile
 
 from qgis.core import (
@@ -27,8 +28,7 @@ from qgis.core import (
     QgsProcessingOutputString,
     QgsProcessingOutputNumber
 )
-from .tools import *
-
+from .tools import lizsyncConfig
 
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
 from ...qgis_plugin_tools.tools.i18n import tr

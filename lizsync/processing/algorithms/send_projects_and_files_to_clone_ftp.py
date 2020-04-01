@@ -13,6 +13,8 @@ __author__ = '3liz'
 __date__ = '2018-12-19'
 __copyright__ = '(C) 2018 by 3liz'
 
+import os
+
 from qgis.core import (
     QgsProcessingParameterString,
     QgsProcessingParameterNumber,
@@ -22,7 +24,14 @@ from qgis.core import (
 )
 
 from ftplib import FTP
-from .tools import *
+from .tools import (
+    checkFtpBinary,
+    check_ftp_connection,
+    ftp_sync,
+    get_ftp_password,
+    lizsyncConfig,
+    returnError,
+)
 from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
 

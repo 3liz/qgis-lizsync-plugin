@@ -3,12 +3,19 @@ __license__ = 'GPL version 3'
 __email__ = 'info@3liz.org'
 __revision__ = '$Format:%H$'
 
+import os
+
 from qgis.core import (
     QgsProcessingParameterString,
     QgsProcessingOutputString,
     QgsProcessingOutputNumber
 )
-from .tools import *
+from .tools import (
+    lizsyncConfig,
+    getUriFromConnectionName,
+    fetchDataFromSqlQuery,
+    returnError,
+)
 from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
 

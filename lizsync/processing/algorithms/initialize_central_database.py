@@ -17,13 +17,21 @@ __copyright__ = '(C) 2018 by 3liz'
 
 __revision__ = '$Format:%H$'
 
+import os
+
 from qgis.core import (
     QgsProcessingParameterString,
     QgsProcessingParameterBoolean,
     QgsProcessingOutputNumber,
     QgsProcessingOutputString
 )
-from .tools import *
+from .tools import (
+    check_lizsync_installation_status,
+    lizsyncConfig,
+    getUriFromConnectionName,
+    fetchDataFromSqlQuery,
+    returnError,
+)
 from db_manager.db_plugins import createDbPlugin
 from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm

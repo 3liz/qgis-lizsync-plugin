@@ -13,6 +13,7 @@ __author__ = '3liz'
 __date__ = '2018-12-19'
 __copyright__ = '(C) 2018 by 3liz'
 
+import os
 import tempfile
 
 from qgis.core import (
@@ -21,7 +22,13 @@ from qgis.core import (
     QgsProcessingOutputString,
     QgsProcessingOutputNumber
 )
-from .tools import *
+from .tools import (
+    lizsyncConfig,
+    getUriFromConnectionName,
+    fetchDataFromSqlQuery,
+    returnError,
+    run_command,
+)
 from platform import system as psys
 from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm

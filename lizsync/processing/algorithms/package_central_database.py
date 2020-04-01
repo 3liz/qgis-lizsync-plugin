@@ -13,6 +13,8 @@ __author__ = '3liz'
 __date__ = '2018-12-19'
 __copyright__ = '(C) 2018 by 3liz'
 
+import os
+
 from qgis.core import (
     QgsProcessingParameterString,
     QgsProcessingParameterFile,
@@ -21,7 +23,14 @@ from qgis.core import (
     QgsProcessingOutputNumber
 )
 
-from .tools import *
+from .tools import (
+    check_lizsync_installation_status,
+    lizsyncConfig,
+    getUriFromConnectionName,
+    fetchDataFromSqlQuery,
+    pg_dump,
+    returnError,
+)
 import zipfile
 import tempfile
 from platform import system as psys
