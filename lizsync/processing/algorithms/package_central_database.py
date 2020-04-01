@@ -124,7 +124,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         # List of schemas to package
         postgresql_schemas = ls.variable('postgresql:central/schemas')
         if not postgresql_schemas:
-            postgresql_schemas='test'
+            postgresql_schemas = 'test'
         self.addParameter(
             QgsProcessingParameterString(
                 self.SCHEMAS,
@@ -218,10 +218,10 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         if not status:
             msg = tr('Some needed configuration are missing in the central database. Please correct them before proceeding.')
             feedback.pushInfo(msg)
-            for name,test in tests.items():
+            for name, test in tests.items():
                 if not test['status']:
                     item_msg = '* {name} - {message}'.format(
-                        name = name.upper(),
+                        name=name.upper(),
                         message=test['message'].replace('"', '')
                     )
                     feedback.pushInfo(item_msg)
@@ -236,7 +236,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
         test_bin = 'psql'
         if psys().lower().startswith('win'):
-            test_bin+= '.exe'
+            test_bin += '.exe'
         has_bin_file = os.path.isfile(
             os.path.join(
                 postgresql_binary_path,
@@ -253,7 +253,6 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             return False, msg
 
         return super(PackageCentralDatabase, self).checkParameterValues(parameters, context)
-
 
     def processAlgorithm(self, parameters, context, feedback):
         """
@@ -295,7 +294,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             for a in parameters[self.SCHEMAS].split(',')
             if a.strip() not in ('public', 'lizsync', 'audit')
         ]
-        schemas_sql =  ', '.join(schemas)
+        schemas_sql = ', '.join(schemas)
 
         # 1/ 01_before.sql
         ####
@@ -303,18 +302,18 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         sql = 'BEGIN;'
 
         # Drop existing schemas
-        sql+= '''
+        sql += '''
             DROP SCHEMA IF EXISTS {0} CASCADE;
         '''.format(
             schemas_sql
         )
         # Drop other sytem schemas
-        sql+= '''
+        sql += '''
             DROP SCHEMA IF EXISTS lizsync,audit CASCADE;
         '''
 
         # Create needed extension
-        sql+= '''
+        sql += '''
             CREATE EXTENSION IF NOT EXISTS postgis;
             CREATE EXTENSION IF NOT EXISTS hstore;
         '''
@@ -324,9 +323,9 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         plugin_dir = os.path.join(alg_dir, '../../')
         sql_file = os.path.join(plugin_dir, 'install/sql/audit.sql')
         with open(sql_file, 'r') as f:
-            sql+= f.read()
+            sql += f.read()
 
-        sql+= '''
+        sql += '''
             COMMIT;
         '''
 
@@ -364,7 +363,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             if a.strip() not in ('public', 'lizsync', 'audit')
         ]
         schemas_sql = ', '.join(schemas)
-        sql+= '''
+        sql += '''
             SELECT audit.audit_table((quote_ident(table_schema) || '.' || quote_ident(table_name))::text)
             FROM information_schema.tables
             WHERE table_schema IN ( {0} )
@@ -379,7 +378,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             f.write(sql)
             feedback.pushInfo(tr('File 03_after.sql created'))
 
-        # 4/ 04_lizsync.sql
+        #  4/ 04_lizsync.sql
         # Add lizsync schema structure
         # We get it from central database to be sure everything will be compatible
         feedback.pushInfo(tr('CREATE SCRIPT 04_lizsync.sql'))
@@ -406,11 +405,10 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             for a in parameters[self.SCHEMAS].split(',')
             if a.strip() not in ('public', 'lizsync', 'audit')
         ]
-        schema_list =  ','.join(schemas)
+        schema_list = ','.join(schemas)
         with open(sql_files['sync_schemas.txt'], 'w') as f:
             f.write(schema_list)
             feedback.pushInfo(tr('File sync_schemas.txt created'))
-
 
         # 6/ sync_id.txt
         # Add new sync history item in the central database
@@ -443,23 +441,22 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
                 sync_id = a[0]
             if sync_id:
                 msg = tr('New synchronization history item has been added in the central database')
-                msg+= ' : syncid = {0}'.format(sync_id)
+                msg += ' : syncid = {0}'.format(sync_id)
                 feedback.pushInfo(msg)
                 with open(sql_files['sync_id.txt'], 'w') as f:
                     f.write(sync_id)
                     feedback.pushInfo(tr('File sync_id.txt created'))
             else:
                 m = tr('No synchronization item could be added !')
-                m+= ' '
-                m+= msg
-                m+= ' '
-                m+= error_message
+                m += ' '
+                m += msg
+                m += ' '
+                m += error_message
                 return returnError(output, m, feedback)
         else:
             m = tr('No synchronization item could be added !')
-            m+= ' ' + error_message
+            m += ' ' + error_message
             return returnError(output, m, feedback)
-
 
         # Additionnal SQL file to run
         additionnal_sql_file = self.parameterAsString(
@@ -478,7 +475,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             compression = zipfile.ZIP_STORED
         modes = {
             zipfile.ZIP_DEFLATED: 'deflated',
-            zipfile.ZIP_STORED:   'stored'
+            zipfile.ZIP_STORED: 'stored'
         }
         status = 1
         msg = ''
@@ -493,7 +490,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
                     )
                 except:
                     status = 0
-                    msg+= tr("Error while zipping file") + ': ' + fname
+                    msg += tr("Error while zipping file") + ': ' + fname
                     m = msg
                     return returnError(output, m, feedback)
         msg = tr('Package has been successfully created !')

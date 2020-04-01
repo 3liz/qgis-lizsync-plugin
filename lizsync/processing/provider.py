@@ -38,9 +38,7 @@ from .algorithms.synchronize_media_subfolder_to_ftp import SynchronizeMediaSubfo
 
 class LizsyncProvider(QgsProcessingProvider):
 
-
     def loadAlgorithms(self):
-
         self.addAlgorithm(ConfigurePlugin())
         self.addAlgorithm(PackageCentralDatabase())
         self.addAlgorithm(DeployDatabaseServerPackage())

@@ -21,7 +21,6 @@ from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgori
 
 
 class SynchronizeDatabase(BaseProcessingAlgorithm):
-
     CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     CONNECTION_NAME_CLONE = 'CONNECTION_NAME_CLONE'
 
@@ -143,7 +142,7 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
             sql
         )
         if not ok:
-            m = error_message+ ' '+ sql
+            m = error_message + ' ' + sql
             feedback.reportError(m)
             return None
         if rowCount != 1:
@@ -337,22 +336,22 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
                     for bi, clone in enumerate(clone_logs):
                         # Search for conflicts
                         if (
-                        # Update
-                        clone[4] == 'U' \
-                        # same table
-                        and central[3] == clone[3] \
-                        # same field
-                        and central[7] == clone[7] \
-                        # same feature (same uid)
-                        and central[8] == clone[8] \
-                        ):
-                            if rule =='clone':
+                                # Update
+                                clone[4] == 'U' \
+                                # same table
+                                and central[3] == clone[3] \
+                                # same field
+                                and central[7] == clone[7] \
+                                # same feature (same uid)
+                                and central[8] == clone[8] \
+                                ):
+                            if rule == 'clone':
                                 # Clone always wins
-                                looser  = 'central'
+                                looser = 'central'
                             elif rule == 'central':
                                 # Central always wins
                                 # BEWARE : central means also "synced from another clone"
-                                looser  = 'clone'
+                                looser = 'clone'
                             elif rule == 'last_modified':
                                 # Compare original action_tstamp_tx
                                 looser = 'clone' if int(clone[2]) < int(central[9]) else 'central'
@@ -384,9 +383,9 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
 
             # Delete lines from logs based on conflict resolution
             for i in sorted(logs_indexes_to_remove['central'], reverse=True):
-                del(central_logs[i])
+                del (central_logs[i])
             for i in sorted(logs_indexes_to_remove['clone'], reverse=True):
-                del(clone_logs[i])
+                del (clone_logs[i])
 
             # Set needed data
             self.max_action_tstamp_tx = max_action_tstamp_tx
@@ -431,7 +430,7 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
                 sql
             )
             if not ok:
-                m = error_message+ ' '+ sql
+                m = error_message + ' ' + sql
                 return False, m
 
             for a in data:
@@ -445,17 +444,17 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
             # TODO : write SQL into file and use psql
             sql = ' SET session_replication_role = replica;'
             for a in logs:
-                sql+= '''
+                sql += '''
                 {0};
                 '''.format(a[6])
-            sql+= ' SET session_replication_role = DEFAULT;'
+            sql += ' SET session_replication_role = DEFAULT;'
             # feedback.pushInfo(sql)
             _, _, _, ok, error_message = fetchDataFromSqlQuery(
                 self.connection_name_clone,
                 sql
             )
             if not ok:
-                m = error_message+ ' '+ sql
+                m = error_message + ' ' + sql
                 return False, m
 
             feedback.pushInfo(
@@ -482,7 +481,7 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
                 sql
             )
             if not ok:
-                m = error_message+ ' '+ sql
+                m = error_message + ' ' + sql
                 return False, m
 
             feedback.pushInfo(
@@ -503,7 +502,7 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
                 sql
             )
             if not ok:
-                m = error_message+ ' '+ sql
+                m = error_message + ' ' + sql
                 return False, m
 
             feedback.pushInfo(
@@ -536,7 +535,7 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
                 sql
             )
             if not ok:
-                m = error_message+ ' '+ sql
+                m = error_message + ' ' + sql
                 return False, m
             for a in data:
                 sync_id = a[0]
@@ -548,8 +547,8 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
             # The session variables are used by the audit function
             # to fill the sync_data field
             sql_session = 'SET SESSION "lizsync.server_from" = \'{}\';'.format(self.clone_id)
-            sql_session+= 'SET SESSION "lizsync.server_to" = \'{}\';'.format(self.central_id)
-            sql_session+= 'SET SESSION "lizsync.sync_id" = \'{}\';'.format(sync_id)
+            sql_session += 'SET SESSION "lizsync.server_to" = \'{}\';'.format(self.central_id)
+            sql_session += 'SET SESSION "lizsync.sync_id" = \'{}\';'.format(sync_id)
 
             # Store SQL query to update central logs afterward with original log timestamp
             sql_update_logs = ''
@@ -568,11 +567,11 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
                     sql
                 )
                 if not ok:
-                    m = error_message+ ' '+ sql
+                    m = error_message + ' ' + sql
                     return False, m
 
                 # Add UPDATE clause in SQL query which will be run afterwards
-                sql_update_logs+= '''
+                sql_update_logs += '''
                 UPDATE audit.logged_actions
                 SET sync_data = sync_data || jsonb_build_object(
                     'action_tstamp_tx',
@@ -603,7 +602,7 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
                 sql
             )
             if not ok:
-                m = error_message+ ' '+ sql
+                m = error_message + ' ' + sql
                 return False, m
 
             feedback.pushInfo(
@@ -620,13 +619,12 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
                 sql
             )
             if not ok:
-                m = error_message+ ' '+ sql
+                m = error_message + ' ' + sql
                 return False, m
 
             feedback.pushInfo(
                 tr('Logged actions has been deleted in clone database')
             )
-
 
             # Modify central server synchronization item clone->central
             sql = '''
@@ -642,7 +640,7 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
                 sql
             )
             if not ok:
-                m = error_message+ ' '+ sql
+                m = error_message + ' ' + sql
                 return False, m
 
             feedback.pushInfo(
@@ -730,12 +728,12 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
             '''
             sep = ''
             for c in conflicts:
-                sql+= sep + ''' (
+                sql += sep + ''' (
                 '{table}', '{uid}', '{clone_id}',
                 {event_id}, '{event_timestamp}',
                 '{central_sql}', '{clone_sql}', '{rejected}', '{rule_applied}'
                 )
-                ''' .format(
+                '''.format(
                     table=c['table'],
                     uid=c['uid'],
                     clone_id=self.clone_id,
@@ -755,7 +753,7 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
                 sql
             )
             if not ok:
-                m = error_message+ ' '+ sql
+                m = error_message + ' ' + sql
                 return returnError(output, m, feedback)
 
             feedback.pushInfo(

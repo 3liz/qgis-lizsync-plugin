@@ -170,7 +170,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
         test_bin = 'psql'
         if psys().lower().startswith('win'):
-            test_bin+= '.exe'
+            test_bin += '.exe'
         has_bin_file = os.path.isfile(
             os.path.join(
                 postgresql_binary_path,
@@ -300,7 +300,6 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                 m = error_message
                 return returnError(output, m, feedback)
 
-
         # Get last synchro and
         # check if no newer bi-directionnal (partial sync)
         # or archive deployment (full sync)
@@ -336,7 +335,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             sql
         )
         if not ok:
-            m = error_message+ ' '+ sql
+            m = error_message + ' ' + sql
             return returnError(output, m, feedback)
         for a in data:
             last_sync = a[0]
@@ -344,17 +343,16 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             m = tr('Synchronization has already been made on this clone since the deployment of this package. Abort the current deployment')
             return returnError(output, m, feedback)
 
-
         # Get synchronized schemas
         feedback.pushInfo(tr('GET THE LIST OF SYNCHRONIZED SCHEMAS FROM THE FILE sync_schemas.txt'))
         sync_schemas = ''
         with open(os.path.join(dir_path, 'sync_schemas.txt')) as f:
-                sync_schemas = f.readline().strip()
+            sync_schemas = f.readline().strip()
         if sync_schemas == '':
             m = tr('No schema to syncronize')
             return returnError(output, m, feedback)
 
-        feedback.pushInfo(tr('Schema list found in sync_schemas.txt') + ' %s' % sync_schemas )
+        feedback.pushInfo(tr('Schema list found in sync_schemas.txt') + ' %s' % sync_schemas)
 
         # CLONE DATABASE
         # Run SQL scripts from archive with PSQL command
@@ -377,7 +375,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         status, uri, error_message = getUriFromConnectionName(connection_name_clone)
         if not status or not uri:
             m = tr('Error getting database connection information')
-            m+= ' ' + error_message
+            m += ' ' + error_message
             return returnError(output, m, feedback)
 
         if uri.service():
@@ -395,7 +393,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         # Build psql command to run
         pgbin = 'psql'
         if psys().lower().startswith('win'):
-            pgbin+= '.exe'
+            pgbin += '.exe'
         pgbin = os.path.join(
             postgresql_binary_path,
             pgbin
@@ -408,24 +406,24 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             try:
                 feedback.pushInfo(tr('Loading file') + ' {0} ....'.format(i))
                 cmd = [
-                    pgbin
-                ] + cmdo + [
-                    '--no-password',
-                    '-f "{0}"'.format(i)
-                ]
+                          pgbin
+                      ] + cmdo + [
+                          '--no-password',
+                          '-f "{0}"'.format(i)
+                      ]
                 # feedback.pushInfo('PSQL = %s' % ' '.join(cmd) )
                 # Add password if needed
-                myenv = { **os.environ }
+                myenv = {**os.environ}
                 if not uri.service():
-                    myenv = {**{'PGPASSWORD': uri.password()}, **os.environ }
+                    myenv = {**{'PGPASSWORD': uri.password()}, **os.environ}
 
                 run_command(cmd, myenv, feedback)
                 # subprocess.run(
-                    # " ".join(cmd),
-                    # shell=True,
-                    # env=myenv
+                # " ".join(cmd),
+                # shell=True,
+                # env=myenv
                 # )
-                msg+= '* {0} -> OK'.format(i.replace(dir_path, ''))
+                msg += '* {0} -> OK'.format(i.replace(dir_path, ''))
 
                 # Delete SQL scripts
                 os.remove(i)
@@ -471,7 +469,6 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             m = tr('Error while adding server id in clone metadata table')
             return returnError(output, m, feedback)
 
-
         # CENTRAL DATABASE
         # Add an item in lizsync.synchronized_schemas
         # to know afterward wich schemas to use when performing sync
@@ -485,7 +482,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             ( '{0}', jsonb_build_array( '{1}' ) );
         '''.format(
             clone_id,
-            "', '".join([ a.strip() for a in sync_schemas.split(',') ])
+            "', '".join([a.strip() for a in sync_schemas.split(',')])
         )
         # feedback.pushInfo(sql)
         header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
@@ -530,4 +527,3 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             self.OUTPUT_STRING: tr('The central database ZIP package has been successfully deployed to the clone')
         }
         return output
-

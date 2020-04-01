@@ -59,7 +59,6 @@ class SynchronizeMediaSubfolderToFtp(BaseProcessingAlgorithm):
 
     ftphost = 'ftp-valabre.lizmap.com'
 
-
     def name(self):
         return 'synchronize_media_subfolder_to_ftp'
 
@@ -207,13 +206,13 @@ class SynchronizeMediaSubfolderToFtp(BaseProcessingAlgorithm):
 
         # Check if ftpdir exists
         ok = True
-        feedback.pushInfo(tr('CHECK REMOTE DIRECTORY') + ' %s' % ftpdir )
+        feedback.pushInfo(tr('CHECK REMOTE DIRECTORY') + ' %s' % ftpdir)
         ftp = FTP()
         ftp.connect(ftphost, ftpport)
         ftp.login(ftplogin, password)
         try:
             ftp.cwd(ftpdir)
-            #do the code for successfull cd
+            # do the code for successfull cd
             m = tr('Remote directory exists in the central server')
         except Exception:
             ok = False
@@ -224,7 +223,7 @@ class SynchronizeMediaSubfolderToFtp(BaseProcessingAlgorithm):
             return returnError(output, m, feedback)
 
         # Check if media/upload exists locally
-        feedback.pushInfo(tr('START FTP DIRECTORY SYNCHRONIZATION TO SERVER') + ' %s' % ftpdir )
+        feedback.pushInfo(tr('START FTP DIRECTORY SYNCHRONIZATION TO SERVER') + ' %s' % ftpdir)
         localdir = localdir + '/media/upload'
         ftpdir = ftpdir + '/media/upload'
         feedback.pushInfo(tr('Local directory') + ' %s' % localdir)

@@ -161,7 +161,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
 
         # Check that it corresponds to an existing connection
-        dbpluginclass = createDbPlugin( 'postgis' )
+        dbpluginclass = createDbPlugin('postgis')
         connections = [c.connectionName() for c in dbpluginclass.connections()]
         if connection_name_central not in connections:
             return False, tr('The configured connection name does not exists in QGIS')
@@ -271,8 +271,8 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
                         feedback.pushInfo(tr('Server id successfully added') + ' {0}'.format(server_id))
             else:
                 m = tr('Error adding server name in server_metadata table.')
-                m+= ' '
-                m+= error_message
+                m += ' '
+                m += error_message
                 return returnError(output, m, feedback)
 
         # Add UID columns for given schema names
@@ -305,14 +305,13 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
                     feedback.pushInfo(msg)
                     for n in names:
                         feedback.pushInfo('* ' + n)
-                    msg+= ', '.join(names)
+                    msg += ', '.join(names)
                 else:
                     msg = tr('No UID columns were missing.')
                     feedback.pushInfo(msg)
             else:
                 m = error_message
                 return returnError(output, m, feedback)
-
 
         # ADD MISSING AUDIT TRIGGERS
         if add_audit_triggers and not tests['audit triggers']['status']:
@@ -349,7 +348,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
                     feedback.pushInfo(msg)
                     for n in names:
                         feedback.pushInfo('* ' + n)
-                    msg+= ', '.join(names)
+                    msg += ', '.join(names)
                 else:
                     msg = tr('No audit triggers were missing.')
                     feedback.pushInfo(msg)
@@ -357,10 +356,8 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
                 m = error_message
                 return returnError(output, m, feedback)
 
-
         output = {
             self.OUTPUT_STATUS: status,
             self.OUTPUT_STRING: msg
         }
         return output
-

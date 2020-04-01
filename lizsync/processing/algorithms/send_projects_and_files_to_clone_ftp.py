@@ -188,7 +188,6 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
             )
         )
 
-
         # OUTPUTS
         # Add output for message
         self.addOutput(
@@ -201,7 +200,6 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
                 self.OUTPUT_STRING, tr('Output message')
             )
         )
-
 
     def checkParameterValues(self, parameters, context):
 
@@ -249,13 +247,13 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
 
         # Check if ftpdir exists
         ok = True
-        feedback.pushInfo(tr('CHECK REMOTE DIRECTORY') + ' %s' % ftpdir )
+        feedback.pushInfo(tr('CHECK REMOTE DIRECTORY') + ' %s' % ftpdir)
         ftp = FTP()
         ftp.connect(ftphost, ftpport)
         ftp.login(ftplogin, password)
         try:
             ftp.cwd(ftpdir)
-            #do the code for successfull cd
+            # do the code for successfull cd
             m = tr('Remote directory exists in the central server')
         except Exception:
             ok = False
@@ -268,13 +266,12 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
         # Run FTP sync
         feedback.pushInfo(tr('Local directory') + ' %s' % localdir)
         feedback.pushInfo(tr('FTP directory') + ' %s' % ftpdir)
-        direction = 'to' # we send data TO FTP
+        direction = 'to'  # we send data TO FTP
         excludedirs = parameters[self.FTP_EXCLUDE_REMOTE_SUBDIRS].strip()
         ok, msg = ftp_sync(ftphost, ftpport, ftplogin, password, localdir, ftpdir, direction, excludedirs, feedback)
         if not ok:
             m = msg
             return returnError(output, m, feedback)
-
 
         status = 1
         msg = tr("Synchronization successfull")
@@ -283,4 +280,3 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
             self.OUTPUT_STRING: msg
         }
         return output
-

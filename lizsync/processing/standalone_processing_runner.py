@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
-import os, sys
+import os
+import sys
 import json
 
 # variables
@@ -30,11 +31,11 @@ app = QgsApplication([], False, qgisConfigPath)
 
 # Set QSettings format and path
 # needed so that db_manager plugin can read the settings from QGIS3.ini
-QCoreApplication.setOrganizationName( QgsApplication.QGIS_ORGANIZATION_NAME )
-QCoreApplication.setOrganizationDomain( QgsApplication.QGIS_ORGANIZATION_DOMAIN )
-QCoreApplication.setApplicationName( QgsApplication.QGIS_APPLICATION_NAME )
-QSettings.setDefaultFormat( QSettings.IniFormat )
-QSettings.setPath( QSettings.IniFormat, QSettings.UserScope, qgisConfigPath )
+QCoreApplication.setOrganizationName(QgsApplication.QGIS_ORGANIZATION_NAME)
+QCoreApplication.setOrganizationDomain(QgsApplication.QGIS_ORGANIZATION_DOMAIN)
+QCoreApplication.setApplicationName(QgsApplication.QGIS_APPLICATION_NAME)
+QSettings.setDefaultFormat(QSettings.IniFormat)
+QSettings.setPath(QSettings.IniFormat, QSettings.UserScope, qgisConfigPath)
 
 # Init QGIS
 app.initQgis()
@@ -46,6 +47,7 @@ Processing.initialize()
 reg = app.processingRegistry()
 # lizsync provider
 from lizsync.processing.provider import LizsyncProvider
+
 reg.addProvider(LizsyncProvider())
 # Native QGIS provider
 # reg.addProvider(QgsNativeAlgorithms())
@@ -59,8 +61,10 @@ input_params = json.loads(parameters)
 
 # Run Alg
 from qgis.core import QgsProcessingFeedback
+
 feedback = QgsProcessingFeedback()
 from processing import run as processing_run
+
 res = processing_run(
     input_alg,
     input_params,

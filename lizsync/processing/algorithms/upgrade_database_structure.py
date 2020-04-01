@@ -120,7 +120,7 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
 
         # Check that it corresponds to an existing connection
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
-        dbpluginclass = createDbPlugin( 'postgis' )
+        dbpluginclass = createDbPlugin('postgis')
         connections = [c.connectionName() for c in dbpluginclass.connections()]
         if connection_name_central not in connections:
             return False, tr('The configured connection name does not exists in QGIS')
@@ -215,7 +215,6 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
                 self.OUTPUT_STATUS: 1,
                 self.OUTPUT_STRING: tr('The database version already matches the plugin version. No upgrade needed.')
             }
-
 
         # Get all the upgrade SQL files between db versions and plugin version
         upgrade_dir = os.path.join(plugin_dir, 'install/sql/upgrade/')

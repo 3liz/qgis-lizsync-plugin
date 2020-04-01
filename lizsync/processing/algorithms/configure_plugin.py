@@ -36,7 +36,6 @@ from ...qgis_plugin_tools.tools.resources import plugin_path
 
 
 class ConfigurePlugin(BaseProcessingAlgorithm):
-
     POSTGRESQL_BINARY_PATH = 'POSTGRESQL_BINARY_PATH'
     WINSCP_BINARY_PATH = 'WINSCP_BINARY_PATH'
 
@@ -138,7 +137,7 @@ class ConfigurePlugin(BaseProcessingAlgorithm):
         # List of schemas to package
         postgresql_schemas = ls.variable('postgresql:central/schemas')
         if not postgresql_schemas:
-            postgresql_schemas='test'
+            postgresql_schemas = 'test'
         self.addParameter(
             QgsProcessingParameterString(
                 self.SCHEMAS,
@@ -423,7 +422,6 @@ class ConfigurePlugin(BaseProcessingAlgorithm):
 
         ls.setVariable('ftp:central/remote_directory', ftp_central_remote_directory)
         feedback.pushInfo(tr('Central FTP Server remote directory') + ' = ' + ftp_central_remote_directory)
-
 
         ls.setVariable('postgresql:clone/name', connection_name_clone)
         feedback.pushInfo(tr('PostgreSQL connection to local clone database') + ' = ' + connection_name_clone)

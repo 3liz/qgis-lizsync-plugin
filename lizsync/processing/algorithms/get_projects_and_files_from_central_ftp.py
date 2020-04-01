@@ -193,7 +193,6 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
             )
         )
 
-
     def checkParameterValues(self, parameters, context):
 
         # Check FTP binary
@@ -240,13 +239,13 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
 
         # Check if ftpdir exists
         ok = True
-        feedback.pushInfo(tr('CHECK REMOTE DIRECTORY') + ' %s' % ftpdir )
+        feedback.pushInfo(tr('CHECK REMOTE DIRECTORY') + ' %s' % ftpdir)
         ftp = FTP()
         ftp.connect(ftphost, ftpport)
         ftp.login(ftplogin, password)
         try:
             ftp.cwd(ftpdir)
-            #do the code for successfull cd
+            # do the code for successfull cd
             m = tr('Remote directory exists in the central server')
         except Exception:
             ok = False
@@ -268,7 +267,7 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
             ]
             feedback.pushInfo(tr('USELAND CONTEXT: Remove old QGIS project files to avoid bug'))
             feedback.pushInfo(" ".join(cmd))
-            myenv = { **os.environ }
+            myenv = {**os.environ}
             run_command(cmd, myenv, feedback)
 
         # import time
@@ -278,7 +277,7 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
         feedback.pushInfo(tr('Local directory') + ' %s' % localdir)
         feedback.pushInfo(tr('FTP directory') + ' %s' % ftpdir)
         excludedirs = parameters[self.FTP_EXCLUDE_REMOTE_SUBDIRS].strip()
-        direction = 'from' # we get data FROM FTP
+        direction = 'from'  # we get data FROM FTP
         print("LOCAL DIR = %s" % localdir)
         print("FTP   DIR = %s" % ftpdir)
 
@@ -302,4 +301,3 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
             self.OUTPUT_STRING: msg
         }
         return output
-

@@ -140,7 +140,7 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
 
         # Check that it corresponds to an existing connection
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
-        dbpluginclass = createDbPlugin( 'postgis' )
+        dbpluginclass = createDbPlugin('postgis')
         connections = [c.connectionName() for c in dbpluginclass.connections()]
         if connection_name_central not in connections:
             return False, tr('The configured connection name does not exists in QGIS')
@@ -191,7 +191,7 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
             if schema == schema_name and not override:
                 ok = False
                 msg = schema_name.upper() + ' - '
-                msg+= tr("Schema already exists in database ! If you REALLY want to drop and recreate it (and loose all data), check the *Overwrite* checkbox")
+                msg += tr("Schema already exists in database ! If you REALLY want to drop and recreate it (and loose all data), check the *Overwrite* checkbox")
         return ok, msg
 
     def processAlgorithm(self, parameters, context, feedback):

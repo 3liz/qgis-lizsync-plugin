@@ -37,7 +37,7 @@ def check_internet(timeout=5):
     # return True
     import requests
     # url='https://www.google.com/'
-    url='https://www.3liz.com/images/flavicon.png'
+    url = 'https://www.3liz.com/images/flavicon.png'
     try:
         _ = requests.get(url, timeout=timeout)
         return True
@@ -61,7 +61,7 @@ def get_ftp_password(host, port, login):
             m = tr('Could not retrieve password from ~/.netrc file')
             return False, None, m
         if not password:
-            m =tr('Could not retrieve password from ~/.netrc file or is empty')
+            m = tr('Could not retrieve password from ~/.netrc file or is empty')
             return False, None, m
         else:
             # Use None to force to use netrc file
@@ -91,11 +91,11 @@ def check_ftp_connection(host, port, login, password=None, timeout=5):
             ftp.login(login, password)
         except ftplib.all_errors as error:
             msg = tr('Error while connecting to FTP server')
-            msg+= ' ' + str(error)
+            msg += ' ' + str(error)
             return False, msg
     except ftplib.all_errors as error:
         msg = tr('Error while connecting to FTP server')
-        msg+= ' ' + str(error)
+        msg += ' ' + str(error)
         return False, msg
     finally:
         ftp.close()
@@ -111,12 +111,12 @@ def check_postgresql_connection(uri, timeout=5):
     conn = None
     try:
         if uri.service():
-            conn = psycopg2.connect (
+            conn = psycopg2.connect(
                 service=uri.service(),
                 connect_timeout=timeout
             )
         else:
-            conn = psycopg2.connect (
+            conn = psycopg2.connect(
                 host=uri.host(), database=uri.database(),
                 user=uri.username(), password=uri.password(),
                 connect_timeout=timeout
@@ -134,7 +134,6 @@ def check_postgresql_connection(uri, timeout=5):
 
 
 def getUriFromConnectionName(connection_name, must_connect=True):
-
     # In UserLand context, use directly information
     # given in LizSync.ini file
     if os.path.isdir('/storage/internal/geopoppy') and psys().lower().startswith('linux'):
@@ -170,10 +169,10 @@ def getUriFromConnectionNameUserland(connection_name, must_connect=True):
                 )
             else:
                 if ls.variable('postgresql:%s/host' % c) \
-                and ls.variable('postgresql:%s/port' % c) \
-                and ls.variable('postgresql:%s/dbname' % c) \
-                and ls.variable('postgresql:%s/user' % c) \
-                and ls.variable('postgresql:%s/password' % c):
+                        and ls.variable('postgresql:%s/port' % c) \
+                        and ls.variable('postgresql:%s/dbname' % c) \
+                        and ls.variable('postgresql:%s/user' % c) \
+                        and ls.variable('postgresql:%s/password' % c):
                     uri.setConnection(
                         ls.variable('postgresql:%s/host' % c),
                         ls.variable('postgresql:%s/port' % c),
@@ -194,7 +193,6 @@ def getUriFromConnectionNameUserland(connection_name, must_connect=True):
 
 
 def fetchDataFromSqlQuery(connection_name, sql):
-
     header = None
     data = []
     header = []
@@ -217,9 +215,9 @@ def fetchDataFromSqlQuery(connection_name, sql):
 
     c = None
     ok = True
-    #print "run query"
+    # print "run query"
     try:
-        c = connector._execute(None,str(sql))
+        c = connector._execute(None, str(sql))
         data = []
         header = connector._get_cursor_columns(c)
         if header == None:
@@ -280,11 +278,11 @@ def run_command(cmd, myenv, feedback):
     pattern = re.compile('|'.join(r'\b{}\b'.format(word) for word in stop_words), re.IGNORECASE)
     rc = None
     with subprocess.Popen(
-        " ".join(cmd),
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        env=myenv
+            " ".join(cmd),
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            env=myenv
     ) as process:
         for line in process.stdout:
             try:
@@ -312,18 +310,18 @@ def check_lizsync_installation_status(connection_name, test_list=['structure', '
     schemas = [
         "'{0}'".format(a.strip())
         for a in schemas.split(',')
-        if a.strip() not in ( 'public', 'lizsync', 'audit')
+        if a.strip() not in ('public', 'lizsync', 'audit')
     ]
-    schemas_sql =  ', '.join(schemas)
+    schemas_sql = ', '.join(schemas)
 
     # Check metadata table
     if 'structure' in test_list:
         test = {'status': True, 'message': tr('Lizsync structure has been installed')}
         sql = ''
-        sql+= " SELECT t.table_schema, t.table_name"
-        sql+= " FROM information_schema.tables AS t"
-        sql+= " WHERE t.table_schema = 'lizsync'"
-        sql+= " AND t.table_name = 'server_metadata'"
+        sql += " SELECT t.table_schema, t.table_name"
+        sql += " FROM information_schema.tables AS t"
+        sql += " WHERE t.table_schema = 'lizsync'"
+        sql += " AND t.table_name = 'server_metadata'"
 
         header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
         if ok:
@@ -342,7 +340,7 @@ def check_lizsync_installation_status(connection_name, test_list=['structure', '
     if 'server id' in test_list:
         test = {'status': True, 'message': tr('Server id is not empty')}
         sql = ''
-        sql+= " SELECT server_id FROM lizsync.server_metadata LIMIT 1"
+        sql += " SELECT server_id FROM lizsync.server_metadata LIMIT 1"
         status = False
         header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
         if ok:
@@ -361,18 +359,18 @@ def check_lizsync_installation_status(connection_name, test_list=['structure', '
     if 'uid columns' in test_list:
         test = {'status': True, 'message': tr('No missing uid columns')}
         sql = ''
-        sql+= " SELECT t.table_schema, t.table_name, (c.column_name IS NOT NULL) AS ok"
-        sql+= " FROM information_schema.tables AS t"
-        sql+= " LEFT JOIN information_schema.columns c"
-        sql+= "     ON True"
-        sql+= "     AND c.table_schema = t.table_schema"
-        sql+= "     AND c.table_name = t.table_name"
-        sql+= "     AND c.column_name = 'uid'"
-        sql+= " WHERE TRUE"
-        sql+= " AND t.table_schema IN ( {0} )"
-        sql+= " AND t.table_type = 'BASE TABLE'"
-        sql+= " AND c.column_name IS NULL"
-        sql+= " ORDER BY t.table_schema, t.table_name"
+        sql += " SELECT t.table_schema, t.table_name, (c.column_name IS NOT NULL) AS ok"
+        sql += " FROM information_schema.tables AS t"
+        sql += " LEFT JOIN information_schema.columns c"
+        sql += "     ON True"
+        sql += "     AND c.table_schema = t.table_schema"
+        sql += "     AND c.table_name = t.table_name"
+        sql += "     AND c.column_name = 'uid'"
+        sql += " WHERE TRUE"
+        sql += " AND t.table_schema IN ( {0} )"
+        sql += " AND t.table_type = 'BASE TABLE'"
+        sql += " AND c.column_name IS NULL"
+        sql += " ORDER BY t.table_schema, t.table_name"
         sqlc = sql.format(
             schemas_sql
         )
@@ -384,27 +382,26 @@ def check_lizsync_installation_status(connection_name, test_list=['structure', '
         if missing:
             global_status = False
             message = tr('Some tables do not have the required uid column')
-            message+= '\n{0}'.format(',\n '.join(missing))
+            message += '\n{0}'.format(',\n '.join(missing))
             test['status'] = False
             test['message'] = message
         tests['uid columns'] = test
-
 
     # Check missing audit triggers
     if 'audit triggers' in test_list:
         test = {'status': True, 'message': tr('No missing audit triggers')}
         sql = ''
-        sql+= " SELECT table_schema, table_name"
-        sql+= " FROM information_schema.tables"
-        sql+= " WHERE True"
-        sql+= " AND table_schema IN ( {0} )"
-        sql+= " AND table_type = 'BASE TABLE'"
-        sql+= " AND (quote_ident(table_schema) || '.' || quote_ident(table_name))::text NOT IN ("
-        sql+= "     SELECT (tgrelid::regclass)::text"
-        sql+= "     FROM pg_trigger"
-        sql+= "     WHERE TRUE"
-        sql+= "     AND tgname LIKE 'audit_trigger_%'"
-        sql+= " )"
+        sql += " SELECT table_schema, table_name"
+        sql += " FROM information_schema.tables"
+        sql += " WHERE True"
+        sql += " AND table_schema IN ( {0} )"
+        sql += " AND table_type = 'BASE TABLE'"
+        sql += " AND (quote_ident(table_schema) || '.' || quote_ident(table_name))::text NOT IN ("
+        sql += "     SELECT (tgrelid::regclass)::text"
+        sql += "     FROM pg_trigger"
+        sql += "     WHERE TRUE"
+        sql += "     AND tgname LIKE 'audit_trigger_%'"
+        sql += " )"
         sqlc = sql.format(
             schemas_sql
         )
@@ -417,7 +414,7 @@ def check_lizsync_installation_status(connection_name, test_list=['structure', '
                     missing.append('"{0}"."{1}"'.format(a[0], a[1]))
                 global_status = False
                 message = tr('Some tables are not monitored by the audit trigger tool')
-                message+= ':\n{0}'.format(',\n '.join(missing))
+                message += ':\n{0}'.format(',\n '.join(missing))
                 test['status'] = False
                 test['message'] = message
         else:
@@ -466,7 +463,6 @@ def checkFtpBinary():
 
 
 def ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, excludedirs, feedback):
-
     # LizSync config file from ini
     ls = lizsyncConfig()
 
@@ -479,11 +475,11 @@ def ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, ex
             if ftppass:
                 pass_str = ':{}'.format(ftppass)
             cmd.append('ftp://{ftpuser}{pass_str}@{ftphost}:{ftpport}'.format(
-                    ftpuser=ftpuser,
-                    pass_str=pass_str,
-                    ftphost=ftphost,
-                    ftpport=ftpport
-                )
+                ftpuser=ftpuser,
+                pass_str=pass_str,
+                ftphost=ftphost,
+                ftpport=ftpport
+            )
             )
             cmd.append('-e')
             cmd.append('"')
@@ -509,9 +505,9 @@ def ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, ex
                 cmd.append('{} {}'.format(ftpdir, localdir))
 
             cmd.append('; quit"')
-            feedback.pushInfo('LFTP = %s' % ' '.join(cmd) )
+            feedback.pushInfo('LFTP = %s' % ' '.join(cmd))
 
-            myenv = { **os.environ }
+            myenv = {**os.environ}
             run_command(cmd, myenv, feedback)
 
         except:
@@ -527,7 +523,7 @@ def ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, ex
             winscp_bin = os.path.join(
                 ls.variable('binaries/winscp'),
                 'WinSCP.com'
-            ).replace('\\','/')
+            ).replace('\\', '/')
             cmd.append('"' + winscp_bin + '"')
             cmd.append('/ini=nul')
             cmd.append('/console')
@@ -539,11 +535,11 @@ def ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, ex
             if ftppass:
                 pass_str = ':{}'.format(ftppass)
             cmd.append('"open ftp://{ftpuser}{pass_str}@{ftphost}:{ftpport}"'.format(
-                    ftpuser=ftpuser,
-                    pass_str=pass_str,
-                    ftphost=ftphost,
-                    ftpport=ftpport
-                )
+                ftpuser=ftpuser,
+                pass_str=pass_str,
+                ftphost=ftphost,
+                ftpport=ftpport
+            )
             )
             cmd.append('"')
             cmd.append('synchronize')
@@ -586,7 +582,7 @@ def ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, ex
                 )
             )
 
-            myenv = { **os.environ }
+            myenv = {**os.environ}
             run_command(cmd, myenv, feedback)
 
         except:
@@ -598,16 +594,14 @@ def ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, ex
     return True, 'Success'
 
 
-
 def pg_dump(feedback, postgresql_binary_path, connection_name, output_file_name, schemas, additionnal_parameters=[]):
-
     messages = []
     status = False
 
     # Check binary
     pgbin = 'pg_dump'
     if psys().lower().startswith('win'):
-        pgbin+= '.exe'
+        pgbin += '.exe'
     pgbin = os.path.join(
         postgresql_binary_path,
         pgbin
@@ -640,13 +634,13 @@ def pg_dump(feedback, postgresql_binary_path, connection_name, output_file_name,
     if psys().lower().startswith('win'):
         pgbin = '"' + pgbin + '"'
     cmd = [
-        pgbin
-    ] + cmdo + [
-        '--no-acl',
-        '--no-owner',
-        '-Fp',
-        '-f "{0}"'.format(output_file_name)
-    ]
+              pgbin
+          ] + cmdo + [
+              '--no-acl',
+              '--no-owner',
+              '-Fp',
+              '-f "{0}"'.format(output_file_name)
+          ]
 
     # Add given schemas
     for s in schemas:
@@ -661,15 +655,15 @@ def pg_dump(feedback, postgresql_binary_path, connection_name, output_file_name,
     try:
         # messages.append('PG_DUMP = %s' % ' '.join(cmd) )
         # Add password if needed
-        myenv = { **os.environ }
+        myenv = {**os.environ}
         if not uri.service():
-            myenv = {**{'PGPASSWORD': uri.password()}, **os.environ }
+            myenv = {**{'PGPASSWORD': uri.password()}, **os.environ}
         run_command(cmd, myenv, feedback)
 
         # subprocess.run(
-            # " ".join(cmd),
-            # shell=True,
-            # env=myenv
+        # " ".join(cmd),
+        # shell=True,
+        # env=myenv
         # )
         status = True
         messages.append(tr('Database has been successfull dumped') + ' into {0}'.format(output_file_name))
@@ -681,7 +675,6 @@ def pg_dump(feedback, postgresql_binary_path, connection_name, output_file_name,
 
 
 def setQgisProjectOffline(qgis_directory, connection_name_central, connection_name_clone, feedback):
-
     # Get uri from connection names
     status_central, uri_central, error_message_central = getUriFromConnectionName(connection_name_central, False)
     status_clone, uri_clone, error_message_clone = getUriFromConnectionName(connection_name_clone, False)
@@ -694,7 +687,7 @@ def setQgisProjectOffline(qgis_directory, connection_name_central, connection_na
 
     uris = {
         'central': {'uri': uri_central},
-        'clone'  : {'uri': uri_clone}
+        'clone': {'uri': uri_clone}
     }
     for a in ('central', 'clone'):
         uri = uris[a]['uri']
@@ -728,7 +721,7 @@ def setQgisProjectOffline(qgis_directory, connection_name_central, connection_na
     }
 
     # Desktop context : use Python
-    # First loop to create modified version of QGIS projects (with added .xml extension)
+    #  First loop to create modified version of QGIS projects (with added .xml extension)
     files = []
     for filename in os.listdir(qgis_directory):
         if not os.path.isfile(os.path.join(qgis_directory, filename)):
@@ -757,7 +750,6 @@ def setQgisProjectOffline(qgis_directory, connection_name_central, connection_na
                 if stext in file_str:
                     file_str = file_str.replace(stext, rtext)
 
-
         # to improve
         # alway replace user by clone local user
         # needed if there are multiple user stored in the qgis project for the same server
@@ -779,6 +771,7 @@ def setQgisProjectOffline(qgis_directory, connection_name_central, connection_na
             f.write(file_str)
 
     return True, 'Success'
+
 
 def returnError(output, msg, feedback):
     """
@@ -824,7 +817,7 @@ class lizsyncConfig:
 
         # Read config
         config = ConfigParser()
-        self.config_file =config_file
+        self.config_file = config_file
         config.read(self.config_file)
         self.config = config
 
@@ -880,4 +873,3 @@ class lizsyncConfig:
         """
         with open(self.config_file, 'w') as f:
             self.config.write(f)
-
