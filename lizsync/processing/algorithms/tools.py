@@ -76,9 +76,6 @@ def check_ftp_connection(host, port, login, password=None, timeout=5):
     """
     Check FTP connection with timeout
     """
-    status = True
-    msg = ''
-
     if not password:
         ok, password, msg = get_ftp_password(host, port, login)
         if not ok:
@@ -155,8 +152,6 @@ def getUriFromConnectionNameUserland(connection_name, must_connect=True):
     ls = lizsyncConfig()
     status = True
     uri = None
-    error_message = ''
-    connection = None
     c_list = ('central', 'clone')
     for c in c_list:
         c_name = ls.variable('postgresql:%s/name' % c)
@@ -193,13 +188,9 @@ def getUriFromConnectionNameUserland(connection_name, must_connect=True):
 
 
 def fetchDataFromSqlQuery(connection_name, sql):
-    header = None
     data = []
     header = []
     rowCount = 0
-    error_message = None
-    connection = None
-    ok = True
 
     # Get URI
     status, uri, error_message = getUriFromConnectionName(connection_name, True)
@@ -208,7 +199,7 @@ def fetchDataFromSqlQuery(connection_name, sql):
         return header, data, rowCount, ok, error_message
     try:
         connector = PostGisDBConnector(uri)
-    except:
+    except Exception:
         error_message = tr('Cannot connect to database')
         ok = False
         return header, data, rowCount, ok, error_message
@@ -220,7 +211,7 @@ def fetchDataFromSqlQuery(connection_name, sql):
         c = connector._execute(None, str(sql))
         data = []
         header = connector._get_cursor_columns(c)
-        if header == None:
+        if header is None:
             header = []
         if len(header) > 0:
             data = connector._fetchall(c)
@@ -287,7 +278,7 @@ def run_command(cmd, myenv, feedback):
         for line in process.stdout:
             try:
                 output = "{}".format(line.rstrip().decode("utf-8"))
-            except:
+            except Exception:
                 output = "{}".format(line.rstrip())
             if not pattern.search(output):
                 print(output)
@@ -341,7 +332,6 @@ def check_lizsync_installation_status(connection_name, test_list=['structure', '
         test = {'status': True, 'message': tr('Server id is not empty')}
         sql = ''
         sql += " SELECT server_id FROM lizsync.server_metadata LIMIT 1"
-        status = False
         header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
         if ok:
             if rowCount != 1:
@@ -405,7 +395,6 @@ def check_lizsync_installation_status(connection_name, test_list=['structure', '
         sqlc = sql.format(
             schemas_sql
         )
-        status = False
         header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sqlc)
         missing = []
         if ok:
@@ -510,7 +499,7 @@ def ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, ex
             myenv = {**os.environ}
             run_command(cmd, myenv, feedback)
 
-        except:
+        except Exception:
             m = tr('Error during FTP sync')
             return False, m
         finally:
@@ -585,7 +574,7 @@ def ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, ex
             myenv = {**os.environ}
             run_command(cmd, myenv, feedback)
 
-        except:
+        except Exception:
             m = tr('Error during FTP sync')
             return False, m
         finally:
@@ -667,7 +656,7 @@ def pg_dump(feedback, postgresql_binary_path, connection_name, output_file_name,
         # )
         status = True
         messages.append(tr('Database has been successfull dumped') + ' into {0}'.format(output_file_name))
-    except:
+    except Exception:
         status = False
         messages.append(tr('Error dumping database') + ' into {0}'.format(output_file_name))
 
@@ -742,7 +731,6 @@ def setQgisProjectOffline(qgis_directory, connection_name_central, connection_na
 
         # Replace needed data
         # Loop through connection parameters and replace
-        seds = []
         for k, v in dbitems.items():
             if k in uris['central']['info'] and k in uris['clone']['info']:
                 stext = v.format(uris['central']['info'][k])
@@ -777,7 +765,6 @@ def returnError(output, msg, feedback):
     """
     Report errors
     """
-    status = 0
     output_string = 'OUTPUT_STRING'
     feedback.reportError(msg)
     if output_string in output:
@@ -847,7 +834,7 @@ class lizsyncConfig:
             return None
         try:
             val = self.config.get(address[0], address[1])
-        except:
+        except Exception:
             val = None
         return val
 

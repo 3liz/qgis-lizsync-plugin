@@ -232,9 +232,9 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         dir_path = os.path.dirname(os.path.abspath(package_file))
         try:
             with zipfile.ZipFile(package_file) as t:
-                zip = t.extractall(dir_path)
+                t.extractall(dir_path)
                 feedback.pushInfo(tr('Package uncompressed successfully'))
-        except:
+        except Exception:
             m = tr('Package extraction error')
             return returnError(output, m, feedback)
 
@@ -427,7 +427,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
 
                 # Delete SQL scripts
                 os.remove(i)
-            except:
+            except Exception:
                 m = tr('Error loading file') + ' {0}'.format(i)
                 return returnError(output, m, feedback)
 

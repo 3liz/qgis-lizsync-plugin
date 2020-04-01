@@ -469,14 +469,11 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
 
         # Create ZIP archive
         try:
-            import zlib
+            import zlib  # NOQA
             compression = zipfile.ZIP_DEFLATED
-        except:
+        except Exception:
             compression = zipfile.ZIP_STORED
-        modes = {
-            zipfile.ZIP_DEFLATED: 'deflated',
-            zipfile.ZIP_STORED: 'stored'
-        }
+
         status = 1
         msg = ''
         zip_file = parameters[self.ZIP_FILE]
@@ -488,7 +485,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
                         arcname=fname,
                         compress_type=compression
                     )
-                except:
+                except Exception:
                     status = 0
                     msg += tr("Error while zipping file") + ': ' + fname
                     m = msg

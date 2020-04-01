@@ -20,6 +20,8 @@ __revision__ = '$Format:%H$'
 import os
 import tempfile
 
+from platform import system as psys
+
 from qgis.core import (
     QgsProcessingParameterNumber,
     QgsProcessingParameterString,

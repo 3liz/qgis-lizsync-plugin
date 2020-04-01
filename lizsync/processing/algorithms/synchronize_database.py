@@ -3,8 +3,6 @@ __license__ = 'GPL version 3'
 __email__ = 'info@3liz.org'
 __revision__ = '$Format:%H$'
 
-import os
-
 from qgis.core import (
     QgsProcessingParameterString,
     QgsProcessingOutputString,
@@ -320,7 +318,6 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
 
         ids, conflicts = [], []
         max_action_tstamp_tx, min_event_id, max_event_id = None, None, None
-        central_removed_logs_indexes = []
         logs_indexes_to_remove = {
             'central': [],
             'clone': []
@@ -664,7 +661,7 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
         self.connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
 
         # Compute the number of steps to display within the progress bar
-        total = 100.0 / 2
+        # total = 100.0 / 2
 
         # Get database servers id
         self.central_id = self.getDatabaseId('central', feedback)

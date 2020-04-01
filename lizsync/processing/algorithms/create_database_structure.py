@@ -228,7 +228,6 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
                     feedback.pushInfo(tr("* Schema has been droped") + ' - ' + s.upper())
                 else:
                     feedback.pushInfo(error_message)
-                    status = 0
                     m = error_message
                     return returnError(output, m, feedback)
 
@@ -246,7 +245,6 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
             'lizsync/90_function_current_setting.sql',
             '99_finalize_database.sql',
         ]
-        msg = ''
         alg_dir = os.path.dirname(__file__)
         plugin_dir = os.path.join(alg_dir, '../../')
 

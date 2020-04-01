@@ -20,8 +20,7 @@ sys.path.append(os.path.join(qgisConfigPath, 'python/plugins/'))
 os.environ['PGSERVICEFILE'] = pg_service_file
 
 # Import QGIS AND QT modules
-from qgis.core import QgsSettings, QgsApplication
-from qgis.analysis import QgsNativeAlgorithms
+from qgis.core import QgsApplication
 from qgis.PyQt.QtCore import QCoreApplication, QSettings
 from processing.core.Processing import Processing
 

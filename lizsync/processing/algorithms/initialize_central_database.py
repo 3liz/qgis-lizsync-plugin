@@ -17,8 +17,6 @@ __copyright__ = '(C) 2018 by 3liz'
 
 __revision__ = '$Format:%H$'
 
-import os
-
 from qgis.core import (
     QgsProcessingParameterString,
     QgsProcessingParameterBoolean,
