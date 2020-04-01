@@ -17,7 +17,7 @@
 
 * Tests - move and rename bash script to run_test.sh
 * Config - Add list of schemas in saved configuration
-* Package - Use parameterAsString for Additionnal SQL file input
+* Package - Use parameterAsString for Additional SQL file input
 * FTP & Database - Check connections before proceeding
 * Synchronize db - remove unwanted parenthesis in simple SET clause
 * Deploy package & tools - Quote zip archive file in psql/pg_dump command
@@ -25,17 +25,17 @@
 
 ### 03/03/2020 Version 0.3.0
 
-* Package & restore - Add an optionnal SQL file to run in clone after deploy
-* Synchronization - Add new option to exclude columns from bidirectionnal database sync
+* Package & restore - Add an optional SQL file to run in clone after deploy
+* Synchronization - Add new option to exclude columns from bidirectional database sync
 * Doc - update README for SQL generator
 * Update french translation
 
 ### 28/02/2020 Version 0.2.3
 
 * Send media to FTP server - Fix bug with missing variable
-* Get projects from FTP - remove also lizmap config file before sync
+* Get projects from FTP - remove also Lizmap config file before sync
 * Userland context - Use String input parameter for ZIP archive
-* Provider - Userland context, only load usefull algs
+* Provider - Userland context, only load useful algorithms
 * FTP - Use LizSync.ini password if given instead of using ~/.netrc file
 * Userland context - Adapt the method to connect to databases: read ini file
 * Translation - update strings
@@ -43,7 +43,7 @@
 * Translation - Fix bug when loading provider and initializing locale
 * Translation - Add French language
 * Doc - Replace <br> with line endings
-* Translation - Add qgis-plugin-tools & Use transifex
+* Translation - Add qgis-plugin-tools & Use Transifex
 * Config - Add new option database_archive_file & improve config parser
 * Fix some more bugs
 * Add small doc about test data and scripts
