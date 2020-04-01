@@ -15,21 +15,24 @@ services:
 jobs:
   include:
 
+    - stage: Run tests
+      name: Docker-compose with PostGIS database
+      install:
+        - cd ${TRAVIS_BUILD_DIR}/docker
+        - ./start.sh
+      script:
+        - ./exec.sh
+
     - stage: Deploy
       if: tag IS present
       name: Create release, plugins.qgis.org
-
       install:
         - pip3 install qgis-plugin-ci
-
       before_deploy:
         - export RELEASE_TITLE="Release of $TRAVIS_TAG"
-
       script:
         - qgis-plugin-ci -v
-
       deploy:
-
         - provider: releases
           edge: true
           file: .

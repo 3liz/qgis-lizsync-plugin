@@ -4,11 +4,16 @@ LOCALES = "en fr"
 PLUGINNAME = lizsync
 
 
-docker_test:
-	$(MAKE) -C qgis_plugin_tools docker_test PLUGINNAME=$(PLUGINNAME)
+start_tests:
+	@echo 'Start docker-compose'
+	@cd docker && ./start.sh
 
-i18n_%:
-	$(MAKE) -C qgis_plugin_tools i18n_$* LOCALES=$(LOCALES)
+run_tests:
+	@echo 'Running tests, containers must be running'
+	@cd docker && ./exec.sh
 
-release_%:
-	$(MAKE) -C qgis_plugin_tools release_$* PLUGINNAME=$(PLUGINNAME)
+stop_tests:
+	@echo 'Stopping/killing containers'
+	@cd docker && ./stop.sh
+
+tests: start_tests run_tests stop_tests

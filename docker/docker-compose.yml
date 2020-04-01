@@ -1,0 +1,28 @@
+version: '3'
+
+services:
+  db:
+    image: kartoza/postgis:9.6-2.4
+    hostname: db
+    container_name: postgis
+    environment:
+      - POSTGRES_USER=docker
+      - POSTGRES_PASS=docker
+      - POSTGRES_DBNAME=gis
+      # Uncomment to expose the postgis database on the network
+      # - ALLOW_IP_RANGE= 0.0.0.0/0
+    # Uncomment to use the postgis database from outside the docker network
+    # ports:
+    #  - "35432:5432"
+    healthcheck:
+      test: "exit 0"
+
+  qgis:
+    image: qgis/qgis:release-3_4
+    container_name: qgis
+    volumes:
+      # - /tmp/.X11-unix:/tmp/.X11-unix
+      - ../lizsync:/tests_directory/lizsync
+    environment:
+      # - DISPLAY=unix$DISPLAY
+      - DISPLAY=:99
