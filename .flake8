@@ -1,0 +1,5 @@
+[flake8]
+max-line-length = 99
+maximum-doc-length = 99
+
+ignore = E123, E126, E402, E501, F821, W503
