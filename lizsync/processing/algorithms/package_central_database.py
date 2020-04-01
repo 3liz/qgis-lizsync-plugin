@@ -193,10 +193,10 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         )
 
     def checkCentralDatabase(self, parameters, feedback):
-        '''
+        """
         Check if central database
         has been initialized
-        '''
+        """
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
 
         # Check if needed schema and metadata has been created
@@ -299,7 +299,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         '''.format(
             schemas_sql
         )
-        # Drop other sytem schemas'''
+        # Drop other sytem schemas
         sql+= '''
             DROP SCHEMA IF EXISTS lizsync,audit CASCADE;
         '''

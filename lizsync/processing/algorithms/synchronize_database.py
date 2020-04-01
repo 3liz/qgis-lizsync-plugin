@@ -14,11 +14,6 @@ from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgori
 
 
 class SynchronizeDatabase(BaseProcessingAlgorithm):
-    """
-    """
-    # Constants used to refer to parameters and outputs. They will be
-    # used when calling the algorithm from another algorithm, or when
-    # calling from the QGIS console.
 
     CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     CONNECTION_NAME_CLONE = 'CONNECTION_NAME_CLONE'
@@ -124,9 +119,9 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
         return super(SynchronizeDatabase, self).checkParameterValues(parameters, context)
 
     def getDatabaseId(self, source, feedback):
-        '''
+        """
         Get database server id
-        '''
+        """
         connection_name = self.connection_name_central
         if source == 'clone':
             connection_name = self.connection_name_clone
@@ -154,9 +149,9 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
         return db_id
 
     def getExcludedColumns(self):
-        '''
+        """
         Get the list of excluded columns from synchronization
-        '''
+        """
         ls = lizsyncConfig()
         var_excluded_columns = ls.variable('general/excluded_columns')
         if var_excluded_columns:
@@ -174,9 +169,9 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
         return excluded_columns
 
     def getLastAuditLogs(self, source):
-        '''
+        """
         Get logs from audit logged_actions table
-        '''
+        """
         if source == 'central':
 
             # Get last synchro made from the central database to this clone
@@ -306,10 +301,10 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
         return data, rowCount, ok, error_message
 
     def analyseAuditLogs(self, central_logs, clone_logs, feedback):
-        '''
+        """
         Parse logs and compare central and clone logs
         Find conflicts and return modified logs
-        '''
+        """
         # Rule to apply on UPDATE conflict
         # same table, same uid, same column
         # rule = 'clone'
@@ -395,9 +390,9 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
         return central_logs, clone_logs, conflicts
 
     def replayLogs(self, target, logs, feedback):
-        '''
+        """
         Replay logs (raw or updated) to the target database
-        '''
+        """
         feedback.pushInfo(
             tr('Number of features to synchronize') + ' to {} = {}'.format(
                 target,
@@ -650,9 +645,9 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
         return True, ''
 
     def processAlgorithm(self, parameters, context, feedback):
-        '''
+        """
         Run the needed steps for bi-directionnal database synchronization
-        '''
+        """
         output = {
             self.OUTPUT_STATUS: 1,
             self.OUTPUT_STRING: ''
@@ -767,4 +762,3 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
             self.OUTPUT_STRING: tr('Two-way database synchronization done')
         }
         return output
-

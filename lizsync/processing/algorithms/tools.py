@@ -73,9 +73,9 @@ def get_ftp_password(host, port, login):
 
 
 def check_ftp_connection(host, port, login, password=None, timeout=5):
-    '''
+    """
     Check FTP connection with timeout
-    '''
+    """
     status = True
     msg = ''
 
@@ -104,9 +104,9 @@ def check_ftp_connection(host, port, login, password=None, timeout=5):
 
 
 def check_postgresql_connection(uri, timeout=5):
-    '''
+    """
     Check connection to PostgreSQL database with timeout
-    '''
+    """
     # Try to connect
     conn = None
     try:
@@ -262,19 +262,19 @@ def validateTimestamp(timestamp_text):
 
 
 def getVersionInteger(f):
-    '''
+    """
     Transform "0.1.2" into "000102"
     Transform "10.9.12" into "100912"
     to allow comparing versions
     and sorting the upgrade files
-    '''
+    """
     return ''.join([a.zfill(2) for a in f.strip().split('.')])
 
 
 def run_command(cmd, myenv, feedback):
-    '''
+    """
     Run any command using subprocess
-    '''
+    """
     feedback.pushInfo(" ".join(cmd))
     stop_words = ['warning']
     pattern = re.compile('|'.join(r'\b{}\b'.format(word) for word in stop_words), re.IGNORECASE)
@@ -302,10 +302,10 @@ def run_command(cmd, myenv, feedback):
 
 
 def check_lizsync_installation_status(connection_name, test_list=['structure', 'server id', 'uid columns', 'audit triggers'], schemas='test'):
-    '''
+    """
     Checks if the central database
     has been initialized with Lizsync tools
-    '''
+    """
     tests = {}
     global_status = True
 
@@ -797,6 +797,8 @@ def returnError(output, msg, feedback):
 
 from configparser import ConfigParser
 from shutil import copyfile
+
+
 class lizsyncConfig:
 
     def __init__(self):
@@ -835,18 +837,18 @@ class lizsyncConfig:
         )
 
     def getAddressFromAlias(self, alias):
-        '''
+        """
         Parse addres like ftp:central/host into ['ftp:central', 'host']
-        '''
+        """
         variables = alias.split('/')
         if len(variables) != 2 or variables[0] not in self.sections:
             return None
         return variables
 
     def variable(self, alias):
-        '''
+        """
         Get configuration
-        '''
+        """
         address = self.getAddressFromAlias(alias)
         if not address:
             return None
@@ -857,9 +859,9 @@ class lizsyncConfig:
         return val
 
     def setVariable(self, alias, value):
-        '''
+        """
         Set configuration
-        '''
+        """
         address = self.getAddressFromAlias(alias)
         if not address:
             return None
@@ -873,9 +875,9 @@ class lizsyncConfig:
         )
 
     def save(self):
-        '''
+        """
         Save config file
-        '''
+        """
         with open(self.config_file, 'w') as f:
             self.config.write(f)
 
