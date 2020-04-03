@@ -23,6 +23,13 @@ jobs:
       script:
         - ./exec.sh
 
+    - stage: deploy
+      name: Push translations to Transifex
+      # if: branch = master
+      install:
+        - pip3 install git+https://github.com/Gustry/qgis-plugin-ci.git
+      script: qgis-plugin-ci push-translation ${TX_TOKEN}
+
     - stage: Deploy
       if: tag IS present
       name: Create release, plugins.qgis.org
