@@ -23,11 +23,17 @@ jobs:
       script:
         - ./exec.sh
 
+    - stage: Push translations to Transifex
+      if: branch = master
+      install:
+        - pip3 install git+https://github.com/Gustry/qgis-plugin-ci.git
+      script: qgis-plugin-ci push-translation ${TX_TOKEN}
+
     - stage: Deploy
       if: tag IS present
       name: Create release, plugins.qgis.org
       install:
-        - pip3 install qgis-plugin-ci
+        - pip3 install git+https://github.com/Gustry/qgis-plugin-ci.git
       before_deploy:
         - export RELEASE_TITLE="Release of $TRAVIS_TAG"
       script:
@@ -42,6 +48,6 @@ jobs:
             tags: true
 
         - provider: script
-          script: qgis-plugin-ci release ${TRAVIS_TAG} --github-token ${GH_TOKEN} --create-plugin-repo
+          script: qgis-plugin-ci release ${TRAVIS_TAG} --github-token ${GH_TOKEN} --transifex-token ${TK_TOKEN} --create-plugin-repo
           on:
             tags: true
