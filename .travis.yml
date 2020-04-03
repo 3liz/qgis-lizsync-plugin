@@ -15,16 +15,16 @@ services:
 jobs:
   include:
 
-    - stage: Run tests
-      name: Docker-compose with PostGIS database
-      install:
-        - cd ${TRAVIS_BUILD_DIR}/docker
-        - ./start.sh
-      script:
-        - ./exec.sh
+#    - stage: Run tests
+#      name: Docker-compose with PostGIS database
+#      install:
+#        - cd ${TRAVIS_BUILD_DIR}/docker
+#        - ./start.sh
+#      script:
+#        - ./exec.sh
 
-    - stage: deploy
-      name: Push translations to Transifex
+    - stage: Push translations to Transifex
+      # name: Push translations to Transifex
       # if: branch = master
       install:
         - pip3 install git+https://github.com/Gustry/qgis-plugin-ci.git
