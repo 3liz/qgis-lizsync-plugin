@@ -18,7 +18,7 @@ jobs:
     - stage: Run tests
       name: Docker-compose with PostGIS database
       install:
-        - cd ${TRAVIS_BUILD_DIR}/docker
+        - cd .docker
         - ./start.sh
       script:
         - ./exec.sh
