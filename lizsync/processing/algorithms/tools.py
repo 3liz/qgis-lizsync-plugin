@@ -100,11 +100,34 @@ def check_ftp_connection(host, port, login, password=None, timeout=5):
     return True, ''
 
 
+def get_connection_password_from_ini(uri):
+    '''
+    Get password from lizsync.ini
+    And set uri password with it
+    '''
+    password = ''
+    ls = lizsyncConfig()
+    c_list = ('central', 'clone')
+    for c in c_list:
+        if  uri.host() == ls.variable('postgresql:%s/host' % c) \
+        and uri.port() == ls.variable('postgresql:%s/port' % c) \
+        and uri.database() == ls.variable('postgresql:%s/dbname' % c) \
+        and uri.username() == ls.variable('postgresql:%s/user' % c) \
+        and ls.variable('postgresql:%s/password' % c):
+            password = ls.variable('postgresql:%s/password' % c)
+            break
+    return password
+
 def check_postgresql_connection(uri, timeout=5):
     """
     Check connection to PostgreSQL database with timeout
     """
-    # Try to connect
+    # Check if password given. If not, try to read it from lizsync.ini
+    if not uri.password():
+        password = get_connection_password_from_ini(uri)
+        uri.setPassword(password)
+
+    # Try to connect with psycopg2
     conn = None
     try:
         if uri.service():

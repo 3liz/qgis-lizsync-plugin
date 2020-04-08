@@ -415,6 +415,9 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                 # Add password if needed
                 myenv = {**os.environ}
                 if not uri.service():
+                    if not uri.password():
+                        password = get_connection_password_from_ini(uri)
+                        uri.setPassword(password)
                     myenv = {**{'PGPASSWORD': uri.password()}, **os.environ}
 
                 run_command(cmd, myenv, feedback)
