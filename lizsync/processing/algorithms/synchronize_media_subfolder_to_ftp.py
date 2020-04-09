@@ -181,21 +181,20 @@ class SynchronizeMediaSubfolderToFtp(BaseProcessingAlgorithm):
             self.OUTPUT_STRING: msg
         }
 
-        # Check localdir
-        feedback.pushInfo(tr('CHECK LOCAL PROJECT DIRECTORY'))
-        # TEMPORARY commented as it's breaking
-        # if not localdir or not os.path.isdir(localdir):
-        #     m = tr('QGIS project local directory not found')
-        #     return returnError(output, m, feedback)
-        # else:
-        #     m = tr('QGIS project local directory ok')
-
         # Parameters
         ftphost = parameters[self.CENTRAL_FTP_HOST]
         ftplogin = parameters[self.CENTRAL_FTP_LOGIN]
         ftpport = parameters[self.CENTRAL_FTP_PORT]
         ftpdir = parameters[self.CENTRAL_FTP_REMOTE_DIR]
         localdir = parameters[self.LOCAL_QGIS_PROJECT_FOLDER]
+
+        # Check localdir
+        feedback.pushInfo(tr('CHECK LOCAL PROJECT DIRECTORY'))
+        if not localdir or not os.path.isdir(localdir):
+            m = tr('QGIS project local directory not found')
+            return returnError(output, m, feedback)
+        else:
+            m = tr('QGIS project local directory ok')
 
         # Check ftp
         ok, password, msg = get_ftp_password(ftphost, ftpport, ftplogin)
