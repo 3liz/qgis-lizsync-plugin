@@ -1,6 +1,5 @@
 """Tests for Processing algorithms."""
 
-import os
 import psycopg2
 import time
 

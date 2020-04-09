@@ -1,7 +1,5 @@
 """Tests for load structure with an empty database."""
 
-import unittest
-
 from .base_test_database import DatabaseTestCase
 
 __copyright__ = "Copyright 2019, 3Liz"
