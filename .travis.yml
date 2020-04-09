@@ -48,7 +48,7 @@ jobs:
             tags: true
 
         - provider: script
-          script: qgis-plugin-ci release ${TRAVIS_TAG} --github-token ${GH_TOKEN} --transifex-token ${TK_TOKEN} --create-plugin-repo --allow-uncommitted-changes
+          script: qgis-plugin-ci release ${TRAVIS_TAG} --github-token ${GH_TOKEN} --transifex-token ${TX_TOKEN} --create-plugin-repo --allow-uncommitted-changes
           on:
             tags: true
 
