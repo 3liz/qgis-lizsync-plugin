@@ -7,10 +7,10 @@ python: 3.7
 services:
   - docker
 
-#branches:
-#  only:
-#    - master
-#    - dev
+branches:
+  only:
+    - master
+    - /^v.*$/
 
 jobs:
   include:
@@ -31,7 +31,7 @@ jobs:
 
     - stage: Deploy
       if: tag IS present
-      name: Create release, plugins.qgis.org
+      name: Create release
       install:
         - pip3 install git+https://github.com/Gustry/qgis-plugin-ci.git
       before_deploy:
@@ -48,6 +48,12 @@ jobs:
             tags: true
 
         - provider: script
-          script: qgis-plugin-ci release ${TRAVIS_TAG} --github-token ${GH_TOKEN} --transifex-token ${TK_TOKEN} --create-plugin-repo
+          script: qgis-plugin-ci release ${TRAVIS_TAG} --github-token ${GH_TOKEN} --transifex-token ${TK_TOKEN} --create-plugin-repo --allow-uncommitted-changes
+          on:
+            tags: true
+
+        - provider: script
+          skip_cleanup: true
+          script: ./github/push_translations_to_github.sh
           on:
             tags: true
