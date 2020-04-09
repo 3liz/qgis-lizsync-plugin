@@ -1,5 +1,12 @@
 ## CHANGELOG
 
+### 09/04/2020 Version 0.3.3
+
+* Synchronize media subfolder - Fix bug with localdir variable not set
+* PostgreSQL connection - Get password from ini file if not given
+* Improve continuous integration: translations, tests
+* Code cleaning and PEP8 fixing
+
 ### 31/03/2020 Version 0.3.2
 
 * Add qgis-plugin-ci configuration to the plugin
