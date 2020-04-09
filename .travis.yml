@@ -7,10 +7,10 @@ python: 3.7
 services:
   - docker
 
-branches:
-  only:
-    - master
-    - /^v.*$/
+#branches:
+#  only:
+#    - master
+#    - /^v.*$/
 
 jobs:
   include:
