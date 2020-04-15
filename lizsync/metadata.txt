@@ -64,3 +64,4 @@ deprecated=False
 
 # This extension is compatible with py-wps-server
 wps=True
+hasProcessingProvider=yes
