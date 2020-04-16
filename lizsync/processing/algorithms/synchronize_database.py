@@ -384,11 +384,11 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
             for i in sorted(logs_indexes_to_remove['clone'], reverse=True):
                 del (clone_logs[i])
 
-            # Set needed data
-            self.max_action_tstamp_tx = max_action_tstamp_tx
-            self.min_event_id = min_event_id
-            self.max_event_id = max_event_id
-            self.ids = ids
+        # Set needed data
+        self.max_action_tstamp_tx = max_action_tstamp_tx
+        self.min_event_id = min_event_id
+        self.max_event_id = max_event_id
+        self.ids = ids
 
         return central_logs, clone_logs, conflicts
 
@@ -403,8 +403,10 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
             )
         )
 
-        if target == 'clone':
+        if target == 'clone' and len(self.ids) > 0:
             # Insert a new synchronization item in central db
+            # Only if some logs have been found (before log analyse) from server
+            # Even if logs is empty, we need to UPDATE central db audit.logged_actions to tell the items have been processed (even if discarded)
             sql = '''
                 INSERT INTO lizsync.history (
                     server_from, server_to,
@@ -439,24 +441,25 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
             # Replay SQL queries in clone db
             # We disable triggers to avoid adding more rows to the local audit logged_actions table
             # TODO : write SQL into file and use psql
-            sql = ' SET session_replication_role = replica;'
-            for a in logs:
-                sql += '''
-                {0};
-                '''.format(a[6])
-            sql += ' SET session_replication_role = DEFAULT;'
-            # feedback.pushInfo(sql)
-            _, _, _, ok, error_message = fetchDataFromSqlQuery(
-                self.connection_name_clone,
-                sql
-            )
-            if not ok:
-                m = error_message + ' ' + sql
-                return False, m
+            if logs:
+                sql = ' SET session_replication_role = replica;'
+                for a in logs:
+                    sql += '''
+                    {0};
+                    '''.format(a[6])
+                sql += ' SET session_replication_role = DEFAULT;'
+                # feedback.pushInfo(sql)
+                _, _, _, ok, error_message = fetchDataFromSqlQuery(
+                    self.connection_name_clone,
+                    sql
+                )
+                if not ok:
+                    m = error_message + ' ' + sql
+                    return False, m
 
-            feedback.pushInfo(
-                tr('SQL queries have been replayed from the central to the clone database')
-            )
+                feedback.pushInfo(
+                    tr('SQL queries have been replayed from the central to the clone database')
+                )
 
             # Modify central server audit logged actions
             sql = '''
@@ -506,7 +509,9 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
                 tr('History sync_status has been updated to "done" in the central database')
             )
 
-        if target == 'central':
+        # To central. Do it only when logs is not empty
+        # no need to update central server audit.logged_actions here
+        if target == 'central' and len(logs) > 0:
 
             # Insert a new synchronization item in central db
             sql = '''
@@ -543,22 +548,58 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
             # Replay SQL queries to central server db
             # The session variables are used by the audit function
             # to fill the sync_data field
-            sql_session = 'SET SESSION "lizsync.server_from" = \'{}\';'.format(self.clone_id)
-            sql_session += 'SET SESSION "lizsync.server_to" = \'{}\';'.format(self.central_id)
-            sql_session += 'SET SESSION "lizsync.sync_id" = \'{}\';'.format(sync_id)
+            if logs:
+                sql_session = 'SET SESSION "lizsync.server_from" = \'{}\';'.format(self.clone_id)
+                sql_session += 'SET SESSION "lizsync.server_to" = \'{}\';'.format(self.central_id)
+                sql_session += 'SET SESSION "lizsync.sync_id" = \'{}\';'.format(sync_id)
 
-            # Store SQL query to update central logs afterward with original log timestamp
-            sql_update_logs = ''
+                # Store SQL query to update central logs afterward with original log timestamp
+                sql_update_logs = ''
 
-            # Loop through logs and replay action
-            # We need to query one by one to be able to update the sync_data->action_tstamp_tx afterwards
-            # by searching action = sql
-            for log in logs:
-                # Add action SQL
-                sql = sql_session + '''{action};'''.format(
-                    action=log[6]
+                # Loop through logs and replay action
+                # We need to query one by one to be able to update the sync_data->action_tstamp_tx afterwards
+                # by searching action = sql
+                for log in logs:
+                    # Add action SQL
+                    sql = sql_session + '''{action};'''.format(
+                        action=log[6]
+                    )
+                    # Replay this SQL containing in the central server
+                    _, _, _, ok, error_message = fetchDataFromSqlQuery(
+                        self.connection_name_central,
+                        sql
+                    )
+                    if not ok:
+                        m = error_message + ' ' + sql
+                        return False, m
+
+                    # Add UPDATE clause in SQL query which will be run afterwards
+                    sql_update_logs += '''
+                    UPDATE audit.logged_actions
+                    SET sync_data = sync_data || jsonb_build_object(
+                        'action_tstamp_tx',
+                        Cast('{timestamp}' AS TIMESTAMP WITH TIME ZONE)
+                    )
+                    WHERE True
+                    AND sync_data->'replayed_by'->>'{central_id}' = '{sync_id}'
+                    AND client_query = '{query}'
+                    AND action = '{action}'
+                    AND concat(schema_name, '.', table_name) = '{ident}';
+                    '''.format(
+                        timestamp=log[1],
+                        central_id=self.central_id,
+                        sync_id=sync_id,
+                        query=sql.replace("'", "''"),
+                        action=log[4],
+                        ident=log[3]
+                    )
+
+                feedback.pushInfo(
+                    tr('SQL queries have been replayed from the clone to the central database')
                 )
-                # Replay this SQL containing in the central server
+
+                # Update central logs to keep original action timestamp
+                sql = sql_update_logs
                 _, _, _, ok, error_message = fetchDataFromSqlQuery(
                     self.connection_name_central,
                     sql
@@ -567,44 +608,9 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
                     m = error_message + ' ' + sql
                     return False, m
 
-                # Add UPDATE clause in SQL query which will be run afterwards
-                sql_update_logs += '''
-                UPDATE audit.logged_actions
-                SET sync_data = sync_data || jsonb_build_object(
-                    'action_tstamp_tx',
-                    Cast('{timestamp}' AS TIMESTAMP WITH TIME ZONE)
+                feedback.pushInfo(
+                    tr('Logged actions sync_data has been updated in the central database with the original timestamp')
                 )
-                WHERE True
-                AND sync_data->'replayed_by'->>'{central_id}' = '{sync_id}'
-                AND client_query = '{query}'
-                AND action = '{action}'
-                AND concat(schema_name, '.', table_name) = '{ident}';
-                '''.format(
-                    timestamp=log[1],
-                    central_id=self.central_id,
-                    sync_id=sync_id,
-                    query=sql.replace("'", "''"),
-                    action=log[4],
-                    ident=log[3]
-                )
-
-            feedback.pushInfo(
-                tr('SQL queries have been replayed from the clone to the central database')
-            )
-
-            # Update central logs to keep original action timestamp
-            sql = sql_update_logs
-            _, _, _, ok, error_message = fetchDataFromSqlQuery(
-                self.connection_name_central,
-                sql
-            )
-            if not ok:
-                m = error_message + ' ' + sql
-                return False, m
-
-            feedback.pushInfo(
-                tr('Logged actions sync_data has been updated in the central database with the original timestamp')
-            )
 
             # Delete all data from clone audit logged_actions
             sql = '''
@@ -694,25 +700,15 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
 
         # central > clone
         feedback.pushInfo(tr('Replay central logs on clone database'))
-        if len(central_logs) > 0:
-            ok, msg = self.replayLogs('clone', central_logs, feedback)
-            if not ok:
-                return returnError(output, msg, feedback)
-        else:
-            feedback.pushInfo(
-                tr('No data to synchronize from the central database')
-            )
+        ok, msg = self.replayLogs('clone', central_logs, feedback)
+        if not ok:
+            return returnError(output, msg, feedback)
 
         # clone > central
         feedback.pushInfo(tr('Replay clone logs on central database'))
-        if len(clone_logs) > 0:
-            ok, msg = self.replayLogs('central', clone_logs, feedback)
-            if not ok:
-                return returnError(output, msg, feedback)
-        else:
-            feedback.pushInfo(
-                tr('No data to synchronize from the clone database')
-            )
+        ok, msg = self.replayLogs('central', clone_logs, feedback)
+        if not ok:
+            return returnError(output, msg, feedback)
 
         # Store conflicts
         if len(conflicts) > 0:
@@ -725,6 +721,7 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
             '''
             sep = ''
             for c in conflicts:
+                print(c)
                 sql += sep + ''' (
                 '{table}', '{uid}', '{clone_id}',
                 {event_id}, '{event_timestamp}',
@@ -743,7 +740,6 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
                 )
                 sep = ''',
                 '''
-            print(sql)
 
             _, _, _, ok, error_message = fetchDataFromSqlQuery(
                 self.connection_name_central,
