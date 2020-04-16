@@ -3,7 +3,7 @@ name=LizSync
 qgisMinimumVersion=3.4
 description=QGIS plugin with processing algs to configure and use the LizSync PostgreSQL synchronization tools.
 
-version=0.3.3
+version=0.3.4
 author=3liz
 email=info@3liz.com
 about=QGIS plugin with processing algs to configure and use the LizSync PostgreSQL synchronization tools.
@@ -17,6 +17,13 @@ repository=https://github.com/3liz/qgis-lizsync-plugin
 
 # Uncomment the following line and add your changelog:
 changelog=
+  Version 0.3.4
+  * Database synchro - Correctly update central audit.logged_actions for discarded UPDATEs
+  * Add missing flag for processing provider in metadata.txt
+  * Minor code cleanup
+  * Fix travis path when pushing QM to github
+  * Update translations from Transifex
+
   Version 0.3.3
   * Synchronize media subfolder - Fix bug with localdir variable not set
   * PostgreSQL connection - Get password from ini file if not given

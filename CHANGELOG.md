@@ -1,5 +1,13 @@
 ## CHANGELOG
 
+### 16/04/2020 Version 0.3.4
+
+* Database synchro - Correctly update central audit.logged_actions for discarded UPDATEs
+* Add missing flag for processing provider in metadata.txt
+* Minor code cleanup
+* Fix travis path when pushing QM to github
+* Update translations from Transifex          
+
 ### 09/04/2020 Version 0.3.3
 
 * Synchronize media subfolder - Fix bug with localdir variable not set
