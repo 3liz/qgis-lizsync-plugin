@@ -35,6 +35,11 @@ from .tools import (
 )
 from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
+from ...qgis_plugin_tools.tools.resources import (
+    plugin_test_data_path,
+    plugin_path,
+    metadata_config,
+)
 
 
 class CreateDatabaseStructure(BaseProcessingAlgorithm):
@@ -245,8 +250,17 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
             'lizsync/90_function_current_setting.sql',
             '99_finalize_database.sql',
         ]
-        alg_dir = os.path.dirname(__file__)
-        plugin_dir = os.path.join(alg_dir, '../../')
+        plugin_dir = plugin_path()
+        version = metadata_config()["general"]["version"]
+
+        run_migration = os.environ.get("DATABASE_RUN_MIGRATION")
+        if run_migration:
+            plugin_dir = plugin_test_data_path()
+            feedback.reportError(
+                "Be careful, running migrations on an empty database using {} "
+                "instead of {}".format(run_migration, version)
+            )
+            version = run_migration
 
         # Loop sql files and run SQL code
         for sf in sql_files:
@@ -269,9 +283,6 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
                     return returnError(output, m, feedback)
 
         # Add version
-        config = configparser.ConfigParser()
-        config.read(str(os.path.join(plugin_dir, 'metadata.txt')))
-        version = config['general']['version']
         sql = '''
             INSERT INTO lizsync.sys_structure_metadonnee
             (version, date_ajout)
@@ -291,6 +302,6 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
 
         output = {
             self.OUTPUT_STATUS: 1,
-            self.OUTPUT_STRING: tr('Lizsync database structure has been successfully created.')
+            self.OUTPUT_STRING: tr('Lizsync database structure has been successfully created to version "{}".'.format(version))
         }
         return output

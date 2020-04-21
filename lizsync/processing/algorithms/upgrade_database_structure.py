@@ -236,7 +236,6 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
         sfiles = sorted(files, key=getKey)
         sql_files = [s[1] for s in sfiles]
 
-        msg = ''
         # Loop sql files and run SQL code
         for sf in sql_files:
             sql_file = os.path.join(plugin_dir, 'install/sql/upgrade/%s' % sf)
@@ -280,7 +279,7 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
             m = error_message
             return returnError(output, m, feedback)
 
-        msg = tr('Lizsync database structure has been successfully upgraded.')
+        msg = tr('Lizsync database structure has been successfully upgraded to version "{}".'.format(plugin_version))
         feedback.pushInfo(msg)
 
         output = {
