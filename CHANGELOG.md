@@ -1,6 +1,6 @@
-## CHANGELOG
+# CHANGELOG
 
-### 16/04/2020 Version 0.3.4
+### 0.3.4 - 16/04/2020
 
 * Database synchro - Correctly update central audit.logged_actions for discarded UPDATEs
 * Add missing flag for processing provider in metadata.txt
@@ -8,14 +8,14 @@
 * Fix travis path when pushing QM to github
 * Update translations from Transifex          
 
-### 09/04/2020 Version 0.3.3
+### 0.3.3 - 09/04/2020
 
 * Synchronize media subfolder - Fix bug with localdir variable not set
 * PostgreSQL connection - Get password from ini file if not given
 * Improve continuous integration: translations, tests
 * Code cleaning and PEP8 fixing
 
-### 31/03/2020 Version 0.3.2
+### 0.3.2 - 31/03/2020
 
 * Add qgis-plugin-ci configuration to the plugin
 * Fix some scripts after moving lizsync directory
@@ -28,7 +28,7 @@
 * Move the plugin to its own folder
 * Remove unused files
 
-### 20/03/2020 Version 0.3.1
+### 0.3.1 - 20/03/2020
 
 * Tests - move and rename bash script to run_test.sh
 * Config - Add list of schemas in saved configuration
@@ -38,14 +38,14 @@
 * Deploy package & tools - Quote zip archive file in psql/pg_dump command
 * Upgrade - rename SQL file for upgrade to 0.3.0
 
-### 03/03/2020 Version 0.3.0
+### 0.3.0 - 03/03/2020
 
 * Package & restore - Add an optional SQL file to run in clone after deploy
 * Synchronization - Add new option to exclude columns from bidirectional database sync
 * Doc - update README for SQL generator
 * Update french translation
 
-### 28/02/2020 Version 0.2.3
+### 0.2.3 - 28/02/2020
 
 * Send media to FTP server - Fix bug with missing variable
 * Get projects from FTP - remove also Lizmap config file before sync
@@ -65,7 +65,7 @@
 * Fix small bug following last commit
 * Config - Use ini configuration for all algorithm instead of QGIS global variables
 
-### 21/02/2020 Version 0.2.2:
+### 0.2.2 - 21/02/2020
 
 * Metadata - Change version to 0.2.2
 * FTP & adapt QGIS projects - Workaround for Userland context
