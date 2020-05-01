@@ -1,5 +1,14 @@
 # CHANGELOG
 
+### 0.3.5 - 01/05/2020
+
+* Bidirectionnal synchronization - Make sure to truncate clone audit log, even for rejected actions
+* Tools - Get password: if no service is given, try to get password also from PGPASSWORD environment variable
+* Run migrations on CI since 0.2.2
+* Disable pushing to transifex from PR
+* Improve travis
+* Switch to 3liz bot for CI
+
 ### 0.3.4 - 16/04/2020
 
 * Database synchro - Correctly update central audit.logged_actions for discarded UPDATEs
