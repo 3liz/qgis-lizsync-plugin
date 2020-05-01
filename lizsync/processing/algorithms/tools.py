@@ -124,9 +124,14 @@ def check_postgresql_connection(uri, timeout=5):
     Check connection to PostgreSQL database with timeout
     """
     # Check if password given. If not, try to read it from lizsync.ini
-    if not uri.password():
-        password = get_connection_password_from_ini(uri)
-        uri.setPassword(password)
+    if not uri.service():
+        password = uri.password()
+        if not password:
+            password = get_connection_password_from_ini(uri)
+        if not password:
+            password = os.environ.get('PGPASSWORD')
+        if password:
+            uri.setPassword(password)
 
     # Try to connect with psycopg2
     conn = None
@@ -164,6 +169,7 @@ def getUriFromConnectionName(connection_name, must_connect=True):
     status = True
     uri = uri_from_name(connection_name)
 
+    # Try to connect if asked
     if must_connect:
         ok, msg = check_postgresql_connection(uri)
         return ok, uri, msg
@@ -724,6 +730,7 @@ def setQgisProjectOffline(qgis_directory, connection_name_central, connection_na
                     uri.password()
                 )
             }
+    # print(uris)
     dbitems = {
         'service': "service='{}'",
         'dbname': "dbname='{}'",
