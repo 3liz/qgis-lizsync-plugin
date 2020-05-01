@@ -612,23 +612,6 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
                     tr('Logged actions sync_data has been updated in the central database with the original timestamp')
                 )
 
-            # Delete all data from clone audit logged_actions
-            sql = '''
-            TRUNCATE audit.logged_actions
-            RESTART IDENTITY;
-            '''
-            _, _, _, ok, error_message = fetchDataFromSqlQuery(
-                self.connection_name_clone,
-                sql
-            )
-            if not ok:
-                m = error_message + ' ' + sql
-                return False, m
-
-            feedback.pushInfo(
-                tr('Logged actions has been deleted in clone database')
-            )
-
             # Modify central server synchronization item clone->central
             sql = '''
                 UPDATE lizsync.history
@@ -648,6 +631,28 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
 
             feedback.pushInfo(
                 tr('History sync_status has been updated to "done" in the central database')
+            )
+
+        if target == 'central':
+
+            # Delete all data from clone audit logged_actions
+            # even if logs was empty
+            # because conflicted queries have been removed from logs
+            # but not yet from the clone audit.logged_actions table
+            sql = '''
+            TRUNCATE audit.logged_actions
+            RESTART IDENTITY;
+            '''
+            _, _, _, ok, error_message = fetchDataFromSqlQuery(
+                self.connection_name_clone,
+                sql
+            )
+            if not ok:
+                m = error_message + ' ' + sql
+                return False, m
+
+            feedback.pushInfo(
+                tr('Logged actions has been deleted in clone database')
             )
 
         return True, ''
