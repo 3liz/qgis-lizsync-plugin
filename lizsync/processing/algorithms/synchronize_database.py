@@ -657,6 +657,51 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
 
         return True, ''
 
+    def storeConflicts(self, conflicts, feedback):
+        """
+        Store resolved conflicts in central database table
+        """
+        sql = '''
+        INSERT INTO lizsync.conflicts
+        ("object_table", "object_uid", "clone_id",
+        "central_event_id", "central_event_timestamp",
+        "central_sql", "clone_sql", "rejected", "rule_applied"
+        ) VALUES
+        '''
+        sep = ''
+        for c in conflicts:
+            print(c)
+            sql += sep + ''' (
+            '{table}', '{uid}', '{clone_id}',
+            {event_id}, '{event_timestamp}',
+            '{central_sql}', '{clone_sql}', '{rejected}', '{rule_applied}'
+            )
+            '''.format(
+                table=c['table'],
+                uid=c['uid'],
+                clone_id=self.clone_id,
+                event_id=c['event_id'],
+                event_timestamp=c['event_timestamp'],
+                central_sql=c['central_sql'].replace("'", "''"),
+                clone_sql=c['clone_sql'].replace("'", "''"),
+                rejected=c['rejected'],
+                rule_applied=c['rule_applied']
+            )
+            sep = ''',
+            '''
+
+        _, _, _, ok, error_message = fetchDataFromSqlQuery(
+            self.connection_name_central,
+            sql
+        )
+        if ok:
+            msg = tr('Conflict resolution items have been saved in central database into lizsync.conflicts table')
+            feedback.pushInfo(msg)
+        else:
+            msg = error_message + ' ' + sql
+
+        return ok, msg
+
     def processAlgorithm(self, parameters, context, feedback):
         """
         Run the needed steps for bi-directionnal database synchronization
@@ -702,7 +747,6 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
         )
 
         # Replay logs
-
         # central > clone
         feedback.pushInfo(tr('Replay central logs on clone database'))
         ok, msg = self.replayLogs('clone', central_logs, feedback)
@@ -717,49 +761,12 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
 
         # Store conflicts
         if len(conflicts) > 0:
-            sql = '''
-            INSERT INTO lizsync.conflicts
-            ("object_table", "object_uid", "clone_id",
-            "central_event_id", "central_event_timestamp",
-            "central_sql", "clone_sql", "rejected", "rule_applied"
-            ) VALUES
-            '''
-            sep = ''
-            for c in conflicts:
-                print(c)
-                sql += sep + ''' (
-                '{table}', '{uid}', '{clone_id}',
-                {event_id}, '{event_timestamp}',
-                '{central_sql}', '{clone_sql}', '{rejected}', '{rule_applied}'
-                )
-                '''.format(
-                    table=c['table'],
-                    uid=c['uid'],
-                    clone_id=self.clone_id,
-                    event_id=c['event_id'],
-                    event_timestamp=c['event_timestamp'],
-                    central_sql=c['central_sql'].replace("'", "''"),
-                    clone_sql=c['clone_sql'].replace("'", "''"),
-                    rejected=c['rejected'],
-                    rule_applied=c['rule_applied']
-                )
-                sep = ''',
-                '''
-
-            _, _, _, ok, error_message = fetchDataFromSqlQuery(
-                self.connection_name_central,
-                sql
-            )
+            feedback.pushInfo(tr('Store conflicts in central database'))
+            ok, msg = self.storeConflicts(conflicts, feedback)
             if not ok:
-                m = error_message + ' ' + sql
-                return returnError(output, m, feedback)
-
-            feedback.pushInfo(
-                tr('Conflict resolution items have been saved in central database into lizsync.conflicts table')
-            )
+                return returnError(output, msg, feedback)
 
         # feedback.setProgress(int(1 * total))
-
         output = {
             self.OUTPUT_STATUS: 1,
             self.OUTPUT_STRING: tr('Two-way database synchronization done')
