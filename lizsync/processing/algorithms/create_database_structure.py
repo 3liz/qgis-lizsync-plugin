@@ -17,7 +17,6 @@ __copyright__ = '(C) 2018 by 3liz'
 
 __revision__ = '$Format:%H$'
 
-import configparser
 import os
 
 from db_manager.db_plugins import createDbPlugin

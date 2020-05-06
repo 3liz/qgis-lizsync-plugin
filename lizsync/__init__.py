@@ -35,7 +35,10 @@ def classFactory(iface):  # pylint: disable=invalid-name
     return LizsyncPlugin()
 
 
-def WPSClassFactory(iface: 'WPSServerInterface') -> Any:
+def WPSClassFactory(iface) -> Any:
+    """
+    :type iface: WPSServerInterface
+    """
 
     from .processing.provider import LizsyncProvider
     iface.registerProvider(LizsyncProvider())

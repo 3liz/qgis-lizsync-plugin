@@ -25,6 +25,7 @@ from qgis.core import (
 from .tools import (
     lizsyncConfig,
     getUriFromConnectionName,
+    get_connection_password_from_ini,
     fetchDataFromSqlQuery,
     returnError,
     run_command,
