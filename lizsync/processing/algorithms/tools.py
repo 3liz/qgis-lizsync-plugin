@@ -750,7 +750,7 @@ def setQgisProjectOffline(qgis_directory, connection_name_central, feedback):
                         line
                     )
                     # fileinput needs to print only line content
-                print(line, end ='')
+                print(line, end='')
 
     return True, 'Success'
 
