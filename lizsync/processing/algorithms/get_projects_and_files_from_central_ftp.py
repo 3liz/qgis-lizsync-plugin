@@ -19,6 +19,7 @@ from qgis.core import (
     QgsProcessingParameterString,
     QgsProcessingParameterNumber,
     QgsProcessingParameterFile,
+    QgsProcessingParameterBoolean,
     QgsProcessingOutputString,
     QgsProcessingOutputNumber
 )
@@ -53,10 +54,9 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
     CENTRAL_FTP_HOST = 'CENTRAL_FTP_HOST'
     CENTRAL_FTP_PORT = 'CENTRAL_FTP_PORT'
     CENTRAL_FTP_LOGIN = 'CENTRAL_FTP_LOGIN'
+    CENTRAL_FTP_PASSWORD = 'CENTRAL_FTP_PASSWORD'
     CENTRAL_FTP_REMOTE_DIR = 'CENTRAL_FTP_REMOTE_DIR'
-    LOCAL_QGIS_PROJECT_FOLDER = 'LOCAL_QGIS_PROJECT_FOLDER'
-
-    CONNECTION_NAME_CLONE = 'CONNECTION_NAME_CLONE'
+    REPLACE_DATASOURCE_IN_QGIS_PROJECT = 'REPLACE_DATASOURCE_IN_QGIS_PROJECT'
     CLONE_QGIS_PROJECT_FOLDER = 'CLONE_QGIS_PROJECT_FOLDER'
 
     FTP_EXCLUDE_REMOTE_SUBDIRS = 'FTP_EXCLUDE_REMOTE_SUBDIRS'
@@ -109,19 +109,6 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
         self.addParameter(db_param_a)
 
         # Clone database connection parameters
-        connection_name_clone = ls.variable('postgresql:clone/name')
-        db_param_b = QgsProcessingParameterString(
-            self.CONNECTION_NAME_CLONE,
-            tr('PostgreSQL connection to the local database'),
-            defaultValue=connection_name_clone,
-            optional=False
-        )
-        db_param_b.setMetadata({
-            'widget_wrapper': {
-                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
-            }
-        })
-        self.addParameter(db_param_b)
 
         central_ftp_host = ls.variable('ftp:central/host')
         self.addParameter(
@@ -150,6 +137,13 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
                 optional=False
             )
         )
+        self.addParameter(
+            QgsProcessingParameterString(
+                self.CENTRAL_FTP_PASSWORD,
+                tr('Central FTP Server password'),
+                optional=True
+            )
+        )
         central_ftp_remote_dir = ls.variable('ftp:central/remote_directory')
         self.addParameter(
             QgsProcessingParameterString(
@@ -168,7 +162,6 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
                 optional=True
             )
         )
-
         clone_qgis_project_folder = ls.variable('clone/qgis_project_folder')
         self.addParameter(
             QgsProcessingParameterFile(
@@ -176,6 +169,14 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
                 tr('Clone QGIS project folder'),
                 defaultValue=clone_qgis_project_folder,
                 behavior=QgsProcessingParameterFile.Folder,
+                optional=False
+            )
+        )
+        self.addParameter(
+            QgsProcessingParameterBoolean(
+                self.REPLACE_DATASOURCE_IN_QGIS_PROJECT,
+                tr('Adapt PostgreSQL connection parameters for GeoPoppy database ?'),
+                defaultValue=True,
                 optional=False
             )
         )
@@ -213,12 +214,17 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
 
         # Parameters
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
-        connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
         ftphost = parameters[self.CENTRAL_FTP_HOST]
         ftplogin = parameters[self.CENTRAL_FTP_LOGIN]
+        ftppassword = parameters[self.CENTRAL_FTP_PASSWORD].strip()
         ftpport = parameters[self.CENTRAL_FTP_PORT]
         ftpdir = parameters[self.CENTRAL_FTP_REMOTE_DIR]
         localdir = parameters[self.CLONE_QGIS_PROJECT_FOLDER]
+        adapt_qgis_projects = self.parameterAsBool(
+            parameters,
+            self.REPLACE_DATASOURCE_IN_QGIS_PROJECT,
+            context
+        )
 
         # Check localdir
         feedback.pushInfo(tr('CHECK LOCAL PROJECT DIRECTORY'))
@@ -230,9 +236,12 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
             feedback.pushInfo(m)
 
         # Check ftp
-        ok, password, msg = get_ftp_password(ftphost, ftpport, ftplogin)
-        if not ok:
-            return returnError(output, msg, feedback)
+        if not ftppassword:
+            ok, password, msg = get_ftp_password(ftphost, ftpport, ftplogin)
+            if not ok:
+                return returnError(output, msg, feedback)
+        else:
+            password = ftppassword
         ok, msg = check_ftp_connection(ftphost, ftpport, ftplogin, password)
         if not ok:
             return returnError(output, msg, feedback)
@@ -288,11 +297,12 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
 
         # Adapt QGIS project to Geopoppy
         # Mainly change database connection parameters (central -> clone)
-        feedback.pushInfo(tr('ADAPT QGIS PROJECTS FOR OFFLINE USE'))
-        ok, msg = setQgisProjectOffline(localdir, connection_name_central, connection_name_clone, feedback)
-        if not ok:
-            m = msg
-            return returnError(output, m, feedback)
+        if adapt_qgis_projects:
+            feedback.pushInfo(tr('ADAPT QGIS PROJECTS FOR OFFLINE USE'))
+            ok, msg = setQgisProjectOffline(localdir, connection_name_central, feedback)
+            if not ok:
+                m = msg
+                return returnError(output, m, feedback)
 
         status = 1
         msg = tr("QGIS projects and file successfully synchronized from the central FTP server")
