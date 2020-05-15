@@ -19,7 +19,7 @@ import netrc
 import psycopg2
 import re
 import subprocess
-
+import fileinput
 from platform import system as psys
 from db_manager.db_plugins.plugin import BaseError
 from db_manager.db_plugins.postgis.connector import PostGisDBConnector
@@ -693,55 +693,37 @@ def pg_dump(feedback, postgresql_binary_path, connection_name, output_file_name,
     return status, messages
 
 
-def setQgisProjectOffline(qgis_directory, connection_name_central, connection_name_clone, feedback):
+def setQgisProjectOffline(qgis_directory, connection_name_central, feedback):
     # Get uri from connection names
     status_central, uri_central, error_message_central = getUriFromConnectionName(connection_name_central, False)
-    status_clone, uri_clone, error_message_clone = getUriFromConnectionName(connection_name_clone, False)
+
     if not status_central or not uri_central:
         m = error_message_central
         return False, m
-    if not status_clone or not uri_clone:
-        m = error_message_clone
-        return False, m
 
-    uris = {
-        'central': {'uri': uri_central},
-        'clone': {'uri': uri_clone}
-    }
-    for a in ('central', 'clone'):
-        uri = uris[a]['uri']
-        if uri.service():
-            uris[a]['info'] = {
-                'service': uri.service(),
-                'string': "service='%s'" % uri.service()
-            }
-        else:
-            uris[a]['info'] = {
-                'host': uri.host(),
-                'port': uri.port(),
-                'dbname': uri.database(),
-                'user': uri.username(),
-                'password': uri.password(),
-                'string': "dbname='{}' host={} port={} user='{}' password='{}'".format(
-                    uri.database(),
-                    uri.host(),
-                    uri.port(),
-                    uri.username(),
-                    uri.password()
-                )
-            }
-    # print(uris)
-    dbitems = {
-        'service': "service='{}'",
-        'dbname': "dbname='{}'",
-        'host': "host={}",
-        'port': "port={}",
-        'user': "user='{}'",
-        'password': "password='{}'"
-    }
+    uris = {'central': {}, 'clone': {}}
+    if uri_central.service():
+        uris['central'] = {
+            'service': uri_central.service(),
+            'string': "service='%s'" % uri_central.service()
+        }
+        uris['clone'] = {
+            'service': 'geopoppy',
+            'string': "service='geopoppy'",
+        }
+    else:
+        uris['central'] = {
+            'string': "dbname='{}' host={} port={} user='[A_Za-z_@]+'( password='[^ ]+')?".format(
+                uri_central.database(),
+                uri_central.host(),
+                uri_central.port()
+            )
+        }
+        uris['clone'] = {
+            'string': "dbname='geopoppy' host=localhost port=5432 user='geopoppy' password='geopoppy'"
+        }
 
-    # Desktop context : use Python
-    #  First loop to create modified version of QGIS projects (with added .xml extension)
+    # Loop through QGIS project files
     files = []
     for filename in os.listdir(qgis_directory):
         if not os.path.isfile(os.path.join(qgis_directory, filename)):
@@ -753,41 +735,22 @@ def setQgisProjectOffline(qgis_directory, connection_name_central, connection_na
         qf = os.path.join(qgis_directory, filename)
         feedback.pushInfo(tr('Process QGIS project file') + ' %s' % qf)
 
-        # Store QGIS project content in memory
-        file_str = None
-        with open(qf, 'r') as f:
-            file_str = f.read()
-        if not file_str:
-            continue
+        # Replace all datasource with geopoppy datasources
+        regex = re.compile(uris['central']['string'], re.IGNORECASE)
 
-        # Replace needed data
-        # Loop through connection parameters and replace
-        for k, v in dbitems.items():
-            if k in uris['central']['info'] and k in uris['clone']['info']:
-                stext = v.format(uris['central']['info'][k])
-                rtext = v.format(uris['clone']['info'][k])
-                if stext in file_str:
-                    file_str = file_str.replace(stext, rtext)
-
-        # to improve
-        # alway replace user by clone local user
-        # needed if there are multiple user stored in the qgis project for the same server
-        # because one of them can be different from the central connection name user
-        replaceAllUsers = True
-        if replaceAllUsers:
-            regex = re.compile(r"user='[A_Za-z_]+'", re.IGNORECASE)
-            rtext = dbitems['user'].format(
-                uris['clone']['info']['user']
-            )
-            file_str = regex.sub(
-                rtext,
-                file_str
-            )
-
-        # Write content back to project file
+        # Replace content in file with fileinput
         feedback.pushInfo(tr('Overwrite QGIS project file with new data') + ' %s' % filename)
-        with open(qf, 'w') as f:
-            f.write(file_str)
+        with fileinput.FileInput(qf, inplace=True, backup='.liz') as f:
+            for line in f:
+                # Check if line contains connection parameters
+                if "dbname=" in line or "service=" in line:
+                    # Replace content in line
+                    line = regex.sub(
+                        uris['clone']['string'],
+                        line
+                    )
+                    # fileinput needs to print only line content
+                print(line, end ='')
 
     return True, 'Success'
 
