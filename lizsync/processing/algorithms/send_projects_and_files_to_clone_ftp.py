@@ -49,10 +49,10 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
     CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     LOCAL_QGIS_PROJECT_FOLDER = 'LOCAL_QGIS_PROJECT_FOLDER'
 
-    CONNECTION_NAME_CLONE = 'CONNECTION_NAME_CLONE'
     CLONE_FTP_HOST = 'CLONE_FTP_HOST'
     CLONE_FTP_PORT = 'CLONE_FTP_PORT'
     CLONE_FTP_LOGIN = 'CLONE_FTP_LOGIN'
+    CLONE_FTP_PASSWORD = 'CLONE_FTP_PASSWORD'
     CLONE_FTP_REMOTE_DIR = 'CLONE_FTP_REMOTE_DIR'
     CLONE_QGIS_PROJECT_FOLDER = 'CLONE_QGIS_PROJECT_FOLDER'
 
@@ -116,21 +116,6 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
         })
         self.addParameter(db_param_a)
 
-        # Clone database connection parameters
-        connection_name_clone = ls.variable('postgresql:clone/name')
-        db_param_b = QgsProcessingParameterString(
-            self.CONNECTION_NAME_CLONE,
-            tr('PostgreSQL connection to the local database'),
-            defaultValue=connection_name_clone,
-            optional=False
-        )
-        db_param_b.setMetadata({
-            'widget_wrapper': {
-                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
-            }
-        })
-        self.addParameter(db_param_b)
-
         local_qgis_project_folder = ls.variable('local/qgis_project_folder')
         self.addParameter(
             QgsProcessingParameterFile(
@@ -167,6 +152,13 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
                 tr('Clone FTP Server login'),
                 defaultValue=clone_ftp_login,
                 optional=False
+            )
+        )
+        self.addParameter(
+            QgsProcessingParameterString(
+                self.CLONE_FTP_PASSWORD,
+                tr('Clone FTP Server password'),
+                optional=True
             )
         )
         clone_ftp_remote_dir = ls.variable('ftp:clone/remote_directory')
@@ -225,6 +217,7 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
         ftphost = parameters[self.CLONE_FTP_HOST]
         ftpport = parameters[self.CLONE_FTP_PORT]
         ftplogin = parameters[self.CLONE_FTP_LOGIN]
+        ftppassword = parameters[self.CLONE_FTP_PASSWORD].strip()
         localdir = parameters[self.LOCAL_QGIS_PROJECT_FOLDER]
         ftpdir = parameters[self.CLONE_FTP_REMOTE_DIR]
 
@@ -238,9 +231,12 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
             feedback.pushInfo(m)
 
         # Check ftp
-        ok, password, msg = get_ftp_password(ftphost, ftpport, ftplogin)
-        if not ok:
-            return returnError(output, msg, feedback)
+        if not ftppassword:
+            ok, password, msg = get_ftp_password(ftphost, ftpport, ftplogin)
+            if not ok:
+                return returnError(output, msg, feedback)
+        else:
+            password = ftppassword
         ok, msg = check_ftp_connection(ftphost, ftpport, ftplogin, password)
         if not ok:
             return returnError(output, msg, feedback)
@@ -255,6 +251,10 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
             ftp.cwd(ftpdir)
             # do the code for successfull cd
             m = tr('Remote directory exists in the central server')
+            for file_name in ftp.nlst():
+                if file_name.endswith('.qgs') or file_name.endswith('.qgs.cfg'):
+                    feedback.pushInfo(tr('Delete file') + ' %s' % file_name)
+                    ftp.delete(file_name)
         except Exception:
             ok = False
             m = tr('Remote directory does not exist')
