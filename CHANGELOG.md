@@ -1,5 +1,15 @@
 # CHANGELOG
 
+### 0.3.6 - 18/05/2020
+
+* Send project to clone - parameters: add password and remove clone connection
+* Get projects from FTP - Hardcode geopoppy db params && use fileinput to get rid of bug
+* Get projects from FTP - Add password and option to adapt project for geopoppy
+* Test data - fix encoding for subdistricts layer
+* Database sync - Move conflict storing into a function
+* Update python version in github action
+* Check flake 8 on github
+
 ### 0.3.5 - 01/05/2020
 
 * Bidirectionnal synchronization - Make sure to truncate clone audit log, even for rejected actions
