@@ -116,6 +116,7 @@ class TestProcessing(unittest.TestCase):
         expected = [
             "history",
             "server_metadata",
+            "conflicts",
             "synchronized_schemas",
             "sys_structure_metadonnee",
         ]
