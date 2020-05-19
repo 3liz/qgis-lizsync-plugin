@@ -471,6 +471,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                 feedback.pushInfo(tr('* server name') + ' = {0}'.format(clone_name))
         else:
             m = tr('Error while adding server id in clone metadata table')
+            m+= ' ' + error_message
             return returnError(output, m, feedback)
 
         # CENTRAL DATABASE
@@ -484,6 +485,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             (server_id, sync_schemas)
             VALUES
             ( '{0}', jsonb_build_array( '{1}' ) );
+
         '''.format(
             clone_id,
             "', '".join([a.strip() for a in sync_schemas.split(',')])
@@ -498,6 +500,47 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             feedback.pushInfo(msg)
         else:
             m = tr('Error while adding the synchronized schemas in the central database')
+            m+= ' ' + error_message
+            return returnError(output, m, feedback)
+
+        # CLONE DATABASE
+        # Add foreign server and foreign schemas for synced schemas
+        # We need full connection params: host, port, dbname, user, password
+        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+        ok, uri, msg = getUriFromConnectionName(connection_name_central, True)
+        if not ok:
+            return returnError(output, msg, feedback)
+
+        # Get password if not found in URI
+        if not uri.password():
+            password = get_connection_password_from_ini(uri)
+            uri.setPassword(password)
+        if not uri.password():
+            msg = tr('No password found for the central database connection !')
+            return returnError(output, msg, feedback)
+
+        # Add foreign server in the clone database
+        feedback.pushInfo(tr('ADDING THE FOREING SERVER AND SCHEMAS ID IN THE CLONE DATABASE'))
+        sql = '''
+        SELECT lizsync.create_central_server_fdw('{0}','{1}','{2}','{3}', '{4}');
+        SELECT lizsync.import_central_server_schemas();
+        '''.format(
+            uri.host(),
+            uri.port(),
+            uri.database(),
+            uri.username(),
+            uri.password()
+        )
+        feedback.pushInfo(sql)
+        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            connection_name_clone,
+            sql
+        )
+        if ok:
+            feedback.pushInfo(tr('Foreign server and schemas have been added in the clone database'))
+        else:
+            m = tr('Error while adding the foregin server and schemas in clone database')
+            m+= ' ' + error_message
             return returnError(output, m, feedback)
 
         # CENTRAL DATABASE - Add clone Id in the lizsync.history line
@@ -519,11 +562,13 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                 connection_name_central,
                 sql
             )
+            feedback.pushInfo(sql)
             if ok:
                 msg = tr('History item has been successfully updated for this archive deployement in the central database')
                 feedback.pushInfo(msg)
             else:
                 m = tr('Error while updating the history item for this archive deployement')
+                m+= ' ' + error_message
                 return returnError(output, m, feedback)
 
         output = {

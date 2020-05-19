@@ -4,6 +4,8 @@
 
 The files inside the `audit` folder are taken from https://github.com/Oslandia/audit_trigger/blob/master/audit.sql
 
+They have been modified to allow storing the synchronization data for each audit line !
+
 ### Schema lizsync
 
 Generation of the `lizsync` schema SQL files is made via

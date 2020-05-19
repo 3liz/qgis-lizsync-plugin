@@ -1,52 +1,458 @@
---
--- PostgreSQL database dump
---
+BEGIN;
 
--- Dumped from database version 9.6.17
--- Dumped by pg_dump version 10.10 (Ubuntu 10.10-0ubuntu0.18.04.1)
+DROP FUNCTION IF EXISTS lizsync.get_event_sql(bigint, text, text[]);
 
-SET statement_timeout = 0;
-SET lock_timeout = 0;
-
-SET client_encoding = 'UTF8';
-SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
-SET check_function_bodies = false;
-SET xmloption = content;
-SET client_min_messages = warning;
-SET row_security = off;
-
--- add_uid_columns(text, text)
-CREATE FUNCTION lizsync.add_uid_columns(p_schema_name text, p_table_name text) RETURNS boolean
+CREATE OR REPLACE FUNCTION lizsync.get_event_sql(target text, pevent_id bigint, puid_column text, excluded_columns text) RETURNS text
     LANGUAGE plpgsql
     AS $$
 DECLARE
-  query text;
+  sqltemplate text;
+  sqloutput text;
+  logged_actions_table text;
+  logged_relations_table text;
 BEGIN
+    IF excluded_columns IS NULL THEN
+        excluded_columns:= '';
+        excluded_columns:= replace(excluded_columns, ' ', '');
+    END IF;
 
-    BEGIN
-        SELECT INTO query
-        concat(
-            ' ALTER TABLE ' || quote_ident(p_schema_name) || '.' || quote_ident(p_table_name) ||
-            ' ADD COLUMN uid uuid DEFAULT md5(random()::text || clock_timestamp()::text)::uuid ' ||
-            ' UNIQUE NOT NULL'
-        );
-        execute query;
-        RAISE NOTICE 'uid column created for % %', quote_ident(p_schema_name), quote_ident(p_table_name);
-        RETURN True;
-    EXCEPTION WHEN OTHERS THEN
-        RAISE NOTICE 'ERROR - uid column already exists';
-        RETURN False;
-    END;
+    IF target = 'central' THEN
+        logged_actions_table = 'central_audit.logged_actions';
+        logged_relations_table = 'central_audit.logged_relations';
+    ELSE
+        logged_actions_table = 'audit.logged_actions';
+        logged_relations_table = 'audit.logged_relations';
+    END IF;
 
+    sqltemplate = '
+    WITH
+    event AS (
+        SELECT * FROM ' || logged_actions_table || ' WHERE event_id = ' || pevent_id || '
+    )
+    -- get primary key names
+    , where_pks AS (
+        SELECT array_agg(uid_column) as pkey_fields
+        FROM ' || logged_relations_table || ' AS r
+        JOIN event ON relation_name = (quote_ident(schema_name) || ''.'' || quote_ident(table_name))
+    )
+    -- create where clause with uid column
+    -- not with primary keys, to manage multi-way sync
+    , where_uid AS (
+        SELECT ''"' || puid_column || '" = '' || quote_literal(row_data->''' || puid_column || ''') AS where_clause
+        FROM event
+    )
+    SELECT
+        CASE
+            WHEN action = ''I'' THEN
+                ''INSERT INTO "'' || schema_name || ''"."'' || table_name || ''"'' ||
+                '' ('' || (
+                    SELECT string_agg(
+                        ''"'' || key || ''"'',
+                        '',''
+                    )
+                    FROM each(row_data)
+                    WHERE True
+                    AND key != ALL(pkey_fields)
+                    AND key != ALL( string_to_array(''' || excluded_columns || ''', '','') )
+                )
+                || '') VALUES ( '' ||
+                (
+                    SELECT string_agg(
+                        CASE WHEN value IS NULL THEN ''NULL'' ELSE quote_literal(value) END,
+                        '',''
+                    )
+                    FROM EACH(row_data)
+                    WHERE True
+                    AND key != ALL(pkey_fields)
+                    AND key != ALL( string_to_array(''' || excluded_columns || ''', '','') )
+                )
+                || '')''
+
+            WHEN action = ''D'' THEN
+                ''DELETE FROM "'' || schema_name || ''"."'' || table_name || ''"'' ||
+                '' WHERE '' || where_clause
+
+            WHEN action = ''U'' THEN
+                ''UPDATE "'' || schema_name || ''"."'' || table_name || ''"'' ||
+                '' SET '' || (
+                    SELECT string_agg(
+                        ''"'' || key || ''"'' || '' = '' ||
+                        CASE
+                            WHEN value IS NULL
+                                THEN ''NULL''
+                            ELSE quote_literal(value)
+                        END,
+                        '',''
+                    ) FROM each(changed_fields)
+                    WHERE True
+                    AND key != ALL(pkey_fields)
+                    AND key != ALL( string_to_array(''' || excluded_columns || ''', '','') )
+                ) ||
+                '' WHERE '' || where_clause
+        END AS output
+    FROM
+        event, where_pks, where_uid
+    '
+    ;
+    --RAISE NOTICE '%s', sqltemplate;
+    EXECUTE sqltemplate
+    INTO sqloutput;
+    RETURN sqloutput;
 END;
 $$;
 
+COMMENT ON FUNCTION lizsync.get_event_sql(target text, pevent_id bigint, puid_column text, excluded_columns text) IS '
+Get the SQL to use for replay from a audit log event
 
--- analyse_audit_logs()
-CREATE FUNCTION lizsync.analyse_audit_logs() RETURNS TABLE(ids bigint[], min_event_id bigint, max_event_id bigint, max_action_tstamp_tx timestamp with time zone)
-    LANGUAGE plpgsql
-    AS $$
+Arguments:
+   target : clone or central database
+   pevent_id:  The event_id of the event in audit.logged_actions to replay
+   puid_column: The name of the column with unique uuid values
+   excluded_columns: list of columns names, separated by comma, to exclude from synchronization
+';
+
+
+
+-- lizsync.create_central_server_fdw
+CREATE OR REPLACE FUNCTION lizsync.create_central_server_fdw(
+    p_central_host text,
+    p_central_port smallint,
+    p_central_database text,
+    p_central_username text,
+    p_central_password text
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    sqltemplate text;
+BEGIN
+    -- Create extension
+    CREATE EXTENSION IF NOT EXISTS postgres_fdw;
+
+    -- Create server
+    DROP SERVER IF EXISTS central_server CASCADE;
+    sqltemplate = '
+    CREATE SERVER central_server
+    FOREIGN DATA WRAPPER postgres_fdw
+    OPTIONS (
+        host ''%1$s'',
+        port ''%2$s'',
+        dbname ''%3$s'',
+        connect_timeout ''5''
+    );
+    ';
+    EXECUTE format(sqltemplate,
+        p_central_host,
+        p_central_port,
+        p_central_database
+    );
+
+    -- User mapping
+    sqltemplate = '
+    CREATE USER MAPPING FOR CURRENT_USER
+    SERVER central_server
+    OPTIONS (
+        user ''%1$s'',
+        password ''%2$s''
+    )
+    ';
+    EXECUTE format(sqltemplate,
+        p_central_username,
+        p_central_password
+    );
+
+    -- Create local schemas
+    CREATE SCHEMA IF NOT EXISTS central_audit;
+    CREATE SCHEMA IF NOT EXISTS central_lizsync;
+
+    -- Import foreign tables
+    -- audit
+    IMPORT FOREIGN SCHEMA audit
+    FROM SERVER central_server
+    INTO central_audit;
+
+    -- lizsync
+    IMPORT FOREIGN SCHEMA lizsync
+    FROM SERVER central_server
+    INTO central_lizsync;
+
+    -- Manually create modified conflicts table
+    -- with no id column to avoid issues
+    -- https://stackoverflow.com/a/53361066/13220524
+    CREATE FOREIGN TABLE central_lizsync.conflicts_bis(
+        object_table text,
+        object_uid uuid,
+        clone_id uuid,
+        central_event_id bigint,
+        central_event_timestamp timestamp with time zone,
+        central_sql text,
+        clone_sql text,
+        rejected text,
+        rule_applied text
+     )
+    SERVER central_server
+    OPTIONS (
+        schema_name 'lizsync',
+        table_name 'conflicts'
+    );
+
+    RETURN True;
+END;
+$$;
+
+COMMENT ON FUNCTION lizsync.create_central_server_fdw(text, smallint, text, text, text) IS 'Create foreign server, needed central_audit and central_lizsync schemas, and import all central database tables as foreign tables. This will allow the clone to connect to the central databse';
+
+-- lizsync.create_temporary_table
+CREATE OR REPLACE FUNCTION lizsync.create_temporary_table(
+    temporary_table text,
+    table_type text
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    sqltemplate text;
+BEGIN
+    -- Drop table if exists
+    EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(temporary_table);
+    -- Create temporary table
+    IF table_type = 'audit' THEN
+        EXECUTE 'CREATE TEMP TABLE ' || quote_ident(temporary_table) || ' (
+            tid                       serial,
+            event_id                  bigint,
+            action_tstamp_tx          timestamp with time zone,
+            action_tstamp_epoch       integer,
+            ident                     text,
+            action_type               text,
+            origine                   text,
+            action                    text,
+            updated_field             text,
+            uid                       uuid,
+            original_action_tstamp_tx integer
+        )
+        --ON COMMIT DROP
+        ';
+    END IF;
+    IF table_type = 'conflict' THEN
+        EXECUTE 'CREATE TEMP TABLE ' || quote_ident(temporary_table) || ' (
+            tid                     serial                   ,
+            conflict_time           timestamp with time zone ,
+            object_table            text                     ,
+            object_uid              uuid                     ,
+            central_tid             integer                  ,
+            clone_tid               integer                  ,
+            central_event_id        integer                  ,
+            central_event_timestamp timestamp with time zone ,
+            central_sql             text                     ,
+            clone_sql               text                     ,
+            rejected                text                     ,
+            rule_applied            text
+        )
+        --ON COMMIT DROP
+        ';
+    END IF;
+
+    RETURN True;
+END;
+$$;
+
+COMMENT ON FUNCTION lizsync.create_temporary_table(text, text) IS 'Create temporary table used during database bidirectionnal synchronization. Parameters: temporary table name, and table type (audit or conflit)';
+
+-- lizsync.get_central_audit_logs
+CREATE OR REPLACE FUNCTION lizsync.get_central_audit_logs(
+    p_uid_field text,
+    p_excluded_columns text[]
+)
+RETURNS TABLE(
+    event_id bigint,
+    action_tstamp_tx timestamp with time zone,
+    action_tstamp_epoch integer,
+    ident text,
+    action_type text,
+    origine text,
+    action text,
+    updated_field text,
+    uid uuid,
+    original_action_tstamp_tx integer
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    p_central_id text;
+    p_clone_id text;
+    sqltemplate text;
+BEGIN
+    -- Get central server id
+    SELECT server_id::text INTO p_central_id
+    FROM central_lizsync.server_metadata
+    LIMIT 1;
+
+    -- Get clone server id
+    SELECT server_id::text INTO p_clone_id
+    FROM lizsync.server_metadata
+    LIMIT 1;
+
+    IF p_central_id IS NULL OR p_clone_id IS NULL THEN
+        RETURN QUERY
+        SELECT
+            NULL, NULL, NULL, NULL,
+            NULL, NULL, NULL, NULL, NULL, NULL
+        LIMIT 0;
+    END IF;
+
+    RETURN QUERY
+        WITH
+        last_sync AS (
+            SELECT
+                max_action_tstamp_tx,
+                max_event_id
+            FROM central_lizsync.history
+            WHERE True
+            AND server_from = p_central_id
+            AND p_clone_id = ANY (server_to)
+            AND sync_status = 'done'
+            ORDER BY sync_time DESC
+            LIMIT 1
+        ),
+        schemas AS (
+            SELECT sync_schemas
+            FROM central_lizsync.synchronized_schemas
+            WHERE server_id = p_clone_id::uuid
+            LIMIT 1
+        )
+        SELECT
+            a.event_id,
+            a.action_tstamp_tx AS action_tstamp_tx,
+            extract(epoch from a.action_tstamp_tx)::integer AS action_tstamp_epoch,
+            concat(a.schema_name, '.', a.table_name) AS ident,
+            a.action AS action_type,
+            CASE
+                WHEN a.sync_data->>'origin' IS NULL THEN 'central'
+                ELSE 'clone'
+            END AS origine,
+            Coalesce(
+                lizsync.get_event_sql(
+                    'central',
+                    a.event_id,
+                    p_uid_field,
+                    array_to_string(
+                        array_cat(
+                            p_excluded_columns,
+                            array_remove(akeys(a.changed_fields), s)
+                        ), ','
+                    )
+                ),
+                ''
+            ) AS action,
+            s AS updated_field,
+            (a.row_data->p_uid_field)::uuid AS uid,
+            CASE
+                WHEN a.sync_data->>'action_tstamp_tx' IS NOT NULL
+                AND a.sync_data->>'origin' IS NOT NULL
+                    THEN extract(epoch from Cast(a.sync_data->>'action_tstamp_tx' AS TIMESTAMP WITH TIME ZONE))::integer
+                ELSE extract(epoch from a.action_tstamp_tx)::integer
+            END AS original_action_tstamp_tx
+        FROM central_audit.logged_actions AS a
+        -- Create as many lines as there are changed fields in UPDATE
+        LEFT JOIN skeys(a.changed_fields) AS s ON TRUE,
+        last_sync, schemas
+
+        WHERE True
+
+        -- modifications do not come from clone database
+        AND (a.sync_data->>'origin' != p_clone_id OR a.sync_data->>'origin' IS NULL)
+
+        -- modifications have not yet been replayed in the clone database
+        AND (NOT (a.sync_data->'replayed_by' ? p_clone_id) OR a.sync_data->'replayed_by' = jsonb_build_object() )
+
+        -- modifications after the last synchronization
+        -- MAX_ACTION_TSTAMP_TX Par ex: 2019-04-20 12:00:00+02
+        AND a.action_tstamp_tx > last_sync.max_action_tstamp_tx
+
+        -- et pour lesquelles l'ID est supérieur
+        -- MAX_EVENT_ID
+        AND a.event_id > last_sync.max_event_id
+
+        -- et pour les schémas listés
+        AND sync_schemas ? schema_name
+
+        ORDER BY a.event_id
+        ;
+END;
+$$;
+
+COMMENT ON FUNCTION lizsync.get_central_audit_logs(text, text[]) IS 'Get all the logs from the central database: modifications do not come from the clone, have not yet been replayed by the clone, are dated after the last synchronization, have an event id higher than the last sync maximum event id, and concern the synchronized schemas for this clone. Parameters: uid column name and excluded columns';
+
+-- lizsync.get_clone_audit_logs
+CREATE OR REPLACE FUNCTION lizsync.get_clone_audit_logs(
+    p_uid_field text,
+    p_excluded_columns text[]
+)
+RETURNS TABLE(
+    event_id bigint,
+    action_tstamp_tx timestamp with time zone,
+    action_tstamp_epoch integer,
+    ident text,
+    action_type text,
+    origine text,
+    action text,
+    updated_field text,
+    uid uuid
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    sqltemplate text;
+BEGIN
+    RETURN QUERY
+    SELECT
+        a.event_id,
+        a.action_tstamp_tx AS action_tstamp_tx,
+        extract(epoch from a.action_tstamp_tx)::integer AS action_tstamp_epoch,
+        concat(a.schema_name, '.', a.table_name) AS ident,
+        a.action AS action_type,
+        'clone'::text AS origine,
+        Coalesce(
+            lizsync.get_event_sql(
+                'clone',
+                a.event_id,
+                p_uid_field,
+                array_to_string(
+                    array_cat(
+                        p_excluded_columns,
+                        array_remove(akeys(a.changed_fields), s)
+                    ), ','
+                )
+            ),
+            ''
+        ) AS action,
+        s AS updated_field,
+        (a.row_data->p_uid_field)::uuid AS uid
+    FROM audit.logged_actions AS a
+    -- Create as many lines as there are changed fields in UPDATE
+    LEFT JOIN skeys(a.changed_fields) AS s ON TRUE
+    WHERE True
+    ORDER BY a.event_id
+    ;
+END;
+$$;
+
+COMMENT ON FUNCTION lizsync.get_clone_audit_logs(text, text[]) IS 'Get all the modifications made in the clone. Parameters: uid column name and excluded columns';
+
+-- lizsync.analyse_audit_logs
+-- remove subsequence UPDATE on same ident, field, uid in the same source
+-- remove rejected logs from temp audit tables
+-- store conflicts
+CREATE OR REPLACE FUNCTION lizsync.analyse_audit_logs()
+RETURNS TABLE(
+    ids bigint[],
+    min_event_id bigint,
+    max_event_id bigint,
+    max_action_tstamp_tx timestamp with time zone
+)
+LANGUAGE plpgsql
+AS $$
 DECLARE
     sqltemplate text;
     p_ids bigint[];
@@ -161,476 +567,20 @@ BEGIN
 END;
 $$;
 
-
--- FUNCTION analyse_audit_logs()
 COMMENT ON FUNCTION lizsync.analyse_audit_logs() IS 'Get audit logs from the central database and the clone since the last synchronization. Compare the logs to find and resolved UPDATE conflicts (same table, feature, column): last modified object wins. This function store the resolved conflicts into the table lizsync.conflicts in the central database. Returns central server event ids, minimum event id, maximum event id, maximum action timestamp.';
 
-
--- create_central_server_fdw(text, smallint, text, text, text)
-CREATE FUNCTION lizsync.create_central_server_fdw(p_central_host text, p_central_port smallint, p_central_database text, p_central_username text, p_central_password text) RETURNS boolean
-    LANGUAGE plpgsql
-    AS $_$
-DECLARE
-    sqltemplate text;
-BEGIN
-    -- Create extension
-    CREATE EXTENSION IF NOT EXISTS postgres_fdw;
-
-    -- Create server
-    DROP SERVER IF EXISTS central_server CASCADE;
-    sqltemplate = '
-    CREATE SERVER central_server
-    FOREIGN DATA WRAPPER postgres_fdw
-    OPTIONS (
-        host ''%1$s'',
-        port ''%2$s'',
-        dbname ''%3$s'',
-        connect_timeout ''5''
-    );
-    ';
-    EXECUTE format(sqltemplate,
-        p_central_host,
-        p_central_port,
-        p_central_database
-    );
-
-    -- User mapping
-    sqltemplate = '
-    CREATE USER MAPPING FOR CURRENT_USER
-    SERVER central_server
-    OPTIONS (
-        user ''%1$s'',
-        password ''%2$s''
-    )
-    ';
-    EXECUTE format(sqltemplate,
-        p_central_username,
-        p_central_password
-    );
-
-    -- Create local schemas
-    CREATE SCHEMA IF NOT EXISTS central_audit;
-    CREATE SCHEMA IF NOT EXISTS central_lizsync;
-
-    -- Import foreign tables
-    -- audit
-    IMPORT FOREIGN SCHEMA audit
-    FROM SERVER central_server
-    INTO central_audit;
-
-    -- lizsync
-    IMPORT FOREIGN SCHEMA lizsync
-    FROM SERVER central_server
-    INTO central_lizsync;
-
-    -- Manually create modified conflicts table
-    -- with no id column to avoid issues
-    -- https://stackoverflow.com/a/53361066/13220524
-    CREATE FOREIGN TABLE central_lizsync.conflicts_bis(
-        object_table text,
-        object_uid uuid,
-        clone_id uuid,
-        central_event_id bigint,
-        central_event_timestamp timestamp with time zone,
-        central_sql text,
-        clone_sql text,
-        rejected text,
-        rule_applied text
-     )
-    SERVER central_server
-    OPTIONS (
-        schema_name 'lizsync',
-        table_name 'conflicts'
-    );
-
-    RETURN True;
-END;
-$_$;
-
-
--- FUNCTION create_central_server_fdw(p_central_host text, p_central_port smallint, p_central_database text, p_central_username text, p_central_password text)
-COMMENT ON FUNCTION lizsync.create_central_server_fdw(p_central_host text, p_central_port smallint, p_central_database text, p_central_username text, p_central_password text) IS 'Create foreign server, needed central_audit and central_lizsync schemas, and import all central database tables as foreign tables. This will allow the clone to connect to the central databse';
-
-
--- create_temporary_table(text, text)
-CREATE FUNCTION lizsync.create_temporary_table(temporary_table text, table_type text) RETURNS boolean
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-    sqltemplate text;
-BEGIN
-    -- Drop table if exists
-    EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(temporary_table);
-    -- Create temporary table
-    IF table_type = 'audit' THEN
-        EXECUTE 'CREATE TEMP TABLE ' || quote_ident(temporary_table) || ' (
-            tid                       serial,
-            event_id                  bigint,
-            action_tstamp_tx          timestamp with time zone,
-            action_tstamp_epoch       integer,
-            ident                     text,
-            action_type               text,
-            origine                   text,
-            action                    text,
-            updated_field             text,
-            uid                       uuid,
-            original_action_tstamp_tx integer
-        )
-        --ON COMMIT DROP
-        ';
-    END IF;
-    IF table_type = 'conflict' THEN
-        EXECUTE 'CREATE TEMP TABLE ' || quote_ident(temporary_table) || ' (
-            tid                     serial                   ,
-            conflict_time           timestamp with time zone ,
-            object_table            text                     ,
-            object_uid              uuid                     ,
-            central_tid             integer                  ,
-            clone_tid               integer                  ,
-            central_event_id        integer                  ,
-            central_event_timestamp timestamp with time zone ,
-            central_sql             text                     ,
-            clone_sql               text                     ,
-            rejected                text                     ,
-            rule_applied            text
-        )
-        --ON COMMIT DROP
-        ';
-    END IF;
-
-    RETURN True;
-END;
-$$;
-
-
--- FUNCTION create_temporary_table(temporary_table text, table_type text)
-COMMENT ON FUNCTION lizsync.create_temporary_table(temporary_table text, table_type text) IS 'Create temporary table used during database bidirectionnal synchronization. Parameters: temporary table name, and table type (audit or conflit)';
-
-
--- get_central_audit_logs(text, text[])
-CREATE FUNCTION lizsync.get_central_audit_logs(p_uid_field text, p_excluded_columns text[]) RETURNS TABLE(event_id bigint, action_tstamp_tx timestamp with time zone, action_tstamp_epoch integer, ident text, action_type text, origine text, action text, updated_field text, uid uuid, original_action_tstamp_tx integer)
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-    p_central_id text;
-    p_clone_id text;
-    sqltemplate text;
-BEGIN
-    -- Get central server id
-    SELECT server_id::text INTO p_central_id
-    FROM central_lizsync.server_metadata
-    LIMIT 1;
-
-    -- Get clone server id
-    SELECT server_id::text INTO p_clone_id
-    FROM lizsync.server_metadata
-    LIMIT 1;
-
-    IF p_central_id IS NULL OR p_clone_id IS NULL THEN
-        RETURN QUERY
-        SELECT
-            NULL, NULL, NULL, NULL,
-            NULL, NULL, NULL, NULL, NULL, NULL
-        LIMIT 0;
-    END IF;
-
-    RETURN QUERY
-        WITH
-        last_sync AS (
-            SELECT
-                max_action_tstamp_tx,
-                max_event_id
-            FROM central_lizsync.history
-            WHERE True
-            AND server_from = p_central_id
-            AND p_clone_id = ANY (server_to)
-            AND sync_status = 'done'
-            ORDER BY sync_time DESC
-            LIMIT 1
-        ),
-        schemas AS (
-            SELECT sync_schemas
-            FROM central_lizsync.synchronized_schemas
-            WHERE server_id = p_clone_id::uuid
-            LIMIT 1
-        )
-        SELECT
-            a.event_id,
-            a.action_tstamp_tx AS action_tstamp_tx,
-            extract(epoch from a.action_tstamp_tx)::integer AS action_tstamp_epoch,
-            concat(a.schema_name, '.', a.table_name) AS ident,
-            a.action AS action_type,
-            CASE
-                WHEN a.sync_data->>'origin' IS NULL THEN 'central'
-                ELSE 'clone'
-            END AS origine,
-            Coalesce(
-                lizsync.get_event_sql(
-                    'central',
-                    a.event_id,
-                    p_uid_field,
-                    array_to_string(
-                        array_cat(
-                            p_excluded_columns,
-                            array_remove(akeys(a.changed_fields), s)
-                        ), ','
-                    )
-                ),
-                ''
-            ) AS action,
-            s AS updated_field,
-            (a.row_data->p_uid_field)::uuid AS uid,
-            CASE
-                WHEN a.sync_data->>'action_tstamp_tx' IS NOT NULL
-                AND a.sync_data->>'origin' IS NOT NULL
-                    THEN extract(epoch from Cast(a.sync_data->>'action_tstamp_tx' AS TIMESTAMP WITH TIME ZONE))::integer
-                ELSE extract(epoch from a.action_tstamp_tx)::integer
-            END AS original_action_tstamp_tx
-        FROM central_audit.logged_actions AS a
-        -- Create as many lines as there are changed fields in UPDATE
-        LEFT JOIN skeys(a.changed_fields) AS s ON TRUE,
-        last_sync, schemas
-
-        WHERE True
-
-        -- modifications do not come from clone database
-        AND (a.sync_data->>'origin' != p_clone_id OR a.sync_data->>'origin' IS NULL)
-
-        -- modifications have not yet been replayed in the clone database
-        AND (NOT (a.sync_data->'replayed_by' ? p_clone_id) OR a.sync_data->'replayed_by' = jsonb_build_object() )
-
-        -- modifications after the last synchronization
-        -- MAX_ACTION_TSTAMP_TX Par ex: 2019-04-20 12:00:00+02
-        AND a.action_tstamp_tx > last_sync.max_action_tstamp_tx
-
-        -- et pour lesquelles l'ID est supérieur
-        -- MAX_EVENT_ID
-        AND a.event_id > last_sync.max_event_id
-
-        -- et pour les schémas listés
-        AND sync_schemas ? schema_name
-
-        ORDER BY a.event_id
-        ;
-END;
-$$;
-
-
--- FUNCTION get_central_audit_logs(p_uid_field text, p_excluded_columns text[])
-COMMENT ON FUNCTION lizsync.get_central_audit_logs(p_uid_field text, p_excluded_columns text[]) IS 'Get all the logs from the central database: modifications do not come from the clone, have not yet been replayed by the clone, are dated after the last synchronization, have an event id higher than the last sync maximum event id, and concern the synchronized schemas for this clone. Parameters: uid column name and excluded columns';
-
-
--- get_clone_audit_logs(text, text[])
-CREATE FUNCTION lizsync.get_clone_audit_logs(p_uid_field text, p_excluded_columns text[]) RETURNS TABLE(event_id bigint, action_tstamp_tx timestamp with time zone, action_tstamp_epoch integer, ident text, action_type text, origine text, action text, updated_field text, uid uuid)
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-    sqltemplate text;
-BEGIN
-    RETURN QUERY
-    SELECT
-        a.event_id,
-        a.action_tstamp_tx AS action_tstamp_tx,
-        extract(epoch from a.action_tstamp_tx)::integer AS action_tstamp_epoch,
-        concat(a.schema_name, '.', a.table_name) AS ident,
-        a.action AS action_type,
-        'clone'::text AS origine,
-        Coalesce(
-            lizsync.get_event_sql(
-                'clone',
-                a.event_id,
-                p_uid_field,
-                array_to_string(
-                    array_cat(
-                        p_excluded_columns,
-                        array_remove(akeys(a.changed_fields), s)
-                    ), ','
-                )
-            ),
-            ''
-        ) AS action,
-        s AS updated_field,
-        (a.row_data->p_uid_field)::uuid AS uid
-    FROM audit.logged_actions AS a
-    -- Create as many lines as there are changed fields in UPDATE
-    LEFT JOIN skeys(a.changed_fields) AS s ON TRUE
-    WHERE True
-    ORDER BY a.event_id
-    ;
-END;
-$$;
-
-
--- FUNCTION get_clone_audit_logs(p_uid_field text, p_excluded_columns text[])
-COMMENT ON FUNCTION lizsync.get_clone_audit_logs(p_uid_field text, p_excluded_columns text[]) IS 'Get all the modifications made in the clone. Parameters: uid column name and excluded columns';
-
-
--- get_event_sql(text, bigint, text, text)
-CREATE FUNCTION lizsync.get_event_sql(target text, pevent_id bigint, puid_column text, excluded_columns text) RETURNS text
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-  sqltemplate text;
-  sqloutput text;
-  logged_actions_table text;
-  logged_relations_table text;
-BEGIN
-    IF excluded_columns IS NULL THEN
-        excluded_columns:= '';
-        excluded_columns:= replace(excluded_columns, ' ', '');
-    END IF;
-
-    IF target = 'central' THEN
-        logged_actions_table = 'central_audit.logged_actions';
-        logged_relations_table = 'central_audit.logged_relations';
-    ELSE
-        logged_actions_table = 'audit.logged_actions';
-        logged_relations_table = 'audit.logged_relations';
-    END IF;
-
-    sqltemplate = '
-    WITH
-    event AS (
-        SELECT * FROM ' || logged_actions_table || ' WHERE event_id = ' || pevent_id || '
-    )
-    -- get primary key names
-    , where_pks AS (
-        SELECT array_agg(uid_column) as pkey_fields
-        FROM ' || logged_relations_table || ' AS r
-        JOIN event ON relation_name = (quote_ident(schema_name) || ''.'' || quote_ident(table_name))
-    )
-    -- create where clause with uid column
-    -- not with primary keys, to manage multi-way sync
-    , where_uid AS (
-        SELECT ''"' || puid_column || '" = '' || quote_literal(row_data->''' || puid_column || ''') AS where_clause
-        FROM event
-    )
-    SELECT
-        CASE
-            WHEN action = ''I'' THEN
-                ''INSERT INTO "'' || schema_name || ''"."'' || table_name || ''"'' ||
-                '' ('' || (
-                    SELECT string_agg(
-                        ''"'' || key || ''"'',
-                        '',''
-                    )
-                    FROM each(row_data)
-                    WHERE True
-                    AND key != ALL(pkey_fields)
-                    AND key != ALL( string_to_array(''' || excluded_columns || ''', '','') )
-                )
-                || '') VALUES ( '' ||
-                (
-                    SELECT string_agg(
-                        CASE WHEN value IS NULL THEN ''NULL'' ELSE quote_literal(value) END,
-                        '',''
-                    )
-                    FROM EACH(row_data)
-                    WHERE True
-                    AND key != ALL(pkey_fields)
-                    AND key != ALL( string_to_array(''' || excluded_columns || ''', '','') )
-                )
-                || '')''
-
-            WHEN action = ''D'' THEN
-                ''DELETE FROM "'' || schema_name || ''"."'' || table_name || ''"'' ||
-                '' WHERE '' || where_clause
-
-            WHEN action = ''U'' THEN
-                ''UPDATE "'' || schema_name || ''"."'' || table_name || ''"'' ||
-                '' SET '' || (
-                    SELECT string_agg(
-                        ''"'' || key || ''"'' || '' = '' ||
-                        CASE
-                            WHEN value IS NULL
-                                THEN ''NULL''
-                            ELSE quote_literal(value)
-                        END,
-                        '',''
-                    ) FROM each(changed_fields)
-                    WHERE True
-                    AND key != ALL(pkey_fields)
-                    AND key != ALL( string_to_array(''' || excluded_columns || ''', '','') )
-                ) ||
-                '' WHERE '' || where_clause
-        END AS output
-    FROM
-        event, where_pks, where_uid
-    '
-    ;
-    --RAISE NOTICE '%s', sqltemplate;
-    EXECUTE sqltemplate
-    INTO sqloutput;
-    RETURN sqloutput;
-END;
-$$;
-
-
--- FUNCTION get_event_sql(target text, pevent_id bigint, puid_column text, excluded_columns text)
-COMMENT ON FUNCTION lizsync.get_event_sql(target text, pevent_id bigint, puid_column text, excluded_columns text) IS '
-Get the SQL to use for replay from a audit log event
-
-Arguments:
-   target : clone or central database
-   pevent_id:  The event_id of the event in audit.logged_actions to replay
-   puid_column: The name of the column with unique uuid values
-   excluded_columns: list of columns names, separated by comma, to exclude from synchronization
-';
-
-
--- import_central_server_schemas()
-CREATE FUNCTION lizsync.import_central_server_schemas() RETURNS TABLE(imported_schemas text[])
-    LANGUAGE plpgsql
-    AS $$
-DECLARE
-    p_clone_id text;
-    p_sync_schema text;
-    sqltemplate text;
-    rec record;
-    p_imported_schemas text[];
-BEGIN
-    sqltemplate = '';
-    p_imported_schemas = ARRAY[]::text[];
-
-    -- Get clone id
-    SELECT server_id::text INTO p_clone_id
-    FROM lizsync.server_metadata
-    LIMIT 1;
-
-    -- Import foreign tables of given schema
-    FOR rec IN
-        SELECT jsonb_array_elements(sync_schemas)::text AS sync_schema
-        FROM central_lizsync.synchronized_schemas
-        WHERE server_id::text = p_clone_id
-    LOOP
-        p_sync_schema = replace(rec.sync_schema, '"', '');
-        p_imported_schemas = p_imported_schemas || p_sync_schema;
-        sqltemplate = concat(
-            sqltemplate,
-            'DROP SCHEMA IF EXISTS central_', p_sync_schema, ' CASCADE;',
-            'CREATE SCHEMA central_', p_sync_schema, ';',
-            'IMPORT FOREIGN SCHEMA ', p_sync_schema, '
-            FROM SERVER central_server
-            INTO central_', p_sync_schema, ';'
-        );
-    END LOOP;
-
-    EXECUTE sqltemplate;
-
-    RETURN QUERY
-    SELECT p_imported_schemas;
-END;
-$$;
-
-
--- FUNCTION import_central_server_schemas()
-COMMENT ON FUNCTION lizsync.import_central_server_schemas() IS 'Import synchronized schemas from the central database foreign server into central_XXX local schemas to the clone database. This allow to edit data of the central database from the clone.';
-
-
--- replay_central_logs_to_clone(bigint[], bigint, bigint, timestamp with time zone)
-CREATE FUNCTION lizsync.replay_central_logs_to_clone(p_ids bigint[], p_min_event_id bigint, p_max_event_id bigint, p_max_action_tstamp_tx timestamp with time zone) RETURNS TABLE(replay_count integer)
-    LANGUAGE plpgsql
-    AS $$
+-- lizsync.replay_central_logs_to_clone
+CREATE OR REPLACE FUNCTION lizsync.replay_central_logs_to_clone(
+    p_ids bigint[],
+    p_min_event_id bigint,
+    p_max_event_id bigint,
+    p_max_action_tstamp_tx timestamp with time zone
+)
+RETURNS TABLE(
+    replay_count integer
+)
+LANGUAGE plpgsql
+AS $$
 DECLARE
     sqltemplate text;
     p_central_id text;
@@ -725,15 +675,67 @@ BEGIN
 END;
 $$;
 
-
--- FUNCTION replay_central_logs_to_clone(p_ids bigint[], p_min_event_id bigint, p_max_event_id bigint, p_max_action_tstamp_tx timestamp with time zone)
-COMMENT ON FUNCTION lizsync.replay_central_logs_to_clone(p_ids bigint[], p_min_event_id bigint, p_max_event_id bigint, p_max_action_tstamp_tx timestamp with time zone) IS 'Replay the central logs in the clone database, then modifiy the corresponding audit logs in the central server to update the sync_data column. A new item is also created in the central server lizsync.history table. When running the log queries, we disable triggers in the clone to avoid adding more rows to the local audit logged_actions table';
+COMMENT ON FUNCTION lizsync.replay_central_logs_to_clone(bigint[], bigint, bigint, timestamp with time zone) IS 'Replay the central logs in the clone database, then modifiy the corresponding audit logs in the central server to update the sync_data column. A new item is also created in the central server lizsync.history table. When running the log queries, we disable triggers in the clone to avoid adding more rows to the local audit logged_actions table';
 
 
--- replay_clone_logs_to_central()
-CREATE FUNCTION lizsync.replay_clone_logs_to_central() RETURNS TABLE(replay_count integer)
-    LANGUAGE plpgsql
-    AS $_$
+-- lizsync.import_central_server_tables
+CREATE OR REPLACE FUNCTION lizsync.import_central_server_schemas()
+RETURNS TABLE(
+    imported_schemas text[]
+)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+    p_clone_id text;
+    p_sync_schema text;
+    sqltemplate text;
+    rec record;
+    p_imported_schemas text[];
+BEGIN
+    sqltemplate = '';
+    p_imported_schemas = ARRAY[]::text[];
+
+    -- Get clone id
+    SELECT server_id::text INTO p_clone_id
+    FROM lizsync.server_metadata
+    LIMIT 1;
+
+    -- Import foreign tables of given schema
+    FOR rec IN
+        SELECT jsonb_array_elements(sync_schemas)::text AS sync_schema
+        FROM central_lizsync.synchronized_schemas
+        WHERE server_id::text = p_clone_id
+    LOOP
+        p_sync_schema = replace(rec.sync_schema, '"', '');
+        p_imported_schemas = p_imported_schemas || p_sync_schema;
+        sqltemplate = concat(
+            sqltemplate,
+            'DROP SCHEMA IF EXISTS central_', p_sync_schema, ' CASCADE;',
+            'CREATE SCHEMA central_', p_sync_schema, ';',
+            'IMPORT FOREIGN SCHEMA ', p_sync_schema, '
+            FROM SERVER central_server
+            INTO central_', p_sync_schema, ';'
+        );
+    END LOOP;
+
+    EXECUTE sqltemplate;
+
+    RETURN QUERY
+    SELECT p_imported_schemas;
+END;
+$$;
+
+
+COMMENT ON FUNCTION lizsync.import_central_server_schemas() IS 'Import synchronized schemas from the central database foreign server into central_XXX local schemas to the clone database. This allow to edit data of the central database from the clone.';
+
+
+-- lizsync.replay_clone_logs_to_central
+CREATE OR REPLACE FUNCTION lizsync.replay_clone_logs_to_central()
+RETURNS TABLE(
+    replay_count integer
+)
+LANGUAGE plpgsql
+AS $$
 DECLARE
     sqltemplate text;
     sqlsession text;
@@ -880,17 +882,17 @@ BEGIN
     RETURN QUERY
     SELECT p_counter;
 END;
-$_$;
+$$;
 
-
--- FUNCTION replay_clone_logs_to_central()
 COMMENT ON FUNCTION lizsync.replay_clone_logs_to_central() IS 'Replay all logs from the clone to the central database. It returns the number of actions replayed. After this, the clone audit logs are truncated.';
 
 
--- store_conflicts()
-CREATE FUNCTION lizsync.store_conflicts() RETURNS TABLE(number_conflicts integer)
-    LANGUAGE plpgsql
-    AS $$
+CREATE OR REPLACE FUNCTION lizsync.store_conflicts()
+RETURNS TABLE(
+    number_conflicts integer
+)
+LANGUAGE plpgsql
+AS $$
 DECLARE
     sqltemplate text;
     dblink_connection_name text;
@@ -934,15 +936,18 @@ BEGIN
 END;
 $$;
 
-
--- FUNCTION store_conflicts()
 COMMENT ON FUNCTION lizsync.store_conflicts() IS 'Store resolved conflicts in the central database lizsync.conflicts table.';
 
 
--- synchronize()
-CREATE FUNCTION lizsync.synchronize() RETURNS TABLE(number_replayed_to_central integer, number_replayed_to_clone integer, number_conflicts integer)
-    LANGUAGE plpgsql
-    AS $$
+-- lizsync.synchronize
+CREATE OR REPLACE FUNCTION lizsync.synchronize()
+RETURNS TABLE(
+    number_replayed_to_central integer,
+    number_replayed_to_clone integer,
+    number_conflicts integer
+)
+LANGUAGE plpgsql
+AS $$
 DECLARE
     sqltemplate text;
     p_clone_id text;
@@ -1042,12 +1047,7 @@ BEGIN
 END;
 $$;
 
-
--- FUNCTION synchronize()
 COMMENT ON FUNCTION lizsync.synchronize() IS 'Run the bi-directionnal database synchronization between the clone and the central server';
 
 
---
--- PostgreSQL database dump complete
---
-
+COMMIT;
