@@ -1,10 +1,15 @@
 version: '3'
 
+networks:
+  qgis_plugin_network:
+
 services:
   db:
     image: kartoza/postgis:9.6-2.4
     hostname: db
     container_name: postgis
+    networks:
+      qgis_plugin_network:
     environment:
       - POSTGRES_USER=docker
       - POSTGRES_PASS=docker
@@ -20,9 +25,11 @@ services:
   qgis:
     image: qgis/qgis:release-3_4
     container_name: qgis
+    networks:
+      qgis_plugin_network:
     volumes:
       # - /tmp/.X11-unix:/tmp/.X11-unix
-      - ../lizsync:/tests_directory/lizsync
+      - ../${PLUGIN_NAME}:/tests_directory/${PLUGIN_NAME}
     environment:
       # - DISPLAY=unix$DISPLAY
       - DISPLAY=:99
