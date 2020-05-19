@@ -24,6 +24,14 @@ jobs:
       script:
         - ./exec.sh
 
+    - stage: Run tests
+      name: Fresh install versus migrations
+      install:
+        - cd .docker
+        - ./start.sh
+      script:
+        - ./install_migrate_generate.sh
+
     - stage: Push translations to Transifex
       if: branch = master AND type != pull_request
       install:

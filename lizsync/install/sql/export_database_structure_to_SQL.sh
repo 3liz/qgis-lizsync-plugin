@@ -60,8 +60,8 @@ done
 rm "$OUTDIR/dump"
 
 # NOMENCLATURE
-echo "GLOSSARY"
-if [ $SCHEMA = 'lizsync' ]
-then
-    pg_dump service=$SERVICE --data-only --inserts --column-inserts -n $SCHEMA --no-acl --no-owner --table "lizsync.glossary" -f "$OUTDIR"/90_GLOSSARY.sql
-fi
+#echo "GLOSSARY"
+#if [ $SCHEMA = 'lizsync' ]
+#then
+#    pg_dump service=$SERVICE --data-only --inserts --column-inserts -n $SCHEMA --no-acl --no-owner --table "lizsync.glossary" -f "$OUTDIR"/90_GLOSSARY.sql
+#fi
