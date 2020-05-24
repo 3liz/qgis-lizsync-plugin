@@ -24,7 +24,8 @@ from qgis.core import (
     QgsProcessingParameterString,
     QgsProcessingParameterBoolean,
     QgsProcessingOutputNumber,
-    QgsProcessingOutputString
+    QgsProcessingOutputString,
+    QgsProcessingParameterDefinition
 )
 from .tools import (
     lizsyncConfig,
@@ -81,7 +82,7 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
             ' * A lizsync schema with tables and functions'
             '\n'
             '\n'
-            'Beware ! If you check the "override" checkboxes, you will loose all existing data in the audit and/or lizsync schema !'
+            'Beware ! If the schema lizsync or audit already exists in the database, not installation will be made. You will need to manually correct the situation (drop or modifiy the schemas, tables and functions.'
 
         )
         return short_help
@@ -109,22 +110,26 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
         })
         self.addParameter(db_param_a)
 
-        self.addParameter(
-            QgsProcessingParameterBoolean(
-                self.OVERRIDE_AUDIT,
-                tr('Drop audit schema and all data ?'),
-                defaultValue=False,
-                optional=False
-            )
+        # Hidden parameters which allow to drop the schemas
+        # Hidden to avoid misuse and data loss
+        # Drop schema audit
+        p = QgsProcessingParameterBoolean(
+            self.OVERRIDE_AUDIT,
+            tr('Drop audit schema and all data ?'),
+            defaultValue=False,
+            optional=False
         )
-        self.addParameter(
-            QgsProcessingParameterBoolean(
-                self.OVERRIDE_LIZSYNC,
-                tr('Drop lizsync schema and all data ?'),
-                defaultValue=False,
-                optional=False
-            )
+        p.setFlags(QgsProcessingParameterDefinition.FlagHidden)
+        self.addParameter(p)
+        # Drop schema lizsync
+        p = QgsProcessingParameterBoolean(
+            self.OVERRIDE_LIZSYNC,
+            tr('Drop lizsync schema and all data ?'),
+            defaultValue=False,
+            optional=False
         )
+        p.setFlags(QgsProcessingParameterDefinition.FlagHidden)
+        self.addParameter(p)
 
         # OUTPUTS
         # Add output for status (integer)
@@ -185,9 +190,15 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
 
         # Get override parameter for the schema to check
         if schema_name == 'audit':
-            override = parameters[self.OVERRIDE_AUDIT]
+            if self.OVERRIDE_AUDIT in parameters:
+                override = parameters[self.OVERRIDE_AUDIT]
+            else:
+                override = False
         if schema_name == 'lizsync':
-            override = parameters[self.OVERRIDE_LIZSYNC]
+            if self.OVERRIDE_LIZSYNC in parameters:
+                override = parameters[self.OVERRIDE_LIZSYNC]
+            else:
+                override = False
 
         msg = schema_name.upper() + ' - ' + tr('Schema does not exists. Continue')
         for a in data:
@@ -195,7 +206,7 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
             if schema == schema_name and not override:
                 ok = False
                 msg = schema_name.upper() + ' - '
-                msg += tr("Schema already exists in database ! If you REALLY want to drop and recreate it (and loose all data), check the *Overwrite* checkbox")
+                msg += tr("Schema already exists in database !")
         return ok, msg
 
     def processAlgorithm(self, parameters, context, feedback):

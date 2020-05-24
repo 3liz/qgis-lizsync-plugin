@@ -154,8 +154,8 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
 
         for line in data:
             number_replayed_to_central = line[0]
-            number_replayed_to_clone   = line[1]
-            number_conflicts           = line[2]
+            number_replayed_to_clone = line[1]
+            number_conflicts = line[2]
 
         a = tr('Two-way database synchronization done')
         b = tr('Number of modifications applied from the central server')
