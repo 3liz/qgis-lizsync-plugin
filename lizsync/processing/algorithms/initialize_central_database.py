@@ -231,7 +231,6 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
         ls.setVariable('postgresql:central/name', connection_name_central)
         ls.setVariable('postgresql:central/schemas', synchronized_schemas)
 
-
         # First run all tests
         test_list = ['structure', 'server id', 'uid columns', 'audit triggers']
         status, tests = check_lizsync_installation_status(

@@ -20,11 +20,9 @@ from qgis.core import (
     QgsProcessingParameterNumber,
     QgsProcessingParameterFile,
     QgsProcessingOutputString,
-    QgsProcessingOutputNumber,
-    QgsProcessingParameterDefinition
+    QgsProcessingOutputNumber
 )
 
-from datetime import datetime
 from ftplib import FTP
 from .tools import (
     checkFtpBinary,
