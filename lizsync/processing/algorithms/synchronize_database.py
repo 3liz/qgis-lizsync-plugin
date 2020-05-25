@@ -66,6 +66,9 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
         ls = lizsyncConfig()
 
         # INPUTS
+
+        # Central database connection
+        # Needed because we need to check we can connect to central database
         connection_name_central = ls.variable('postgresql:central/name')
         db_param_a = QgsProcessingParameterString(
             self.CONNECTION_NAME_CENTRAL,
@@ -131,7 +134,14 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
             self.OUTPUT_STRING: ''
         }
 
-        self.connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
+        # Parameters
+        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+        connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
+
+        # store parameters
+        ls = lizsyncConfig()
+        ls.setVariable('postgresql:central/name', connection_name_central)
+        ls.setVariable('postgresql:clone/name', connection_name_clone)
 
         # Run the database PostgreSQL function lizsync.synchronize()
         feedback.pushInfo(
@@ -142,7 +152,7 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
             FROM lizsync.synchronize()
         '''
         _, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
-            self.connection_name_clone,
+            connection_name_clone,
             sql
         )
         if not ok:
@@ -157,6 +167,7 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
             number_replayed_to_clone = line[1]
             number_conflicts = line[2]
 
+        # Output messages
         a = tr('Two-way database synchronization done')
         b = tr('Number of modifications applied from the central server')
         b+= ' = %s' % number_replayed_to_clone
@@ -170,7 +181,6 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
         feedback.pushInfo(d)
 
         msg = tr('Two-way database synchronization done.')
-        # feedback.setProgress(int(1 * total))
         output = {
             self.OUTPUT_STATUS: 1,
             self.OUTPUT_STRING: msg + ' ' + ', '.join([b, c, d])

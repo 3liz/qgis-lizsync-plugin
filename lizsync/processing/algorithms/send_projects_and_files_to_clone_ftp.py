@@ -102,6 +102,8 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
         ls = lizsyncConfig()
 
         # INPUTS
+
+        # Central database connection name
         connection_name_central = ls.variable('postgresql:central/name')
         db_param_a = QgsProcessingParameterString(
             self.CONNECTION_NAME_CENTRAL,
@@ -116,6 +118,7 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
         })
         self.addParameter(db_param_a)
 
+        # Local directory containing the files to send to the clone by FTP
         local_qgis_project_folder = ls.variable('local/qgis_project_folder')
         self.addParameter(
             QgsProcessingParameterFile(
@@ -127,6 +130,8 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
             )
         )
 
+        # Clone FTP connection parameters
+        # host
         clone_ftp_host = ls.variable('ftp:clone/host')
         self.addParameter(
             QgsProcessingParameterString(
@@ -136,6 +141,7 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
                 optional=False
             )
         )
+        # port
         clone_ftp_port = ls.variable('ftp:clone/port')
         self.addParameter(
             QgsProcessingParameterNumber(
@@ -145,6 +151,7 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
                 optional=False
             )
         )
+        # login
         clone_ftp_login = ls.variable('ftp:clone/user')
         self.addParameter(
             QgsProcessingParameterString(
@@ -154,6 +161,7 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
                 optional=False
             )
         )
+        # password
         self.addParameter(
             QgsProcessingParameterString(
                 self.CLONE_FTP_PASSWORD,
@@ -161,6 +169,7 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
                 optional=True
             )
         )
+        # remote directory
         clone_ftp_remote_dir = ls.variable('ftp:clone/remote_directory')
         self.addParameter(
             QgsProcessingParameterString(
@@ -171,11 +180,15 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
             )
         )
 
+        # Exclude some directories from sync
+        excluded_directories = ls.variable('local/excluded_directories')
+        if not excluded_directories:
+            excluded_directories = 'data'
         self.addParameter(
             QgsProcessingParameterString(
                 self.FTP_EXCLUDE_REMOTE_SUBDIRS,
                 tr('List of sub-directory to exclude from synchro, separated by commas.'),
-                defaultValue='data',
+                defaultValue=excluded_directories,
                 optional=True
             )
         )
@@ -218,8 +231,19 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
         ftpport = parameters[self.CLONE_FTP_PORT]
         ftplogin = parameters[self.CLONE_FTP_LOGIN]
         ftppassword = parameters[self.CLONE_FTP_PASSWORD].strip()
-        localdir = parameters[self.LOCAL_QGIS_PROJECT_FOLDER]
         ftpdir = parameters[self.CLONE_FTP_REMOTE_DIR]
+        localdir = parameters[self.LOCAL_QGIS_PROJECT_FOLDER]
+        excluded_directories = parameters[self.FTP_EXCLUDE_REMOTE_SUBDIRS].strip()
+
+        # store parameters
+        ls = lizsyncConfig()
+        ls.setVariable('ftp:clone/host', ftphost)
+        ls.setVariable('ftp:clone/port', ftpport)
+        ls.setVariable('ftp:clone/user', ftplogin)
+        ls.setVariable('ftp:clone/password', ftppassword)
+        ls.setVariable('ftp:clone/remote_directory', ftpdir)
+        ls.setVariable('local/qgis_project_folder', localdir)
+        ls.setVariable('local/excluded_directories', excluded_directories)
 
         # Check localdir
         feedback.pushInfo(tr('CHECK LOCAL PROJECT DIRECTORY'))
@@ -267,8 +291,11 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
         feedback.pushInfo(tr('Local directory') + ' %s' % localdir)
         feedback.pushInfo(tr('FTP directory') + ' %s' % ftpdir)
         direction = 'to'  # we send data TO FTP
-        excludedirs = parameters[self.FTP_EXCLUDE_REMOTE_SUBDIRS].strip()
-        ok, msg = ftp_sync(ftphost, ftpport, ftplogin, password, localdir, ftpdir, direction, excludedirs, feedback)
+        ok, msg = ftp_sync(
+            ftphost, ftpport, ftplogin, password,
+            localdir, ftpdir, direction,
+            excluded_directories, feedback
+        )
         if not ok:
             m = msg
             return returnError(output, m, feedback)

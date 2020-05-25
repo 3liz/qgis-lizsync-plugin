@@ -124,6 +124,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             )
         )
 
+        # Database ZIP archive file
         database_archive_file = ls.variable('general/database_archive_file')
         if not database_archive_file:
             database_archive_file = os.path.join(
@@ -182,18 +183,18 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             return False, tr('The needed PostgreSQL binaries cannot be found in the specified path')
 
         # Check output zip path
-        package_file = parameters[self.ZIP_FILE]
-        if not os.path.exists(package_file):
-            package_file = os.path.join(
+        database_archive_file = self.parameterAsString(parameters, self.ZIP_FILE, context)
+        if not os.path.exists(database_archive_file):
+            database_archive_file = os.path.join(
                 tempfile.gettempdir(),
                 'central_database_package.zip'
             )
-        ok = os.path.exists(package_file)
+        ok = os.path.exists(database_archive_file)
 
         # Check ZIP archive content
         if not ok:
-            return False, tr("The ZIP archive does not exists in the specified path") + ": {0}".format(package_file)
-        parameters[self.ZIP_FILE] = package_file
+            return False, tr("The ZIP archive does not exists in the specified path") + ": {0}".format(database_archive_file)
+        parameters[self.ZIP_FILE] = database_archive_file
 
         # Check connections
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
@@ -215,24 +216,30 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             self.OUTPUT_STATUS: 0,
             self.OUTPUT_STRING: ''
         }
-
-        package_file = parameters[self.ZIP_FILE]
+        database_archive_file = self.parameterAsString(parameters, self.ZIP_FILE, context)
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
         postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
 
+        # store parameters
+        ls = lizsyncConfig()
+        ls.setVariable('general/database_archive_file', database_archive_file)
+        ls.setVariable('postgresql:central/name', connection_name_central)
+        ls.setVariable('postgresql:clone/name', connection_name_clone)
+        ls.setVariable('binaries/postgresql', postgresql_binary_path)
+
         # Check archive
-        if not os.path.exists(package_file):
-            m = tr('Package not found') + ' : %s' % package_file
+        if not os.path.exists(database_archive_file):
+            m = tr('Package not found') + ' : %s' % database_archive_file
             return returnError(output, m, feedback)
 
         msg = ''
         # Uncompress package
-        feedback.pushInfo(tr('UNCOMPRESS PACKAGE') + ' {0}'.format(package_file))
+        feedback.pushInfo(tr('UNCOMPRESS PACKAGE') + ' {0}'.format(database_archive_file))
         import zipfile
-        dir_path = os.path.dirname(os.path.abspath(package_file))
+        dir_path = os.path.dirname(os.path.abspath(database_archive_file))
         try:
-            with zipfile.ZipFile(package_file) as t:
+            with zipfile.ZipFile(database_archive_file) as t:
                 t.extractall(dir_path)
                 feedback.pushInfo(tr('Package uncompressed successfully'))
         except Exception:
@@ -506,7 +513,6 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         # CLONE DATABASE
         # Add foreign server and foreign schemas for synced schemas
         # We need full connection params: host, port, dbname, user, password
-        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         ok, uri, msg = getUriFromConnectionName(connection_name_central, True)
         if not ok:
             return returnError(output, msg, feedback)

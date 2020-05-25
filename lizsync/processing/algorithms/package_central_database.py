@@ -121,15 +121,15 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             )
         )
 
-        # List of schemas to package
-        postgresql_schemas = ls.variable('postgresql:central/schemas')
-        if not postgresql_schemas:
-            postgresql_schemas = 'test'
+        # List of schemas to package and synchronize afterwards
+        synchronized_schemas = ls.variable('postgresql:central/schemas')
+        if not synchronized_schemas:
+            synchronized_schemas = 'test'
         self.addParameter(
             QgsProcessingParameterString(
                 self.SCHEMAS,
                 tr('List of schemas to package, separated by commas. (schemas public, lizsync & audit are never processed)'),
-                defaultValue=postgresql_schemas,
+                defaultValue=synchronized_schemas,
                 optional=False
             )
         )
@@ -264,8 +264,25 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             self.OUTPUT_STATUS: status,
             self.OUTPUT_STRING: msg
         }
+
+        # Parameters
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
+        synchronized_schemas = parameters[self.SCHEMAS]
+        additionnal_sql_file = self.parameterAsString(
+            parameters,
+            self.ADDITIONNAL_SQL_FILE,
+            context
+        )
+        zip_file = parameters[self.ZIP_FILE]
+
+        # store parameters
+        ls = lizsyncConfig()
+        ls.setVariable('postgresql:central/name', connection_name_central)
+        ls.setVariable('binaries/postgresql', postgresql_binary_path)
+        ls.setVariable('postgresql:central/schemas', synchronized_schemas)
+        ls.setVariable('general/additionnal_sql_file', additionnal_sql_file)
+        ls.setVariable('general/database_archive_file', zip_file)
 
         # First run some test in database
         test, m = self.checkCentralDatabase(parameters, feedback)
@@ -291,7 +308,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         # Get the list of input schemas
         schemas = [
             '"{0}"'.format(a.strip())
-            for a in parameters[self.SCHEMAS].split(',')
+            for a in synchronized_schemas.split(',')
             if a.strip() not in ('public', 'lizsync', 'audit')
         ]
         schemas_sql = ', '.join(schemas)
@@ -360,7 +377,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         # Add audit trigger in all table in given schemas
         schemas = [
             "'{0}'".format(a.strip())
-            for a in parameters[self.SCHEMAS].split(',')
+            for a in synchronized_schemas.split(',')
             if a.strip() not in ('public', 'lizsync', 'audit')
         ]
         schemas_sql = ', '.join(schemas)
@@ -403,7 +420,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         feedback.pushInfo(tr('ADD SCHEMAS TO FILE sync_schemas.txt'))
         schemas = [
             "{0}".format(a.strip())
-            for a in parameters[self.SCHEMAS].split(',')
+            for a in synchronized_schemas.split(',')
             if a.strip() not in ('public', 'lizsync', 'audit')
         ]
         schema_list = ','.join(schemas)
@@ -460,11 +477,6 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             return returnError(output, m, feedback)
 
         # Additionnal SQL file to run
-        additionnal_sql_file = self.parameterAsString(
-            parameters,
-            self.ADDITIONNAL_SQL_FILE,
-            context
-        )
         if additionnal_sql_file and os.path.isfile(additionnal_sql_file):
             sql_files['99_last.sql'] = additionnal_sql_file
 
@@ -477,7 +489,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
 
         status = 1
         msg = ''
-        zip_file = parameters[self.ZIP_FILE]
+
         with zipfile.ZipFile(zip_file, mode='w') as zf:
             for fname, fsource in sql_files.items():
                 try:

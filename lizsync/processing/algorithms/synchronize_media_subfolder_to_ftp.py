@@ -47,11 +47,11 @@ class SynchronizeMediaSubfolderToFtp(BaseProcessingAlgorithm):
     # Constants used to refer to parameters and outputs. They will be
     # used when calling the algorithm from another algorithm, or when
     # calling from the QGIS console.
-    INPUT_SYNC_DATE = 'INPUT_SYNC_DAT'
     LOCAL_QGIS_PROJECT_FOLDER = 'LOCAL_QGIS_PROJECT_FOLDER'
     CENTRAL_FTP_HOST = 'CENTRAL_FTP_HOST'
     CENTRAL_FTP_PORT = 'CENTRAL_FTP_PORT'
     CENTRAL_FTP_LOGIN = 'CENTRAL_FTP_LOGIN'
+    CENTRAL_FTP_PASSWORD = 'CENTRAL_FTP_PASSWORD'
     CENTRAL_FTP_REMOTE_DIR = 'CENTRAL_FTP_REMOTE_DIR'
 
     OUTPUT_STATUS = 'OUTPUT_STATUS'
@@ -93,14 +93,8 @@ class SynchronizeMediaSubfolderToFtp(BaseProcessingAlgorithm):
         ls = lizsyncConfig()
 
         # INPUTS
-        p = QgsProcessingParameterString(
-            self.INPUT_SYNC_DATE, 'Synchronization time',
-            defaultValue=datetime.now().isoformat(),
-            optional=False
-        )
-        p.setFlags(QgsProcessingParameterDefinition.FlagHidden)
-        self.addParameter(p)
 
+        # Local QGIS folder
         local_qgis_project_folder = ls.variable('local/qgis_project_folder')
         self.addParameter(
             QgsProcessingParameterFile(
@@ -111,6 +105,9 @@ class SynchronizeMediaSubfolderToFtp(BaseProcessingAlgorithm):
                 optional=False
             )
         )
+
+        # Central FTP connection parameters
+        # host
         central_ftp_host = ls.variable('ftp:central/host')
         self.addParameter(
             QgsProcessingParameterString(
@@ -120,6 +117,7 @@ class SynchronizeMediaSubfolderToFtp(BaseProcessingAlgorithm):
                 optional=False
             )
         )
+        # port
         central_ftp_port = ls.variable('ftp:central/port')
         self.addParameter(
             QgsProcessingParameterNumber(
@@ -129,6 +127,7 @@ class SynchronizeMediaSubfolderToFtp(BaseProcessingAlgorithm):
                 optional=False
             )
         )
+        # login
         central_ftp_login = ls.variable('ftp:central/user')
         self.addParameter(
             QgsProcessingParameterString(
@@ -138,6 +137,15 @@ class SynchronizeMediaSubfolderToFtp(BaseProcessingAlgorithm):
                 optional=False
             )
         )
+        # password
+        self.addParameter(
+            QgsProcessingParameterString(
+                self.CENTRAL_FTP_PASSWORD,
+                tr('Central FTP Server password'),
+                optional=True
+            )
+        )
+        # remote directory
         central_ftp_remote_dir = ls.variable('ftp:central/remote_directory')
         self.addParameter(
             QgsProcessingParameterString(
@@ -183,10 +191,20 @@ class SynchronizeMediaSubfolderToFtp(BaseProcessingAlgorithm):
 
         # Parameters
         ftphost = parameters[self.CENTRAL_FTP_HOST]
-        ftplogin = parameters[self.CENTRAL_FTP_LOGIN]
         ftpport = parameters[self.CENTRAL_FTP_PORT]
+        ftplogin = parameters[self.CENTRAL_FTP_LOGIN]
+        ftppassword = parameters[self.CENTRAL_FTP_PASSWORD].strip()
         ftpdir = parameters[self.CENTRAL_FTP_REMOTE_DIR]
         localdir = parameters[self.LOCAL_QGIS_PROJECT_FOLDER]
+
+        # store parameters
+        ls = lizsyncConfig()
+        ls.setVariable('ftp:central/host', ftphost)
+        ls.setVariable('ftp:central/port', ftpport)
+        ls.setVariable('ftp:central/user', ftplogin)
+        ls.setVariable('ftp:central/password', ftppassword)
+        ls.setVariable('ftp:central/remote_directory', ftpdir)
+        ls.setVariable('local/qgis_project_folder', localdir)
 
         # Check localdir
         feedback.pushInfo(tr('CHECK LOCAL PROJECT DIRECTORY'))
@@ -195,9 +213,12 @@ class SynchronizeMediaSubfolderToFtp(BaseProcessingAlgorithm):
             return returnError(output, m, feedback)
 
         # Check ftp
-        ok, password, msg = get_ftp_password(ftphost, ftpport, ftplogin)
-        if not ok:
-            return returnError(output, msg, feedback)
+        if not ftppassword:
+            ok, password, msg = get_ftp_password(ftphost, ftpport, ftplogin)
+            if not ok:
+                return returnError(output, msg, feedback)
+        else:
+            password = ftppassword
         ok, msg = check_ftp_connection(ftphost, ftpport, ftplogin, password)
         if not ok:
             return returnError(output, msg, feedback)

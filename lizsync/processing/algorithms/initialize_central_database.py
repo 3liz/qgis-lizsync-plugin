@@ -106,6 +106,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
         })
         self.addParameter(db_param_a)
 
+        # Add server id in metadata
         self.addParameter(
             QgsProcessingParameterBoolean(
                 self.ADD_SERVER_ID,
@@ -114,6 +115,8 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
                 optional=False
             )
         )
+
+        # Add uid columns in all the tables of the synchronized schemas
         self.addParameter(
             QgsProcessingParameterBoolean(
                 self.ADD_UID_COLUMNS,
@@ -122,6 +125,8 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
                 optional=False
             )
         )
+
+        # Add audit trigger for all tables in the synchronized schemas
         self.addParameter(
             QgsProcessingParameterBoolean(
                 self.ADD_AUDIT_TRIGGERS,
@@ -130,11 +135,16 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
                 optional=False
             )
         )
+
+        # Schemas to synchronize
+        synchronized_schemas = ls.variable('postgresql:central/schemas').strip()
+        if not synchronized_schemas:
+            synchronized_schemas = 'test'
         self.addParameter(
             QgsProcessingParameterString(
                 self.SCHEMAS,
                 tr('Restrict to comma separated schema names. NB: schemas public, lizsync & audit are never processed'),
-                defaultValue='test',
+                defaultValue=synchronized_schemas,
                 optional=True
             )
         )
@@ -209,17 +219,25 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
             self.OUTPUT_STRING: msg
         }
 
+        # Parameters
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         add_uid_columns = self.parameterAsBool(parameters, self.ADD_UID_COLUMNS, context)
         add_server_id = self.parameterAsBool(parameters, self.ADD_SERVER_ID, context)
         add_audit_triggers = self.parameterAsBool(parameters, self.ADD_AUDIT_TRIGGERS, context)
+        synchronized_schemas = parameters[self.SCHEMAS]
+
+        # store parameters
+        ls = lizsyncConfig()
+        ls.setVariable('postgresql:central/name', connection_name_central)
+        ls.setVariable('postgresql:central/schemas', synchronized_schemas)
+
 
         # First run all tests
         test_list = ['structure', 'server id', 'uid columns', 'audit triggers']
         status, tests = check_lizsync_installation_status(
             connection_name_central,
             test_list,
-            parameters[self.SCHEMAS]
+            synchronized_schemas
         )
         if status:
             msg = tr('Everything is OK. No action needed')
@@ -231,7 +249,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
         # compile SQL schemas
         schemas = [
             "'{0}'".format(a.strip())
-            for a in parameters[self.SCHEMAS].split(',')
+            for a in synchronized_schemas.split(',')
             if a.strip() not in ('public', 'lizsync', 'audit')
         ]
         schemas_sql = ', '.join(schemas)

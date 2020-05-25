@@ -70,6 +70,8 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
         ls = lizsyncConfig()
 
         # INPUTS
+
+        # Central database connection name
         connection_name_central = ls.variable('postgresql:central/name')
         db_param_a = QgsProcessingParameterString(
             self.CONNECTION_NAME_CENTRAL,
@@ -84,7 +86,7 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
         })
         self.addParameter(db_param_a)
 
-        # INPUTS
+        # Checkbox needed to be check to run the upgrade
         self.addParameter(
             QgsProcessingParameterBoolean(
                 self.RUNIT,
@@ -167,10 +169,16 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
             self.OUTPUT_STATUS: 0,
             self.OUTPUT_STRING: ''
         }
+
+        # Parameters
         connection_name = parameters[self.CONNECTION_NAME_CENTRAL]
+        runit = self.parameterAsBool(parameters, self.RUNIT, context)
+
+        # store parameters
+        ls = lizsyncConfig()
+        ls.setVariable('postgresql:central/name', connection_name_central)
 
         # Drop schema if needed
-        runit = self.parameterAsBool(parameters, self.RUNIT, context)
         if not runit:
             m = tr('You must check the box to run the upgrade !')
             return returnError(output, m, feedback)

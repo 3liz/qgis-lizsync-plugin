@@ -108,8 +108,7 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
         })
         self.addParameter(db_param_a)
 
-        # Clone database connection parameters
-
+        # Central host connection parameters
         central_ftp_host = ls.variable('ftp:central/host')
         self.addParameter(
             QgsProcessingParameterString(
@@ -154,14 +153,20 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
             )
         )
 
+        # Exlude some directories from sync
+        excluded_directories = ls.variable('local/excluded_directories')
+        if not excluded_directories:
+            excluded_directories = 'data'
         self.addParameter(
             QgsProcessingParameterString(
                 self.FTP_EXCLUDE_REMOTE_SUBDIRS,
                 tr('List of sub-directory to exclude from synchro, separated by commas.'),
-                defaultValue='data',
+                defaultValue=excluded_directories,
                 optional=True
             )
         )
+
+        # Target folder
         clone_qgis_project_folder = ls.variable('clone/qgis_project_folder')
         self.addParameter(
             QgsProcessingParameterFile(
@@ -172,6 +177,8 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
                 optional=False
             )
         )
+
+        # Adapt project for Geopoppy
         self.addParameter(
             QgsProcessingParameterBoolean(
                 self.REPLACE_DATASOURCE_IN_QGIS_PROJECT,
@@ -225,6 +232,15 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
             self.REPLACE_DATASOURCE_IN_QGIS_PROJECT,
             context
         )
+        # store parameters
+        ls = lizsyncConfig()
+        ls.setVariable('postgresql:central/name', connection_name_central)
+        ls.setVariable('ftp:central/host', ftphost)
+        ls.setVariable('ftp:central/port', ftpport)
+        ls.setVariable('ftp:central/user', ftplogin)
+        ls.setVariable('ftp:central/password', ftppassword)
+        ls.setVariable('ftp:central/remote_directory', ftpdir)
+        ls.setVariable('clone/qgis_project_folder', localdir)
 
         # Check localdir
         feedback.pushInfo(tr('CHECK LOCAL PROJECT DIRECTORY'))
