@@ -4,7 +4,7 @@ export $(grep -v '^#' .env | xargs)
 docker run \
   -v "${PWD}/../docs:/output" \
   --network=docker_${NETWORK} \
-  etrimaille/docker-schemaspy-pg:latest \
+  etrimaille/schemaspy-pg:latest \
   -t pgsql-mat \
   -dp /drivers \
   -host db \
