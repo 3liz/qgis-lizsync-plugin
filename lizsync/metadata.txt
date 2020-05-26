@@ -3,7 +3,7 @@ name=LizSync
 qgisMinimumVersion=3.4
 description=QGIS plugin with processing algs to configure and use the LizSync PostgreSQL synchronization tools.
 
-version=0.4.0
+version=master
 author=3liz
 email=info@3liz.com
 about=QGIS plugin with processing algs to configure and use the LizSync PostgreSQL synchronization tools.

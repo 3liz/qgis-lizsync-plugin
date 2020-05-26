@@ -3,11 +3,11 @@ __license__ = 'GPL version 3'
 __email__ = 'info@3liz.org'
 __revision__ = '$Format:%H$'
 
-import configparser
 import os
 
 from db_manager.db_plugins import createDbPlugin
 from qgis.core import (
+    QgsProcessingException,
     QgsProcessingParameterString,
     QgsProcessingParameterBoolean,
     QgsProcessingOutputNumber,
@@ -16,13 +16,19 @@ from qgis.core import (
 
 from .tools import (
     lizsyncConfig,
-    getVersionInteger,
     getUriFromConnectionName,
-    fetchDataFromSqlQuery,
     returnError,
 )
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
+from ...qgis_plugin_tools.tools.database import (
+    available_migrations,
+    fetch_data_from_sql_query,
+)
 from ...qgis_plugin_tools.tools.i18n import tr
+from ...qgis_plugin_tools.tools.resources import plugin_path
+from ...qgis_plugin_tools.tools.version import format_version_integer, version
+
+SCHEMA = "lizsync"
 
 
 class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
@@ -31,9 +37,6 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
     and plugin version in metadata.txt
     """
 
-    # Constants used to refer to parameters and outputs. They will be
-    # used when calling the algorithm from another algorithm, or when
-    # calling from the QGIS console.
     CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     RUNIT = 'RUNIT'
     OUTPUT_STATUS = 'OUTPUT_STATUS'
@@ -62,10 +65,6 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
         return short_help
 
     def initAlgorithm(self, config):
-        """
-        Here we define the inputs and output of the algorithm, along
-        with some other properties.
-        """
         # LizSync config file from ini
         ls = lizsyncConfig()
 
@@ -146,7 +145,7 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
             WHERE schema_name = 'lizsync';
         '''
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
-        [header, data, rowCount, ok, error_message] = fetchDataFromSqlQuery(
+        [header, data, rowCount, ok, error_message] = fetch_data_from_sql_query(
             connection_name_central,
             sql
         )
@@ -162,9 +161,6 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
         return ok, msg
 
     def processAlgorithm(self, parameters, context, feedback):
-        """
-        Here is where the processing itself takes place.
-        """
         output = {
             self.OUTPUT_STATUS: 0,
             self.OUTPUT_STRING: ''
@@ -190,7 +186,7 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
             ORDER BY date_ajout DESC
             LIMIT 1;
         '''
-        [header, data, rowCount, ok, error_message] = fetchDataFromSqlQuery(
+        [header, data, rowCount, ok, error_message] = fetch_data_from_sql_query(
             connection_name,
             sql
         )
@@ -206,13 +202,22 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
             return returnError(output, m, feedback)
         feedback.pushInfo(tr('Database structure version') + ' = %s' % db_version)
 
-        # get plugin version
-        alg_dir = os.path.dirname(__file__)
-        plugin_dir = os.path.join(alg_dir, '../../')
-        config = configparser.ConfigParser()
-        config.read(os.path.join(plugin_dir, 'metadata.txt'))
-        plugin_version = config['general']['version']
-        feedback.pushInfo(tr('Plugin version') + ' = %s' % plugin_version)
+        # Get plugin version
+        plugin_version = version()
+        if plugin_version in ["master", "dev"]:
+            migrations = available_migrations(000000)
+            last_migration = migrations[-1]
+            plugin_version = (
+                last_migration.replace("upgrade_to_", "").replace(".sql", "").strip()
+            )
+            feedback.reportError(
+                "Be careful, running the migrations on a development branch!"
+            )
+            feedback.reportError(
+                "Latest available migration is {}".format(plugin_version)
+            )
+        else:
+            feedback.pushInfo(tr("Version du plugin") + " = {}".format(plugin_version))
 
         # Return if nothing to do
         if db_version == plugin_version:
@@ -221,73 +226,53 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
                 self.OUTPUT_STRING: tr('The database version already matches the plugin version. No upgrade needed.')
             }
 
-        # Get all the upgrade SQL files between db versions and plugin version
-        upgrade_dir = os.path.join(plugin_dir, 'install/sql/upgrade/')
-        get_files = [
-            f for f in os.listdir(upgrade_dir)
-            if os.path.isfile(os.path.join(upgrade_dir, f))
-        ]
-        files = []
-        db_version_integer = getVersionInteger(db_version)
-        for f in get_files:
-            k = getVersionInteger(
-                f.replace('upgrade_to_', '').replace('.sql', '').strip()
-            )
-            if k > db_version_integer:
-                files.append(
-                    [k, f]
-                )
-
-        def getKey(item):
-            return item[0]
-
-        sfiles = sorted(files, key=getKey)
-        sql_files = [s[1] for s in sfiles]
+        db_version_integer = format_version_integer(db_version)
+        sql_files = available_migrations(db_version_integer)
 
         # Loop sql files and run SQL code
         for sf in sql_files:
-            sql_file = os.path.join(plugin_dir, 'install/sql/upgrade/%s' % sf)
-            with open(sql_file, 'r') as f:
+            sql_file = os.path.join(plugin_path(), "install/sql/upgrade/{}".format(sf))
+            with open(sql_file, "r") as f:
                 sql = f.read()
                 if len(sql.strip()) == 0:
-                    feedback.pushInfo('* ' + sf + ' -- SKIPPED (EMPTY FILE)')
+                    feedback.pushInfo("* " + sf + " -- SKIPPED (EMPTY FILE)")
                     continue
 
                 # Add SQL database version in lizsync.metadata
-                new_db_version = sf.replace('upgrade_to_', '').replace('.sql', '').strip()
-                feedback.pushInfo('* NEW DB VERSION' + new_db_version)
-                sql += '''
-                    UPDATE lizsync.sys_structure_metadonnee
+                new_db_version = (
+                    sf.replace("upgrade_to_", "").replace(".sql", "").strip()
+                )
+                feedback.pushInfo("* NEW DB VERSION " + new_db_version)
+                sql += """
+                    UPDATE {}.sys_structure_metadonnee
                     SET (version, date_ajout)
-                    = ( '%s', now()::timestamp(0) );
-                ''' % new_db_version
+                    = ( '{}', now()::timestamp(0) );
+                """.format(
+                    SCHEMA, new_db_version
+                )
 
-                [header, data, rowCount, ok, error_message] = fetchDataFromSqlQuery(
-                    connection_name,
-                    sql
+                _, _, _, ok, error_message = fetch_data_from_sql_query(
+                    connection_name, sql
                 )
                 if not ok:
-                    m = error_message
-                    return returnError(output, m, feedback)
+                    raise QgsProcessingException(error_message)
 
-                feedback.pushInfo('* ' + sf + ' -- SUCCESS !')
+                feedback.pushInfo("* " + sf + " -- OK !")
 
         # Everything is fine, we now update to the plugin version
-        sql = '''
-            UPDATE lizsync.sys_structure_metadonnee
+        sql = """
+            UPDATE {}.sys_structure_metadonnee
             SET (version, date_ajout)
             = ( '{}', now()::timestamp(0) );
-        '''.format(plugin_version)
-
-        _, _, _, ok, error_message = fetchDataFromSqlQuery(
-            connection_name,
-            sql
+        """.format(
+            SCHEMA, plugin_version
         )
-        if not ok:
-            m = error_message
-            return returnError(output, m, feedback)
 
-        msg = tr('Lizsync database structure has been successfully upgraded to version "{}".'.format(plugin_version))
+        _, _, _, ok, error_message = fetch_data_from_sql_query(connection_name, sql)
+        if not ok:
+            raise QgsProcessingException(error_message)
+
+        msg = tr("*** THE DATABASE STRUCTURE HAS BEEN UPDATED ***")
         feedback.pushInfo(msg)
 
         output = {
