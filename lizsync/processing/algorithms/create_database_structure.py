@@ -23,6 +23,7 @@ from db_manager.db_plugins import createDbPlugin
 from qgis.core import (
     QgsProcessingParameterString,
     QgsProcessingParameterBoolean,
+    QgsProcessingException,
     QgsProcessingOutputNumber,
     QgsProcessingOutputString,
     QgsProcessingParameterDefinition
@@ -30,26 +31,27 @@ from qgis.core import (
 from .tools import (
     lizsyncConfig,
     getUriFromConnectionName,
-    fetchDataFromSqlQuery,
     returnError,
+)
+from ...qgis_plugin_tools.tools.database import (
+    available_migrations,
+    fetch_data_from_sql_query,
 )
 from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
 from ...qgis_plugin_tools.tools.resources import (
     plugin_test_data_path,
     plugin_path,
-    metadata_config,
 )
+from ...qgis_plugin_tools.tools.version import version
+
+SCHEMA = "lizsync"
 
 
 class CreateDatabaseStructure(BaseProcessingAlgorithm):
     """
     Create Lizsync structure in Database
     """
-
-    # Constants used to refer to parameters and outputs. They will be
-    # used when calling the algorithm from another algorithm, or when
-    # calling from the QGIS console.
 
     CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     OVERRIDE_AUDIT = 'OVERRIDE_AUDIT'
@@ -88,10 +90,6 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
         return short_help
 
     def initAlgorithm(self, config):
-        """
-        Here we define the inputs and output of the algorithm, along
-        with some other properties.
-        """
         # LizSync config file from ini
         ls = lizsyncConfig()
 
@@ -101,7 +99,6 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
             self.CONNECTION_NAME_CENTRAL,
             tr('PostgreSQL connection to the central database'),
             defaultValue=connection_name_central,
-            optional=False
         )
         db_param_a.setMetadata({
             'widget_wrapper': {
@@ -117,7 +114,6 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
             self.OVERRIDE_AUDIT,
             tr('Drop audit schema and all data ?'),
             defaultValue=False,
-            optional=False
         )
         p.setFlags(QgsProcessingParameterDefinition.FlagHidden)
         self.addParameter(p)
@@ -126,7 +122,6 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
             self.OVERRIDE_LIZSYNC,
             tr('Drop lizsync schema and all data ?'),
             defaultValue=False,
-            optional=False
         )
         p.setFlags(QgsProcessingParameterDefinition.FlagHidden)
         self.addParameter(p)
@@ -180,8 +175,10 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
         '''.format(
             schema_name
         )
-        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+        connection_name_central = self.parameterAsString(
+            parameters, self.CONNECTION_NAME_CENTRAL, context
+        )
+        header, data, rowCount, ok, error_message = fetch_data_from_sql_query(
             connection_name_central,
             sql
         )
@@ -210,15 +207,13 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
         return ok, msg
 
     def processAlgorithm(self, parameters, context, feedback):
-        """
-        Here is where the processing itself takes place.
-        """
         output = {
             self.OUTPUT_STATUS: 0,
             self.OUTPUT_STRING: ''
         }
-        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
-
+        connection_name = self.parameterAsString(
+            parameters, self.CONNECTION_NAME_CENTRAL, context
+        )
         # Drop schemas if needed
         override_audit = self.parameterAsBool(parameters, self.OVERRIDE_AUDIT, context)
         override_lizsync = self.parameterAsBool(parameters, self.OVERRIDE_LIZSYNC, context)
@@ -235,12 +230,12 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
                     s
                 )
 
-                header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
-                    connection_name_central,
+                header, data, rowCount, ok, error_message = fetch_data_from_sql_query(
+                    connection_name,
                     sql
                 )
                 if ok:
-                    feedback.pushInfo(tr("* Schema has been droped") + ' - ' + s.upper())
+                    feedback.pushInfo(tr("* Schema has been dropped") + ' - ' + s.upper())
                 else:
                     feedback.pushInfo(error_message)
                     m = error_message
@@ -248,70 +243,85 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
 
         # Create full structure
         sql_files = [
-            '00_initialize_database.sql',
-            'audit.sql',
-            'lizsync/10_FUNCTION.sql',
-            'lizsync/20_TABLE_SEQUENCE_DEFAULT.sql',
-            'lizsync/30_VIEW.sql',
-            'lizsync/40_INDEX.sql',
-            'lizsync/50_TRIGGER.sql',
-            'lizsync/60_CONSTRAINT.sql',
-            'lizsync/70_COMMENT.sql',
-            'lizsync/90_function_current_setting.sql',
-            '99_finalize_database.sql',
+            "00_initialize_database.sql",
+            "audit.sql",
+            "{}/10_FUNCTION.sql".format(SCHEMA),
+            "{}/20_TABLE_SEQUENCE_DEFAULT.sql".format(SCHEMA),
+            "{}/30_VIEW.sql".format(SCHEMA),
+            "{}/40_INDEX.sql".format(SCHEMA),
+            "{}/50_TRIGGER.sql".format(SCHEMA),
+            "{}/60_CONSTRAINT.sql".format(SCHEMA),
+            "{}/70_COMMENT.sql".format(SCHEMA),
+            "{}/90_function_current_setting.sql".format(SCHEMA),
+            "99_finalize_database.sql",
         ]
         plugin_dir = plugin_path()
-        version = metadata_config()["general"]["version"]
+        plugin_version = version()
+        dev_version = False
+        run_migration = os.environ.get(
+            "TEST_DATABASE_INSTALL_{}".format(SCHEMA.capitalize())
+        )
+        if plugin_version in ["master", "dev"] and not run_migration:
+            feedback.reportError(
+                "Be careful, running the install on a development branch!"
+            )
+            dev_version = True
 
-        run_migration = os.environ.get("DATABASE_RUN_MIGRATION")
         if run_migration:
             plugin_dir = plugin_test_data_path()
             feedback.reportError(
                 "Be careful, running migrations on an empty database using {} "
-                "instead of {}".format(run_migration, version)
+                "instead of {}".format(run_migration, plugin_version)
             )
-            version = run_migration
+            plugin_version = run_migration
 
         # Loop sql files and run SQL code
         for sf in sql_files:
             feedback.pushInfo(sf)
-            sql_file = os.path.join(plugin_dir, 'install/sql/%s' % sf)
-            with open(sql_file, 'r') as f:
+            sql_file = os.path.join(plugin_dir, "install/sql/{}".format(sf))
+            with open(sql_file, "r") as f:
                 sql = f.read()
                 if len(sql.strip()) == 0:
-                    feedback.pushInfo('  Skipped (empty file)')
+                    feedback.pushInfo("  Skipped (empty file)")
                     continue
 
-                header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
-                    connection_name_central,
-                    sql
+                _, _, _, ok, error_message = fetch_data_from_sql_query(
+                    connection_name, sql
                 )
                 if ok:
-                    feedback.pushInfo(tr('SQL file successfully played'))
+                    feedback.pushInfo("  Success !")
                 else:
-                    m = error_message
-                    return returnError(output, m, feedback)
+                    raise QgsProcessingException(error_message)
 
         # Add version
-        sql = '''
-            INSERT INTO lizsync.sys_structure_metadonnee
+        if run_migration or not dev_version:
+            metadata_version = plugin_version
+        else:
+            migrations = available_migrations(000000)
+            last_migration = migrations[-1]
+            metadata_version = (
+                last_migration.replace("upgrade_to_", "").replace(".sql", "").strip()
+            )
+            feedback.reportError("Latest migration is {}".format(metadata_version))
+
+        sql = """
+            INSERT INTO {}.sys_structure_metadonnee
             (version, date_ajout)
             VALUES (
-                '%s', now()::timestamp(0)
-            )
-        ''' % version
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
-            connection_name_central,
-            sql
+                '{}', now()::timestamp(0)
+            )""".format(
+            SCHEMA, metadata_version
         )
-        if ok:
-            feedback.pushInfo(tr('Version added in the lizsync metadata table'))
-        else:
-            m = error_message
-            return returnError(output, m, feedback)
+        fetch_data_from_sql_query(connection_name, sql)
+        feedback.pushInfo(
+            "Database version '{}'.".format(metadata_version)
+        )
 
-        output = {
+        return {
             self.OUTPUT_STATUS: 1,
-            self.OUTPUT_STRING: tr('Lizsync database structure has been successfully created to version "{}".'.format(version))
+            self.OUTPUT_STRING: tr(
+                "*** THE STRUCTURE {} HAS BEEN CREATED WITH VERSION '{}'***".format(
+                    SCHEMA, metadata_version
+                )
+            ),
         }
-        return output

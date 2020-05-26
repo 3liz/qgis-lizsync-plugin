@@ -17,13 +17,16 @@ else:
     import processing
 
 from ..processing.provider import LizsyncProvider as ProcessingProvider
+from ..qgis_plugin_tools.tools.database import available_migrations
 from ..qgis_plugin_tools.tools.logger_processing import LoggerProcessingFeedBack
-from ..qgis_plugin_tools.tools.resources import metadata_config
 
 __copyright__ = "Copyright 2019, 3Liz"
 __license__ = "GPL version 3"
 __email__ = "info@3liz.org"
 __revision__ = "$Format:%H$"
+
+SCHEMA = "lizsync"
+VERSION = "0.2.2"
 
 
 class TestProcessing(unittest.TestCase):
@@ -40,7 +43,6 @@ class TestProcessing(unittest.TestCase):
 
     def test_load_structure_with_migration(self):
         """Test we can load the PostGIS structure with migrations."""
-        VERSION = "0.2.2"
         provider = ProcessingProvider()
         QgsApplication.processingRegistry().addProvider(provider)
 
@@ -51,17 +53,18 @@ class TestProcessing(unittest.TestCase):
             'OVERRIDE_LIZSYNC': True,  # Must be true, for the first time in the test.
         }
 
-        os.environ["DATABASE_RUN_MIGRATION"] = VERSION
+        os.environ["TEST_DATABASE_INSTALL_{}".format(SCHEMA.capitalize())] = VERSION
+        alg = "{}:create_database_structure".format(provider.id())
         try:
-            processing_output = processing.run(
-                "lizsync:create_database_structure", params, feedback=feedback
-            )
+            processing_output = processing.run(alg, params, feedback=feedback)
         except QgsProcessingException as e:
             self.assertTrue(False, e)
-        del os.environ["DATABASE_RUN_MIGRATION"]
+        del os.environ["TEST_DATABASE_INSTALL_{}".format(SCHEMA.capitalize())]
 
         self.cursor.execute(
-            "SELECT table_name FROM information_schema.tables WHERE table_schema = 'lizsync'"
+            "SELECT table_name FROM information_schema.tables WHERE table_schema = '{}'".format(
+                SCHEMA
+            )
         )
         records = self.cursor.fetchall()
         result = [r[0] for r in records]
@@ -74,15 +77,17 @@ class TestProcessing(unittest.TestCase):
             "sys_structure_metadonnee",
         ]
         self.assertCountEqual(expected, result)
-        expected = "Lizsync database structure has been successfully created to version \"{}\".".format(VERSION)
+        expected = "*** THE STRUCTURE lizsync HAS BEEN CREATED WITH VERSION '{}'***".format(VERSION)
         self.assertEqual(expected, processing_output["OUTPUT_STRING"])
 
-        sql = '''
+        sql = """
             SELECT version
-            FROM lizsync.sys_structure_metadonnee
+            FROM {}.sys_structure_metadonnee
             ORDER BY date_ajout DESC
             LIMIT 1;
-        '''
+        """.format(
+            SCHEMA
+        )
         self.cursor.execute(sql)
         record = self.cursor.fetchone()
         self.assertEqual(VERSION, record[0])
@@ -92,24 +97,36 @@ class TestProcessing(unittest.TestCase):
             "CONNECTION_NAME_CENTRAL": "test",
             "RUNIT": True,
         }
-        results = processing.run(
-            "lizsync:upgrade_database_structure", params, feedback=feedback
-        )
+        alg = "{}:upgrade_database_structure".format(provider.id())
+        results = processing.run(alg, params, feedback=feedback)
         self.assertEqual(1, results["OUTPUT_STATUS"], 1)
-        metadata = metadata_config()
-        version = metadata["general"]["version"]
-        version = version.replace("-beta", "")
         self.assertEqual(
-            "Lizsync database structure has been successfully upgraded to version \"{}\".".format(version),
+            "*** THE DATABASE STRUCTURE HAS BEEN UPDATED ***",
             results["OUTPUT_STRING"],
         )
 
+        sql = """
+            SELECT version
+            FROM {}.sys_structure_metadonnee
+            ORDER BY date_ajout DESC
+            LIMIT 1;
+        """.format(
+            SCHEMA
+        )
         self.cursor.execute(sql)
         record = self.cursor.fetchone()
-        self.assertEqual(version, record[0])
+
+        migrations = available_migrations(000000)
+        last_migration = migrations[-1]
+        metadata_version = (
+            last_migration.replace("upgrade_to_", "").replace(".sql", "").strip()
+        )
+        self.assertEqual(metadata_version, record[0])
 
         self.cursor.execute(
-            "SELECT table_name FROM information_schema.tables WHERE table_schema = 'lizsync'"
+            "SELECT table_name FROM information_schema.tables WHERE table_schema = '{}'".format(
+                SCHEMA
+            )
         )
         records = self.cursor.fetchall()
         result = [r[0] for r in records]
@@ -141,10 +158,13 @@ class TestProcessing(unittest.TestCase):
             'OVERRIDE_AUDIT': True,  # Must be true, for the first time in the test.
             'OVERRIDE_LIZSYNC': True,  # Must be true, for the first time in the test.
         }
-        processing.run("lizsync:create_database_structure", params, feedback=feedback)
+        alg = "{}:create_database_structure".format(provider.id())
+        processing.run(alg, params, feedback=feedback)
 
         self.cursor.execute(
-            "SELECT table_name FROM information_schema.tables WHERE table_schema = 'audit'"
+            "SELECT table_name FROM information_schema.tables WHERE table_schema = '{}'".format(
+                'audit'
+            )
         )
         records = self.cursor.fetchall()
         result = [r[0] for r in records]
@@ -155,7 +175,9 @@ class TestProcessing(unittest.TestCase):
         self.assertCountEqual(expected, result)
 
         self.cursor.execute(
-            "SELECT table_name FROM information_schema.tables WHERE table_schema = 'lizsync'"
+            "SELECT table_name FROM information_schema.tables WHERE table_schema = '{}'".format(
+                SCHEMA
+            )
         )
         records = self.cursor.fetchall()
         result = [r[0] for r in records]
@@ -176,7 +198,7 @@ class TestProcessing(unittest.TestCase):
         }
 
         with self.assertRaises(QgsProcessingException):
-            processing.run("lizsync:create_database_structure", params, feedback=feedback)
+            processing.run(alg, params, feedback=feedback)
 
         self.assertTrue(feedback.last.startswith('Unable to execute algorithm'), feedback.last)
 
