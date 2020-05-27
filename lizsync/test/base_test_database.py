@@ -39,7 +39,7 @@ class DatabaseTestCase(unittest.TestCase):
         self.feedback = LoggerProcessingFeedBack()
 
         params = {
-            "CONNECTION_NAME_CENTRAL": "test",
+            "CONNECTION_NAME": "test",
             'OVERRIDE_AUDIT': True,
             'OVERRIDE_LIZSYNC': True,
         }

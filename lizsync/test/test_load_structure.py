@@ -48,7 +48,7 @@ class TestProcessing(unittest.TestCase):
 
         feedback = LoggerProcessingFeedBack()
         params = {
-            'CONNECTION_NAME_CENTRAL': 'test',
+            'CONNECTION_NAME': 'test',
             'OVERRIDE_AUDIT': True,  # Must be true, for the first time in the test.
             'OVERRIDE_LIZSYNC': True,  # Must be true, for the first time in the test.
         }
@@ -94,7 +94,7 @@ class TestProcessing(unittest.TestCase):
 
         feedback.pushDebugInfo("Update the database")
         params = {
-            "CONNECTION_NAME_CENTRAL": "test",
+            "CONNECTION_NAME": "test",
             "RUNIT": True,
         }
         alg = "{}:upgrade_database_structure".format(provider.id())
@@ -154,7 +154,7 @@ class TestProcessing(unittest.TestCase):
         feedback.pushInfo("PostGIS version : {}".format(record[0]))
 
         params = {
-            'CONNECTION_NAME_CENTRAL': 'test',
+            'CONNECTION_NAME': 'test',
             'OVERRIDE_AUDIT': True,  # Must be true, for the first time in the test.
             'OVERRIDE_LIZSYNC': True,  # Must be true, for the first time in the test.
         }
@@ -192,7 +192,7 @@ class TestProcessing(unittest.TestCase):
 
         feedback.pushDebugInfo("Relaunch the algorithm without override")
         params = {
-            "CONNECTION_NAME_CENTRAL": "test",
+            "CONNECTION_NAME": "test",
             'OVERRIDE_AUDIT': False,
             'OVERRIDE_LIZSYNC': False,
         }
@@ -203,7 +203,7 @@ class TestProcessing(unittest.TestCase):
         self.assertTrue(feedback.last.startswith('Unable to execute algorithm'), feedback.last)
 
         feedback.pushDebugInfo("Update the database")
-        params = {"CONNECTION_NAME_CENTRAL": "test", "RUNIT": True}
+        params = {"CONNECTION_NAME": "test", "RUNIT": True}
         results = processing.run(
             "lizsync:upgrade_database_structure", params, feedback=feedback
         )
