@@ -203,6 +203,7 @@ class SynchronizeMediaSubfolderToFtp(BaseProcessingAlgorithm):
         ls.setVariable('ftp:central/password', ftppassword)
         ls.setVariable('ftp:central/remote_directory', ftpdir)
         ls.setVariable('local/qgis_project_folder', localdir)
+        ls.save()
 
         # Check localdir
         feedback.pushInfo(tr('CHECK LOCAL PROJECT DIRECTORY'))

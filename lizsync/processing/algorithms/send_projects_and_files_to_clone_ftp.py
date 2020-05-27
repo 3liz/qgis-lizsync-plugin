@@ -244,6 +244,7 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
         ls.setVariable('ftp:clone/remote_directory', ftpdir)
         ls.setVariable('local/qgis_project_folder', localdir)
         ls.setVariable('local/excluded_directories', excluded_directories)
+        ls.save()
 
         # Check localdir
         feedback.pushInfo(tr('CHECK LOCAL PROJECT DIRECTORY'))

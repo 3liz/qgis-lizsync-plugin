@@ -241,6 +241,7 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
         ls.setVariable('ftp:central/password', ftppassword)
         ls.setVariable('ftp:central/remote_directory', ftpdir)
         ls.setVariable('clone/qgis_project_folder', localdir)
+        ls.save()
 
         # Check localdir
         feedback.pushInfo(tr('CHECK LOCAL PROJECT DIRECTORY'))

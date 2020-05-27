@@ -173,6 +173,7 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
         # store parameters
         ls = lizsyncConfig()
         ls.setVariable('postgresql:central/name', connection_name)
+        ls.save()
 
         # Drop schema if needed
         if not runit:

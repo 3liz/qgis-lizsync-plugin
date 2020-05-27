@@ -142,6 +142,7 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
         ls = lizsyncConfig()
         ls.setVariable('postgresql:central/name', connection_name_central)
         ls.setVariable('postgresql:clone/name', connection_name_clone)
+        ls.save()
 
         # Run the database PostgreSQL function lizsync.synchronize()
         feedback.pushInfo(

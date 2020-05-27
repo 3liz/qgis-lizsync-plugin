@@ -227,6 +227,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         ls.setVariable('postgresql:central/name', connection_name_central)
         ls.setVariable('postgresql:clone/name', connection_name_clone)
         ls.setVariable('binaries/postgresql', postgresql_binary_path)
+        ls.save()
 
         # Check archive
         if not os.path.exists(database_archive_file):

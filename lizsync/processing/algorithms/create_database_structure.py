@@ -53,6 +53,7 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
     Create Lizsync structure in Database
     """
 
+
     CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     OVERRIDE_AUDIT = 'OVERRIDE_AUDIT'
     OVERRIDE_LIZSYNC = 'OVERRIDE_LIZSYNC'
@@ -211,12 +212,20 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
             self.OUTPUT_STATUS: 0,
             self.OUTPUT_STRING: ''
         }
+
+        # Parameters
         connection_name = self.parameterAsString(
             parameters, self.CONNECTION_NAME_CENTRAL, context
         )
-        # Drop schemas if needed
         override_audit = self.parameterAsBool(parameters, self.OVERRIDE_AUDIT, context)
         override_lizsync = self.parameterAsBool(parameters, self.OVERRIDE_LIZSYNC, context)
+
+        # store parameters
+        ls = lizsyncConfig()
+        ls.setVariable('postgresql:central/name', connection_name_central)
+        ls.save()
+
+        # Drop schemas if needed
         schemas = {
             'audit': override_audit,
             'lizsync': override_lizsync
@@ -311,7 +320,7 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
                 '{}', now()::timestamp(0)
             )""".format(
             SCHEMA, metadata_version
-        )
+            )
         fetch_data_from_sql_query(connection_name, sql)
         feedback.pushInfo(
             "Database version '{}'.".format(metadata_version)
@@ -325,3 +334,4 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
                 )
             ),
         }
+        return output

@@ -283,6 +283,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         ls.setVariable('postgresql:central/schemas', synchronized_schemas)
         ls.setVariable('general/additionnal_sql_file', additionnal_sql_file)
         ls.setVariable('general/database_archive_file', zip_file)
+        ls.save()
 
         # First run some test in database
         test, m = self.checkCentralDatabase(parameters, feedback)
