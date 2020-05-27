@@ -1,12 +1,14 @@
 # CHANGELOG
 
-### 0.4.0 - 25/05/2020
+### 0.4.0 - 27/05/2020
 
 * Synchronization - Move all logic from Python to PostgreSQL functions
-* Install - Add missing upgrade script to 0.3.2 & fix test
-* Tests - Update docker-compose project, add schemaspy, add test migration
 * Remove configure plugin algorithm: last used values are now saved by each algorithm
 * Create structure - Hide override parameters to avoid data loss
+* PostgreSQL - Get password from pgpass file if not found elsewhere
+* Install - Add missing upgrade script to 0.3.2 & fix test
+* Tests - Update docker-compose project, add schemaspy, add test migration
+* Improve script run_test.sh
 
 ### 0.3.6 - 18/05/2020
 
