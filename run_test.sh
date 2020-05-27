@@ -21,7 +21,7 @@ lizsync/install/test_data/import_test_data_into_postgresql.sh lizsync_central te
 echo ""
 echo "Install Lizsync tools on the central database"
 echo "##########################"
-python3 lizsync/processing/standalone_processing_runner.py "lizsync:create_database_structure" '{"CONNECTION_NAME_CENTRAL": "lizsync_central", "OVERRIDE_AUDIT": false, "OVERRIDE_LIZSYNC": false}'
+python3 lizsync/processing/standalone_processing_runner.py "lizsync:create_database_structure" '{"CONNECTION_NAME": "lizsync_central", "OVERRIDE_AUDIT": false, "OVERRIDE_LIZSYNC": false}'
 
 # Prepare central database
 echo ""
@@ -58,18 +58,28 @@ sleep 2
 psql service=lizsync_clone_b -f lizsync/install/test_data/clone_b_database_edition_sample.sql
 
 
-exit
-
-
-# Test diffs between the 2 test databases:
-install/test_data/quick_diff.sh lizsync_central lizsync_clone_a
-
-# Test data for pluviometers
-psql service=lizsync_clone_a -c "SELECT * FROM test.pluviometers WHERE id > 30"
-psql service=lizsync_central -c "SELECT * FROM test.pluviometers WHERE id > 30"
-
 # Run Two-way database synchronization
 echo ""
 echo "Run Two-way database synchronization"
 echo "##########################"
 python3 lizsync/processing/standalone_processing_runner.py "lizsync:synchronize_database" '{"CONNECTION_NAME_CENTRAL": "lizsync_central", "CONNECTION_NAME_CLONE": "lizsync_clone_a"}'
+python3 lizsync/processing/standalone_processing_runner.py "lizsync:synchronize_database" '{"CONNECTION_NAME_CENTRAL": "lizsync_central", "CONNECTION_NAME_CLONE": "lizsync_clone_b"}'
+python3 lizsync/processing/standalone_processing_runner.py "lizsync:synchronize_database" '{"CONNECTION_NAME_CENTRAL": "lizsync_central", "CONNECTION_NAME_CLONE": "lizsync_clone_a"}'
+python3 lizsync/processing/standalone_processing_runner.py "lizsync:synchronize_database" '{"CONNECTION_NAME_CENTRAL": "lizsync_central", "CONNECTION_NAME_CLONE": "lizsync_clone_b"}'
+
+# See diff between databases
+echo ""
+echo "Display diff between databases"
+echo "##########################"
+echo "CENTRAL / CLONE A"
+echo "##########################"
+lizsync/install/test_data/quick_diff.sh lizsync_central lizsync_clone_a test
+echo "##########################"
+echo "CENTRAL / CLONE B"
+echo "##########################"
+lizsync/install/test_data/quick_diff.sh lizsync_central lizsync_clone_b test
+echo "##########################"
+echo "CLONE A / CLONE B"
+echo "##########################"
+lizsync/install/test_data/quick_diff.sh lizsync_clone_a lizsync_clone_b test
+
