@@ -53,7 +53,7 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
     Create Lizsync structure in Database
     """
 
-    CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
+    CONNECTION_NAME = 'CONNECTION_NAME'
     OVERRIDE_AUDIT = 'OVERRIDE_AUDIT'
     OVERRIDE_LIZSYNC = 'OVERRIDE_LIZSYNC'
 
@@ -94,11 +94,11 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
         ls = lizsyncConfig()
 
         # INPUTS
-        connection_name_central = ls.variable('postgresql:central/name')
+        connection_name = ls.variable('postgresql:central/name')
         db_param_a = QgsProcessingParameterString(
-            self.CONNECTION_NAME_CENTRAL,
+            self.CONNECTION_NAME,
             tr('PostgreSQL connection to the central database'),
-            defaultValue=connection_name_central,
+            defaultValue=connection_name,
         )
         db_param_a.setMetadata({
             'widget_wrapper': {
@@ -143,14 +143,14 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
     def checkParameterValues(self, parameters, context):
 
         # Check that it corresponds to an existing connection
-        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+        connection_name = parameters[self.CONNECTION_NAME]
         dbpluginclass = createDbPlugin('postgis')
         connections = [c.connectionName() for c in dbpluginclass.connections()]
-        if connection_name_central not in connections:
+        if connection_name not in connections:
             return False, tr('The configured connection name does not exists in QGIS')
 
         # Check connection
-        ok, uri, msg = getUriFromConnectionName(connection_name_central, True)
+        ok, uri, msg = getUriFromConnectionName(connection_name, True)
         if not ok:
             return False, msg
 
@@ -175,11 +175,11 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
         '''.format(
             schema_name
         )
-        connection_name_central = self.parameterAsString(
-            parameters, self.CONNECTION_NAME_CENTRAL, context
+        connection_name = self.parameterAsString(
+            parameters, self.CONNECTION_NAME, context
         )
         header, data, rowCount, ok, error_message = fetch_data_from_sql_query(
-            connection_name_central,
+            connection_name,
             sql
         )
         if not ok:
@@ -214,7 +214,7 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
 
         # Parameters
         connection_name = self.parameterAsString(
-            parameters, self.CONNECTION_NAME_CENTRAL, context
+            parameters, self.CONNECTION_NAME, context
         )
         override_audit = self.parameterAsBool(parameters, self.OVERRIDE_AUDIT, context)
         override_lizsync = self.parameterAsBool(parameters, self.OVERRIDE_LIZSYNC, context)
