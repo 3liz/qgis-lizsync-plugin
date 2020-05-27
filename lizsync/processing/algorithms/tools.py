@@ -130,8 +130,30 @@ def check_postgresql_connection(uri, timeout=5):
             password = get_connection_password_from_ini(uri)
         if not password:
             password = os.environ.get('PGPASSWORD')
+        if not password:
+            pgpassfile = os.path.expanduser('~/.pgpass')
+            if not os.path.exists(pgpassfile):
+                pgpassfile = os.path.join(os.getenv('APPDATA'), 'postgresql/pgpass.conf')
+            if os.path.exists(pgpassfile):
+                search_a = '{}:{}:{}:{}:'.format(
+                    uri.host(), uri.port(), uri.database(), uri.username()
+                )
+                search_b = '{}:{}:*:{}:'.format(
+                    uri.host(), uri.port(), uri.username()
+                )
+                dbline = None
+                with open(pgpassfile, 'r') as pg:
+                    for line in pg:
+                        if line.strip().startswith(search_a) or line.startswith(search_b):
+                            dbline = line.strip()
+                            break
+                if dbline:
+                    password = dbline.split(':')[-1]
         if password:
             uri.setPassword(password)
+        else:
+            msg = tr('No password found for the database connection !')
+            return False, msg
 
     # Try to connect with psycopg2
     conn = None
