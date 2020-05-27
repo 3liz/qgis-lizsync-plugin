@@ -53,7 +53,6 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
     Create Lizsync structure in Database
     """
 
-
     CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     OVERRIDE_AUDIT = 'OVERRIDE_AUDIT'
     OVERRIDE_LIZSYNC = 'OVERRIDE_LIZSYNC'
@@ -222,7 +221,7 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
 
         # store parameters
         ls = lizsyncConfig()
-        ls.setVariable('postgresql:central/name', connection_name_central)
+        ls.setVariable('postgresql:central/name', connection_name)
         ls.save()
 
         # Drop schemas if needed
