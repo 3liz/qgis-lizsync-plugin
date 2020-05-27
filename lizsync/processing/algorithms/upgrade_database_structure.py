@@ -37,7 +37,7 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
     and plugin version in metadata.txt
     """
 
-    CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
+    CONNECTION_NAME = 'CONNECTION_NAME'
     RUNIT = 'RUNIT'
     OUTPUT_STATUS = 'OUTPUT_STATUS'
     OUTPUT_STRING = 'OUTPUT_STRING'
@@ -71,11 +71,11 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
         # INPUTS
 
         # Central database connection name
-        connection_name_central = ls.variable('postgresql:central/name')
+        connection_name = ls.variable('postgresql:central/name')
         db_param_a = QgsProcessingParameterString(
-            self.CONNECTION_NAME_CENTRAL,
+            self.CONNECTION_NAME,
             tr('PostgreSQL connection to the central database'),
-            defaultValue=connection_name_central,
+            defaultValue=connection_name,
             optional=False
         )
         db_param_a.setMetadata({
@@ -120,14 +120,14 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
             return ok, msg
 
         # Check that it corresponds to an existing connection
-        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+        connection_name = parameters[self.CONNECTION_NAME]
         dbpluginclass = createDbPlugin('postgis')
         connections = [c.connectionName() for c in dbpluginclass.connections()]
-        if connection_name_central not in connections:
+        if connection_name not in connections:
             return False, tr('The configured connection name does not exists in QGIS')
 
         # Check connection
-        ok, uri, msg = getUriFromConnectionName(connection_name_central, True)
+        ok, uri, msg = getUriFromConnectionName(connection_name, True)
         if not ok:
             return False, msg
 
@@ -144,9 +144,9 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
             FROM information_schema.schemata
             WHERE schema_name = 'lizsync';
         '''
-        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+        connection_name = parameters[self.CONNECTION_NAME]
         [header, data, rowCount, ok, error_message] = fetch_data_from_sql_query(
-            connection_name_central,
+            connection_name,
             sql
         )
         if not ok:
@@ -167,7 +167,7 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
         }
 
         # Parameters
-        connection_name = parameters[self.CONNECTION_NAME_CENTRAL]
+        connection_name = parameters[self.CONNECTION_NAME]
         runit = self.parameterAsBool(parameters, self.RUNIT, context)
 
         # store parameters
