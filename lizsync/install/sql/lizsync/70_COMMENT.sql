@@ -36,15 +36,13 @@ COMMENT ON FUNCTION lizsync.get_central_audit_logs(p_uid_field text, p_excluded_
 COMMENT ON FUNCTION lizsync.get_clone_audit_logs(p_uid_field text, p_excluded_columns text[]) IS 'Get all the modifications made in the clone. Parameters: uid column name and excluded columns';
 
 
--- FUNCTION get_event_sql(target text, pevent_id bigint, puid_column text, excluded_columns text)
-COMMENT ON FUNCTION lizsync.get_event_sql(target text, pevent_id bigint, puid_column text, excluded_columns text) IS '
+-- FUNCTION get_event_sql(pevent_id bigint, puid_column text, excluded_columns text[])
+COMMENT ON FUNCTION lizsync.get_event_sql(pevent_id bigint, puid_column text, excluded_columns text[]) IS '
 Get the SQL to use for replay from a audit log event
 
 Arguments:
-   target : clone or central database
    pevent_id:  The event_id of the event in audit.logged_actions to replay
    puid_column: The name of the column with unique uuid values
-   excluded_columns: list of columns names, separated by comma, to exclude from synchronization
 ';
 
 
