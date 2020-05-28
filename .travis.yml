@@ -45,6 +45,8 @@ jobs:
         - pip3 install git+https://github.com/Gustry/qgis-plugin-ci.git
       before_deploy:
         - export RELEASE_TITLE="$TRAVIS_TAG"
+        - qgis-plugin-ci changelog $TRAVIS_TAG > ../release.md
+        - cat ../release.md
       script:
         - qgis-plugin-ci -v
       deploy:
@@ -52,6 +54,7 @@ jobs:
           edge: true
           file: .
           name: ${RELEASE_TITLE}
+          release_notes_file: ../release.md
           api_key: ${GH_TOKEN}
           on:
             tags: true
@@ -63,6 +66,6 @@ jobs:
 
         - provider: script
           skip_cleanup: true
-          script: chmod +x .github/push_translations_to_github.sh; .github/push_translations_to_github.sh
+          script: .github/push_translations_to_github.sh
           on:
             tags: true
