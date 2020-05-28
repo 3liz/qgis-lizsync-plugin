@@ -1,7 +1,6 @@
     BEGIN;
 
 DROP FUNCTION IF EXISTS lizsync.get_event_sql(target text, pevent_id bigint, puid_column text, excluded_columns text);
-
 CREATE OR REPLACE FUNCTION lizsync.get_event_sql(pevent_id bigint, puid_column text, excluded_columns text[]) RETURNS text
     LANGUAGE plpgsql
     AS $$
@@ -173,12 +172,10 @@ BEGIN
             Coalesce(
                 lizsync.get_event_sql(
                     a.event_id,
-                    ''%2$s'',
-                    array_to_string(
-                        array_cat(
-                            string_to_array(''%3$s'',''@''),
-                            array_remove(akeys(a.changed_fields), s)
-                        ), '',''
+                    ''%2$s''::text,
+                    array_cat(
+                        string_to_array(''%3$s'',''@''),
+                        array_remove(akeys(a.changed_fields), s)
                     )
                 ),
                 ''''
@@ -263,12 +260,10 @@ BEGIN
         Coalesce(
             lizsync.get_event_sql(
                 a.event_id,
-                p_uid_field,
-                array_to_string(
-                    array_cat(
-                        p_excluded_columns,
-                        array_remove(akeys(a.changed_fields), s)
-                    ), ','
+                p_uid_field::text,
+                array_cat(
+                    p_excluded_columns,
+                    array_remove(akeys(a.changed_fields), s)
                 )
             ),
             ''
