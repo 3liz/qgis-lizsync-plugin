@@ -1,5 +1,10 @@
 # CHANGELOG
 
+### 0.4.1 - 28/05/2020
+
+* Database function - Improve speed of lizsync.synchronize() & add PostgreSQL notices
+* Update translations
+
 ### 0.4.0 - 27/05/2020
 
 * Synchronization - Move all logic from Python to PostgreSQL functions
