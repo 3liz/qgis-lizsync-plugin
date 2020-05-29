@@ -1,0 +1,5 @@
+synchronized_schemas
+server_metadata
+conflicts
+history
+sys_structure_metadonnee
