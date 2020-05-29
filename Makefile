@@ -1,6 +1,6 @@
 start_tests:
 	@echo 'Start docker-compose'
-	@cd .docker && ./start.sh
+	@cd .docker && ./start.sh with-qgis
 
 run_tests:
 	@echo 'Running tests, containers must be running'
@@ -12,6 +12,11 @@ stop_tests:
 	@cd .docker && ./stop.sh
 
 tests: start_tests run_tests stop_tests
+
+test_migration:
+	@cd .docker && ./start.sh
+	@cd .docker && ./install_migrate_generate.sh
+	@cd .docker && ./stop.sh
 
 schemaspy:
 	@cd .docker && ./start.sh

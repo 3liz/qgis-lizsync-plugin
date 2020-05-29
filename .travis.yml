@@ -17,15 +17,15 @@ jobs:
   include:
 
     - stage: Run tests
-      name: Docker-compose with PostGIS database
+      name: QGIS and PostGIS
       install:
         - cd .docker
-        - ./start.sh
+        - ./start.sh with-qgis
       script:
         - ./exec.sh
 
     - stage: Run tests
-      name: Fresh install versus migrations
+      name: Database installation versus running migrations
       install:
         - cd .docker
         - ./start.sh
