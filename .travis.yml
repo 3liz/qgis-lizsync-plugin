@@ -66,6 +66,6 @@ jobs:
 
         - provider: script
           skip_cleanup: true
-          script: .github/push_translations_to_github.sh
+          script: .github/push_to_github.sh
           on:
             tags: true
