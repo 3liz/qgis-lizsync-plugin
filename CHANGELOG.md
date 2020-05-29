@@ -1,5 +1,9 @@
 # CHANGELOG
 
+### 0.4.2 - 29/05/2020
+
+* Add more translations into French
+
 ### 0.4.1 - 28/05/2020
 
 * Database function - Improve speed of lizsync.synchronize() & add PostgreSQL notices
