@@ -1,5 +1,10 @@
 # CHANGELOG
 
+### 0.4.3 - 31/05/2020
+
+* Tools - pg_dump: detect pg_dump error
+* Synchronize database - Fix bug in SQL function
+
 ### 0.4.2 - 29/05/2020
 
 * Add more translations into French
