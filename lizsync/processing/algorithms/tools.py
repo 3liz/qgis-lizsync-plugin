@@ -319,7 +319,9 @@ def run_command(cmd, myenv, feedback):
     feedback.pushInfo(" ".join(cmd))
     stop_words = ['warning']
     pattern = re.compile('|'.join(r'\b{}\b'.format(word) for word in stop_words), re.IGNORECASE)
+    error_pattern = re.compile('error:')
     rc = None
+    status = True
     with subprocess.Popen(
             " ".join(cmd),
             shell=True,
@@ -338,8 +340,11 @@ def run_command(cmd, myenv, feedback):
                 break
             if output:
                 feedback.pushInfo(output)
+            if output and error_pattern.search(output):
+                status = False
         rc = process.poll()
-    return rc
+
+    return rc, status
 
 
 def check_lizsync_installation_status(connection_name, test_list=['structure', 'server id', 'uid columns', 'audit triggers'], schemas='test'):
@@ -699,15 +704,17 @@ def pg_dump(feedback, postgresql_binary_path, connection_name, output_file_name,
         myenv = {**os.environ}
         if not uri.service():
             myenv = {**{'PGPASSWORD': uri.password()}, **os.environ}
-        run_command(cmd, myenv, feedback)
+        rc, status = run_command(cmd, myenv, feedback)
 
         # subprocess.run(
         # " ".join(cmd),
         # shell=True,
         # env=myenv
         # )
-        status = True
-        messages.append(tr('Database has been successfull dumped') + ' into {0}'.format(output_file_name))
+        if status:
+            messages.append(tr('Database has been successfull dumped') + ' into {0}'.format(output_file_name))
+        else:
+            messages.append(tr('Error dumping database') + ' into {0}'.format(output_file_name))
     except Exception:
         status = False
         messages.append(tr('Error dumping database') + ' into {0}'.format(output_file_name))
