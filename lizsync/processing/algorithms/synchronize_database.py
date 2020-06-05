@@ -29,13 +29,13 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
         return 'synchronize_database'
 
     def displayName(self):
-        return tr('Two-way database synchronization between central and clone databases')
+        return tr('Two-way database synchronization')
 
     def group(self):
-        return tr('03 Synchronize data and files')
+        return tr('02 PostgreSQL synchronization')
 
     def groupId(self):
-        return 'lizsync_sync'
+        return 'lizsync_postgresql_sync'
 
     def shortHelpString(self):
         short_help = tr(

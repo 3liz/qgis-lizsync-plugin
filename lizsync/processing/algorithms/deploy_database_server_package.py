@@ -59,10 +59,10 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         return tr('Deploy a database package to the clone')
 
     def group(self):
-        return tr('02 Package and deploy database data')
+        return tr('02 PostgreSQL synchronization')
 
     def groupId(self):
-        return 'lizsync_package'
+        return 'lizsync_postgresql_sync'
 
     def shortHelpString(self):
         short_help = tr(

@@ -40,15 +40,18 @@ cmd_folder = os.path.split(inspect.getfile(inspect.currentframe()))[0]
 if cmd_folder not in sys.path:
     sys.path.insert(0, cmd_folder)
 
-from qgis.PyQt.QtCore import QCoreApplication, QTranslator
+from qgis.PyQt.QtCore import Qt, QCoreApplication, QTranslator
 from .qgis_plugin_tools.tools.i18n import setup_translation
 from .qgis_plugin_tools.tools.resources import plugin_path
+from .lizsync_dockwidget import LizsyncDockWidget
 
 
 class LizsyncPlugin:
 
-    def __init__(self):
+    def __init__(self, iface):
         self.provider = None
+        self.dock = None
+        self.iface = iface
 
         locale, file_path = setup_translation(
             folder=plugin_path("i18n"), file_pattern="lizsync_{}.qm")
@@ -67,6 +70,10 @@ class LizsyncPlugin:
 
     def initGui(self):
         self.initProcessing()
+        self.dock = LizsyncDockWidget(self.iface)
+        self.iface.addDockWidget(Qt.RightDockWidgetArea, self.dock)
 
     def unload(self):
+        self.iface.removeDockWidget(self.dock)
+        self.dock.deleteLater()
         QgsApplication.processingRegistry().removeProvider(self.provider)

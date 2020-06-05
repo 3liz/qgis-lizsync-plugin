@@ -32,7 +32,7 @@ from typing import Any
 def classFactory(iface):  # pylint: disable=invalid-name
 
     from .plugin import LizsyncPlugin
-    return LizsyncPlugin()
+    return LizsyncPlugin(iface)
 
 
 def WPSClassFactory(iface) -> Any:

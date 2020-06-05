@@ -71,10 +71,10 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
         return tr('Get projects and files from the central FTP server')
 
     def group(self):
-        return tr('03 Synchronize data and files')
+        return tr('03 GeoPoppy file synchronization')
 
     def groupId(self):
-        return 'lizsync_sync'
+        return 'lizsync_geopoppy_sync'
 
     def shortHelpString(self):
         short_help = tr(
