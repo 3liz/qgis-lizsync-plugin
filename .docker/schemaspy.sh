@@ -3,7 +3,7 @@ export $(grep -v '^#' .env | xargs)
 
 chmod 777 -R "${PWD}"/../docs
 docker run \
-  -v "${PWD}/../docs:/output" \
+  -v "${PWD}/../docs/database:/output" \
   --network=docker_${NETWORK} \
   etrimaille/schemaspy-pg:latest \
   -t pgsql-mat \
