@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 export $(grep -v '^#' .env | xargs)
 
-if [ -n "$(git status --porcelain)" ];
+if [ -n "$(git status --porcelain -uno)" ];
 then
     echo "Git working directory is not clean. Aborting."
     exit 1
