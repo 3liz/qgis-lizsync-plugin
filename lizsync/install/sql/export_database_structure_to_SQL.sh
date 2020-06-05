@@ -50,6 +50,8 @@ for ITEM in FUNCTION "TABLE|SEQUENCE|DEFAULT" VIEW INDEX TRIGGER CONSTRAINT COMM
     fi
     # Remove SET function to remove some compatibility issues between PostgreSQL versions
     sed -i "s#SET idle_in_transaction_session_timeout = 0;##g" "$OUTDIR"/"$I"_"$ITEM".sql;
+    # Remove as integer for sequences, to keep compatibility
+    sed -i -E "s#    AS integer##g" "$OUTDIR"/"$I"_"$ITEM".sql;
     # Rename
     rename -f 's#\|#_#g' "$OUTDIR"/"$I"_"$ITEM".sql;
     # Increment I
