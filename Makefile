@@ -20,8 +20,8 @@ test_migration:
 
 schemaspy:
 	@cd .docker && ./start.sh
-	rm -rf docs/
-	mkdir docs/
+	rm -rf docs/database/
+	mkdir docs/database/
 	@cd .docker && ./install_db.sh
 	@cd .docker && ./schemaspy.sh
 	@cd .docker && ./stop.sh
