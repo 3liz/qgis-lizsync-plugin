@@ -1,5 +1,11 @@
 # CHANGELOG
 
+### 0.4.4 - 08/06/2020
+
+* Interface - Dock: simplify button labels & add tooltips
+* Documentation - Publish database schema & user manual (in French): https://3liz.github.io/qgis-lizsync-plugin/
+* Continuous integration - improve CI scripts
+
 ### 0.4.3 - 31/05/2020
 
 * Tools - pg_dump: detect pg_dump error
