@@ -8,9 +8,6 @@ from functools import partial
 from qgis.PyQt import (
     QtWidgets,
 )
-from qgis.PyQt.QtCore import (
-    pyqtSignal,
-)
 from qgis.PyQt.QtWidgets import (
     QPushButton,
 )
@@ -28,11 +25,9 @@ FORM_CLASS = load_ui('lizsync_dockwidget_base.ui')
 
 class LizsyncDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
 
-    closingPlugin = pyqtSignal()
-
     def __init__(self, iface, parent=None):
         """Constructor."""
-        super(LizsyncDockWidget, self).__init__(parent)
+        super().__init__(parent)
 
         self.iface = iface
         self.setupUi(self)
@@ -62,7 +57,7 @@ class LizsyncDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # Help on database
         button = self.findChild(QPushButton, 'button_help_database')
         if button:
-            button.clicked.connect(self.helpDatabase)
+            button.clicked.connect(self.help_database)
 
     def runAlgorithm(self, name):
 
@@ -79,11 +74,8 @@ class LizsyncDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         alg_name = 'lizsync:{0}'.format(name)
         execAlgorithmDialog(alg_name, param)
 
-    def closeEvent(self, event):
-        self.closingPlugin.emit()
-        event.accept()
-
-    def helpDatabase(self):
+    @staticmethod
+    def help_database():
         """
         Display the help on database structure
         """
