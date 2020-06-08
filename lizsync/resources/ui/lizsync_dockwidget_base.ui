@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>545</width>
-    <height>623</height>
+    <width>346</width>
+    <height>583</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,8 +25,8 @@
         <rect>
          <x>0</x>
          <y>0</y>
-         <width>525</width>
-         <height>584</height>
+         <width>326</width>
+         <height>544</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
@@ -38,20 +38,29 @@
           <layout class="QVBoxLayout" name="verticalLayout_2">
            <item>
             <widget class="QPushButton" name="button_create_database_structure">
-             <property name="text">
+             <property name="toolTip">
               <string>Install Lizsync tools on the central database</string>
+             </property>
+             <property name="text">
+              <string>Install LizSync on database</string>
              </property>
             </widget>
            </item>
            <item>
             <widget class="QPushButton" name="button_upgrade_database_structure">
-             <property name="text">
+             <property name="toolTip">
               <string>Upgrade LizSync tools in the central database</string>
+             </property>
+             <property name="text">
+              <string>Upgrade LizSync on database</string>
              </property>
             </widget>
            </item>
            <item>
             <widget class="QPushButton" name="button_initialize_central_database">
+             <property name="toolTip">
+              <string>Prepare the central database</string>
+             </property>
              <property name="text">
               <string>Prepare the central database</string>
              </property>
@@ -68,22 +77,31 @@
           <layout class="QVBoxLayout" name="verticalLayout_3">
            <item>
             <widget class="QPushButton" name="button_package_master_database">
-             <property name="text">
+             <property name="toolTip">
               <string>Create a package from the central database</string>
+             </property>
+             <property name="text">
+              <string>Create a package</string>
              </property>
             </widget>
            </item>
            <item>
             <widget class="QPushButton" name="button_deploy_database_server_package">
-             <property name="text">
+             <property name="toolTip">
               <string>Deploy a database package to the clone</string>
+             </property>
+             <property name="text">
+              <string>Deploy a package</string>
              </property>
             </widget>
            </item>
            <item>
             <widget class="QPushButton" name="button_synchronize_database">
-             <property name="text">
+             <property name="toolTip">
               <string>Two-way database synchronization</string>
+             </property>
+             <property name="text">
+              <string>Synchronize database</string>
              </property>
             </widget>
            </item>
@@ -98,22 +116,31 @@
           <layout class="QVBoxLayout" name="verticalLayout_4">
            <item>
             <widget class="QPushButton" name="button_get_projects_and_files_from_central_ftp">
-             <property name="text">
+             <property name="toolTip">
               <string>Get projects and files from the central FTP server</string>
+             </property>
+             <property name="text">
+              <string>Get files from server</string>
              </property>
             </widget>
            </item>
            <item>
             <widget class="QPushButton" name="button_send_projects_and_files_to_clone_ftp">
-             <property name="text">
+             <property name="toolTip">
               <string>Send local QGIS projects and files to the clone FTP server</string>
+             </property>
+             <property name="text">
+              <string>Send files to the clone</string>
              </property>
             </widget>
            </item>
            <item>
             <widget class="QPushButton" name="button_synchronize_media_subfolder_to_ftp">
-             <property name="text">
+             <property name="toolTip">
               <string>Synchronize the clone media subfolder to the central FTP server</string>
+             </property>
+             <property name="text">
+              <string>Send media to the server</string>
              </property>
             </widget>
            </item>
@@ -128,8 +155,11 @@
           <layout class="QVBoxLayout" name="verticalLayout_5">
            <item>
             <widget class="QPushButton" name="button_help_database">
+             <property name="toolTip">
+              <string>Open online help web page</string>
+             </property>
              <property name="text">
-              <string>Database model</string>
+              <string>Online help</string>
              </property>
             </widget>
            </item>
