@@ -133,6 +133,19 @@ Vous arriverez alors à la **page d'accueil de Lizmap.** qui est vide. Il faut v
 
 ![Carte Espace de coproduction](/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/documentation_android/media/utilisation_lizmap_carte_coproduction.png)
 
+### Menu GeoPoppy
+
+Dans la barre de menu de gauche, vous pouvez accéder au menu **GeoPoppy** via l'icône avec les doubles-flèches qui tournent. Ce menu ouvre un panneau à gauche de la carte (ou en plein écran en mode portrait), qui propose les actions suivantes:
+
+* **Test connection** Ce bouton tester la connection vers la base de données centrale, pour savoir si on peut ensuite lancer la synchronisation entre la base de données du clone et la base centrale
+* **Synchronize database** Lance la synchronisation bidirectionnelle entre la base de données locale de la tablette et la base de données centrale. Les modifications du serveur central sont appliquées sur la base de la tablette, puis les modifications réalisées sur la tablette sont poussées sur le serveur central.
+* **Synchronize media** Ce bouton permet d'envoyer les photos enregistrées sur la tablette lors de l'utilisation des formulaires d'édition de la carte. Ces photos sont envoyées sur le serveur FTP central.
+* **Fullscreen** Ce bouton permet de passer la carte en mode plein-écran, ou de revenir au mode classique.
+
+Pour pouvoir fonctionner, toutes les actions, sauf **Fullscreen**, ont besoin d'avoir une connexion internet, pour pouvoir dialoguer avec le serveur central (base PostgreSQL ou serveur FTP). **Vérifier que votre connexion est stable avant de lancer les synchronisations.**
+
+![Lizmap menu GeoPoppy](/home/mdouchin/Documents/3liz/qgis/QGIS3/plugins/lizsync/docs/user_guide/media/utilisation_lizmap_menu_geopoppy.jpeg)
+
 ## Trucs et astuce UserLand et GeoPoppy
 
 **UserLand** peut être considéré comme le moteur de **GeoPoppy**. Voici quelques manipulations à effectuer si vous rencontrez des soucis de fonctionnement.
