@@ -71,7 +71,7 @@ Ensuite, chercher l'extension dans la liste via l'onglet **Tout** en tapant `liz
 
 L'extension **LizSync** a ajouté des **algorithmes** dans le **menu Traitement** de QGIS, qui permettent de suivre les différentes étapes précisées dans le scénario d'utilisation. Pour voir la liste des algorithmes disponibles, il faut ouvrir le panneau **Boîte à outils de traitements** à partir du menu **Traitement** de QGIS, puis chercher **LizSync**
 
-![Les algorithmes LizSync du menu Traitement Android](/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/documentation_android/media/qgis_menu_traitement_boite_a_outils_lizsync.jpeg)
+![Les algorithmes LizSync du menu Traitement Android](media/qgis_menu_traitement_boite_a_outils_lizsync.jpeg)
 
 Chaque algorithme joue un rôle dans le scénario classique d'utilisation.
 
@@ -111,7 +111,7 @@ Dans votre logiciel QGIS, vous pouvez maintenant créer une connexion PostgreSQL
 * **utilisateur**: `geopoppy`
 * **mot de passe**: `geopoppy`
 
-![Connexion GeoPoppy Android](/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/documentation_android/media/qgis_creer_connexion_geopoppy_android.jpeg)
+![Connexion GeoPoppy Android](media/qgis_creer_connexion_geopoppy_android.jpeg)
 
 Vous pouvez **tester** que la connexion fonctionne bien, par exemple avec le **gestionnaire de bases de données** de QGIS: menu `Base de données / Gestionnaire de base de données`.
 
@@ -151,7 +151,7 @@ Cet algorithme va créer **2 nouveaux schémas** `lizsync` et `audit` sur la bas
 
 Attention ! Si vous cochez la case **écraser**, vous perdrez toutes les données existantes dans le schéma audit et/ou le schéma lizsync !
 
-![Installer les outils LizSync](/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/documentation_android/media/qgis_installer_outils_sur_base_centrale.jpeg)
+![Installer les outils LizSync](media/qgis_installer_outils_sur_base_centrale.jpeg)
 
 #### Préparer la base centrale
 
@@ -165,7 +165,7 @@ LizSync a besoin :
 
 Vous pouvez fournir une **liste de schémas** PostgreSQL de la base centrale, cet algorithme ajoutera les éléments nécessaires si besoin.
 
-![Préparer la base centrale](/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/documentation_android/media/qgis_preparer_la_base_centrale.jpeg)
+![Préparer la base centrale](media/qgis_preparer_la_base_centrale.jpeg)
 
 #### Créer une archive de données depuis la base centrale
 
@@ -183,13 +183,13 @@ L'idée est d'adapter le contenu de la base à l'usage local sur le clone.
 
 Une **connexion internet vers la base centrale est nécessaire** pour pouvoir créer un item d'historique de synchronisation sur la base centrale dans la table `lizsync.history`, et naturellement pour pouvoir télécharger les données de la base de données centrale.
 
-![Creer une archive depuis la base centrale](/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/documentation_android/media/qgis_creer_une_archive.jpeg)
+![Creer une archive depuis la base centrale](media/qgis_creer_une_archive.jpeg)
 
 #### Charger l'archive vers le clone
 
 Charger une **archive ZIP**, générée précédemment via l'algorithme `Créer une archive de données depuis la base centrale`, vers le clone choisi. Cette archive ZIP, nommée par défaut `central_database_package.zip`, contient les données sauvegardées depuis la base **PostgreSQL centrale**.
 
-![Charger une archive vers le clone](/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/documentation_android/media/qgis_charger_archive_vers_le_clone.jpeg)
+![Charger une archive vers le clone](media/qgis_charger_archive_vers_le_clone.jpeg)
 
 **A la fin de cette étape, les données sont prêtes à être modifiées sur le clone et sur la base centrale.**
 
@@ -208,7 +208,7 @@ Pour les `UPDATE`, les logs sont comparés pour gérer les conflits, c'est-à-di
 
 La base de données centrale stocke quels sont les clones qui ont rejoués les logs de modification, et garde un **historique des synchronisations**. Les conflits sont listés dans la table `lizsync.conflicts` de la **base centrale**.
 
-![Synchronisation bidirectionnelle](/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/documentation_android/media/qgis_synchronisation_bidirectionnelle.jpeg)
+![Synchronisation bidirectionnelle](media/qgis_synchronisation_bidirectionnelle.jpeg)
 
 
 ## Synchronisation des projets QGIS et des fichiers
@@ -227,7 +227,7 @@ Si la dernière case est cochée, les informations de connexion à la base de do
 
 Les projets pourront donc ensuite être **envoyés sur le clone** pour être consultés en mode déconnecté, puisqu'ils appellent les données locale du clone, et non de la base centrale.
 
-![Récupérer les projets QGIS](/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/documentation_android/media/qgis_recuperer_projets_qgis_depuis_serveur_central.jpeg)
+![Récupérer les projets QGIS](media/qgis_recuperer_projets_qgis_depuis_serveur_central.jpeg)
 
 ### Envoyer les projets QGIS locaux et les fichiers sur le clone
 
@@ -254,6 +254,6 @@ La méthode par **connexion USB** sera probablement la plus rapide, notamment si
 
 Cet algorithme supprimera les projets QGIS et les configurations Lizmap présentes sur la tablette, puis lancera la synchronisation des données.
 
-![Envoyer les projets QGIS sur le clone](/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/documentation_android/media/qgis_envoyer_projets_qgis_sur_le_clone.jpeg)
+![Envoyer les projets QGIS sur le clone](media/qgis_envoyer_projets_qgis_sur_le_clone.jpeg)
 
 **Une fois les projets QGIS et les configurations Lizmap envoyés, vous pouvez utiliser l'application Lizmap installée sur la tablette pour ouvrir la carte et utiliser les fonctionnalités de visualisation et d'édition de données.**
