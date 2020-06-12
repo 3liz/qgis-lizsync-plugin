@@ -59,7 +59,7 @@ Nous allons d'abord créer un système de fichiers à partir de cette image, via
     - Cliquer sur *Show advanced options* puis sur le bouton **SELECT BACKUP FILE TO IMPORT** et sélectionner dans votre dossier **Téléchargement** l'image GeoPoppy, par exemple `geopoppy32-debian-rootfs.tar.gz`
 * Valider avec l'**icône disquette** en haut à droite
 
-![UserLand nouveau systeme de fichier](/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/documentation_android/media/userland_creer_systeme_fichier.jpg)
+![UserLand nouveau systeme de fichier](media/userland_creer_systeme_fichier.jpg)
 
 Une fois le système de fichier créé, nous pouvons créer une nouvelle session à partir de ce système:
 
@@ -72,7 +72,7 @@ Une fois le système de fichier créé, nous pouvons créer une nouvelle session
     - Nom d'utilisateur: **geopoppy**
 * Valider avec l'**icône disquette** en haut à droite
 
-![UserLand nouvelle session](/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/documentation_android/media/userland_creer_nouvelle_session.jpg)
+![UserLand nouvelle session](media/userland_creer_nouvelle_session.jpg)
 
 **Une fois ces 2 étapes accomplies, nous allons pouvoir lancer l'application GeoPoppy depuis le logiciel UserLand**
 
@@ -99,7 +99,7 @@ Dans un premier temps, vérifier que vous êtes bien connecté en WIFI sur le m�
 
 **Une fois ces services chargés, vous pouvez **réduire la fenêtre de UserLand**, mais surtout pas la fermer.**
 
-![UserLand demarrage GeoPoppy](/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/documentation_android/media/userland_demarrage_geopoppy.jpg)
+![UserLand demarrage GeoPoppy](media/userland_demarrage_geopoppy.jpg)
 
 
 ## Utilisation
@@ -114,24 +114,24 @@ Une fois la page chargée, un message d'erreur est présenté. C'est dû au cert
 
 * A l'arrivée de la page:
 
-![Erreur HTTPS 1](/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/documentation_android/media/utilisation_exception_https_1.jpg)
+![Erreur HTTPS 1](media/utilisation_exception_https_1.jpg)
 
 * Cliquer sur **Paramètres avancés** puis cliquer sur le lien **Continuer vers le site **localhost** (dangereux)**
 
-![Erreur HTTPS 2](/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/documentation_android/media/utilisation_exception_https_2.jpg)
+![Erreur HTTPS 2](media/utilisation_exception_https_2.jpg)
 
 Vous arriverez alors à la **page d'accueil de Lizmap.** qui est vide. Il faut vous connecter via le bouton **Connexion** de la barre en haut à droite, puis utiliser **vos identifiants OpenDFCI** dans le formulaire affiché:
 
-![Page de connexion](/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/documentation_android/media/utilisation_lizmap_page_connexion.png)
+![Page de connexion](media/utilisation_lizmap_page_connexion.png)
 
 
 * Une fois connecté, vous accédez à la **page d'accueil**, qui montre les cartes disponibles:
 
-![Page d'accueil une fois connecté](/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/documentation_android/media/utilisation_lizmap_page_accueil_connecte.png)
+![Page d'accueil une fois connecté](media/utilisation_lizmap_page_accueil_connecte.png)
 
 * Pour voir une carte, il faut cliquer (taper) sur une des imagettes, par exemple **Espace de coproduction** dans la copie d'écran ci-dessus. Vous arrivez alors à la carte choisie.
 
-![Carte Espace de coproduction](/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/documentation_android/media/utilisation_lizmap_carte_coproduction.png)
+![Carte Espace de coproduction](media/utilisation_lizmap_carte_coproduction.png)
 
 ### Menu GeoPoppy
 
@@ -144,7 +144,7 @@ Dans la barre de menu de gauche, vous pouvez accéder au menu **GeoPoppy** via l
 
 Pour pouvoir fonctionner, toutes les actions, sauf **Fullscreen**, ont besoin d'avoir une connexion internet, pour pouvoir dialoguer avec le serveur central (base PostgreSQL ou serveur FTP). **Vérifier que votre connexion est stable avant de lancer les synchronisations.**
 
-![Lizmap menu GeoPoppy](/home/mdouchin/Documents/3liz/qgis/QGIS3/plugins/lizsync/docs/user_guide/media/utilisation_lizmap_menu_geopoppy.jpeg)
+![Lizmap menu GeoPoppy](media/utilisation_lizmap_menu_geopoppy.jpeg)
 
 ## Trucs et astuce UserLand et GeoPoppy
 
