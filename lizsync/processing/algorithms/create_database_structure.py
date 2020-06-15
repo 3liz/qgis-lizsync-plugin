@@ -333,4 +333,3 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
                 )
             ),
         }
-        return output

@@ -33,18 +33,6 @@ from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.resources import plugin_path
 
 
-def check_internet(timeout=5):
-    # return True
-    import requests
-    # url='https://www.google.com/'
-    url = 'https://www.3liz.com/images/flavicon.png'
-    try:
-        _ = requests.get(url, timeout=timeout)
-        return True
-    except requests.ConnectionError:
-        return False
-
-
 def get_ftp_password(host, port, login):
     # Check FTP password
     # Get FTP password
@@ -56,7 +44,7 @@ def get_ftp_password(host, port, login):
         try:
             auth = netrc.netrc().authenticators(host)
             if auth is not None:
-                ftpuser, account, password = auth
+                ftpuser, _, password = auth
         except (netrc.NetrcParseError, IOError):
             m = tr('Could not retrieve password from ~/.netrc file')
             return False, None, m
@@ -123,7 +111,7 @@ def check_postgresql_connection(uri, timeout=5):
     """
     Check connection to PostgreSQL database with timeout
     """
-    # Check if password given. If not, try to read it from lizsync.ini
+    # Check if password is given. If not, try to read it from lizsync.ini
     if not uri.service():
         password = uri.password()
         if not password:
@@ -282,34 +270,10 @@ def fetchDataFromSqlQuery(connection_name, sql):
 
     # Log errors
     if not ok:
-        error_message = tr('Unknown error occured while fetching data')
+        error_message = tr('Unknown error occurred while fetching data')
         return header, data, rowCount, ok, error_message
-        print(error_message)
-        print(sql)
 
     return header, data, rowCount, ok, error_message
-
-
-def validateTimestamp(timestamp_text):
-    from dateutil.parser import parse
-    valid = True
-    msg = ''
-    try:
-        parse(timestamp_text)
-    except ValueError as e:
-        valid = False
-        msg = str(e)
-    return valid, msg
-
-
-def getVersionInteger(f):
-    """
-    Transform "0.1.2" into "000102"
-    Transform "10.9.12" into "100912"
-    to allow comparing versions
-    and sorting the upgrade files
-    """
-    return ''.join([a.zfill(2) for a in f.strip().split('.')])
 
 
 def run_command(cmd, myenv, feedback):
