@@ -1,1167 +1,244 @@
+
 <!DOCTYPE HTML>
 <html>
  <head>
   <meta charset="utf-8"/>
-  <title>
-   Made with Remarkable!
-  </title>
+  <title>Extension QGIS</title>
   <link href="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.1/styles/github.min.css" rel="stylesheet"/>
-  <style type="text/css">
-   body,table tr{background-color:#fff}table tr td,table tr th{border:1px solid #ccc;text-align:left;padding:6px 13px;margin:0}pre code,table,table tr{padding:0}hr,pre code{background:0 0}body{font:16px Helvetica,Arial,sans-serif;line-height:1.4;color:#333;word-wrap:break-word;padding:10px 15px}strong,table tr th{font-weight:700}h1{font-size:2em;margin:.67em 0;text-align:center}h2{font-size:1.75em}h3{font-size:1.5em}h4{font-size:1.25em}h1,h2,h3,h4,h5,h6{font-weight:700;position:relative;margin-top:15px;margin-bottom:15px;line-height:1.1}h1,h2{border-bottom:1px solid #eee}hr{height:0;margin:15px 0;overflow:hidden;border:0;border-bottom:1px solid #ddd}a{color:#4183C4}a.absent{color:#c00}ol,ul{padding-left:15px;margin-left:5px}ol{list-style-type:lower-roman}table tr{border-top:1px solid #ccc;margin:0}table tr:nth-child(2n){background-color:#aaa}table tr td :first-child,table tr th :first-child{margin-top:0}table tr td:last-child,table tr th :last-child{margin-bottom:0}img{max-width:100%}blockquote{padding:0 15px;border-left:4px solid #ccc}code,tt{margin:0 2px;padding:0 5px;white-space:nowrap;border:1px solid #eaeaea;background-color:#f8f8f8;border-radius:3px}pre code{margin:0;white-space:pre;border:none}.highlight pre,pre{background-color:#f8f8f8;border:1px solid #ccc;font-size:13px;line-height:19px;overflow:auto;padding:6px 10px;border-radius:3px}
-  </style>
+  <link href="../../remarkable.css" rel="stylesheet"/>
  </head>
  <body>
-  <h1 id="installation-et-utilisation-de-lizsync-sur-qgis">
-   Installation et utilisation de LizSync sur QGIS
-  </h1>
-  <h2 id="introduction">
-   Introduction
-  </h2>
-  <p>
-   Ce document présente l’outil LizSync qui permet de mettre en oeuvre la synchronisation entre une base de données PostgreSQL centrale et une ou plusieurs bases de données clone.
-  </p>
-  <p>
-   LizSync permet le
-   <strong>
-    déploiement et la synchronisation des données
-   </strong>
-   entre une unique base de données centrale et un ou plusieurs clones:
-  </p>
-  <ul>
-   <li>
-    base de données
-    <strong>
-     centrale
-    </strong>
-    : c’est la base de production qui contient l’ensemble des données.
-   </li>
-   <li>
-    base de données
-    <strong>
-     clone
-    </strong>
-    : c’est une base installée sur un ordinateur, une tablette ou un autre serveur. Elle contient un sous-ensemble des schémas de la base centrale
-   </li>
-  </ul>
-  <p>
-   Une
-   <strong>
-    extension LizSync pour QGIS
-   </strong>
-   permet de lancer les différentes actions nécessaires pour faire fonctionner cet outil: installation, préparation de la base centrale, création et déploiement d’archive, synchronisation.
-  </p>
-  <h2 id="scenario-et-concepts">
-   Scénario et concepts
-  </h2>
-  <h3 id="donnees-en-base-postgresql">
-   Données en base PostgreSQL
-  </h3>
-  <p>
-   Une base
-   <strong>
-    PostgreSQL
-   </strong>
-   appelée centrale contient un ensemble complet de données, organisées dans des
-   <strong>
-    schémas
-   </strong>
-   . Aucune donnée n’est stockée dans le schéma
-   <strong>
-    public
-   </strong>
-   .
-  </p>
-  <p>
-   Avant de pouvoir utiliser
-   <strong>
-    LizSync
-   </strong>
-   , on doit d’abord l’
-   <strong>
-    installer sur la base centrale
-   </strong>
-   , afin d’ajouter les schémas, tables et fonctions qui permettent de gérer la synchronisation. Toutes les données relatives aux synchronisations seront stockées dans le schéma
-   <code>
-    lizsync
-   </code>
-   . Les tables du schéma
-   <code>
-    audit
-   </code>
-   enregistreront les modifications réalisées sur les données des autres schémas.
-  </p>
-  <p>
-   Ensuite, il faut
-   <strong>
-    préparer cette base centrale
-   </strong>
-   , c’est-à-dire s’assurer que les tables à synchroniser comportent les champs requis, notamment un
-   <strong>
-    identifiant unique
-   </strong>
-   (UUID), et que les modifications sur ces tables sont bien enregistrées au fil de l’eau via l’outil d’audit de LizSync.
-  </p>
-  <p>
-   Lorsque la base centrale est prête, il est alors possible de
-   <strong>
-    créer une archive de données
-   </strong>
-   pour un ou plusieurs schémas. Cette archive contient les données des schémas, mais aussi les métadonnées utiles de la base centrale (identifiant unique). La création de l’archive est vue pour LizSync comme une action de
-   <strong>
-    synchronisation
-   </strong>
-   , dite complète.
-  </p>
-  <p>
-   Cette archive est ensuite
-   <strong>
-    chargée vers la base clone
-   </strong>
-   (vers un ou plusieurs clones), ce qui supprime l’ensemble des données du clone pour les schémas de l’archive, puis réinstalle les outils LizSync sur le clone et enfin charge les données. A l’issu de cette phase, les données du clone pour les schémas choisis sont équivalentes aux données qui étaient présentes lors de la création de l’archive.
-  </p>
-  <p>
-   Les données des bases centrales et clone peuvent alors
-   <strong>
-    évoluer librement
-   </strong>
-   en parallèle, tant que la
-   <strong>
-    structure n’est pas modifiée
-   </strong>
-   (pas d’ajout de tables ou de champs). Par exemple via une saisie de données terrain avec des tablettes sur les bases clones.
-  </p>
-  <p>
-   Une
-   <strong>
-    synchronisation bidirectionnelle
-   </strong>
-   peut alors être effectuée pour récupérer sur le clone les changements apparus sur la base centrale, puis envoyer sur la base centrale les modifications des données du clone.
-  </p>
-  <h3 id="cartes-lizmap-dans-le-contexte-geopoppy">
-   Cartes Lizmap dans le contexte GeoPoppy
-  </h3>
-  <p>
-   Pour pouvoir
-   <strong>
-    éditer les données
-   </strong>
-   dans les bases PostgreSQL, il est possible d’utiliser n’importe quel logiciel: QGIS, QField, PgAdmin, des scripts SQL lancés manuellement, etc.
-  </p>
-  <p>
-   L’outil
-   <strong>
-    Lizmap Web Client
-   </strong>
-   peut aussi être utilisé pour réaliser ces éditions:
-  </p>
-  <ul>
-   <li>
-    sur la
-    <strong>
-     base centrale
-    </strong>
-    , avec l’application Lizmap accessible en ligne
-   </li>
-   <li>
-    sur les
-    <strong>
-     bases clone
-    </strong>
-    embarquées sur des tablettes, via l’outil
-    <strong>
-     GeoPoppy pour Android
-    </strong>
-    , qui permet d’embarquer l’application
-    <strong>
-     Lizmap en mode déconnecté
-    </strong>
-    .
-   </li>
-  </ul>
-  <p>
-   Dans ce contexte
-   <strong>
-    GeoPoppy
-   </strong>
-   , il faut donc que les projets QGIS
-   <code>
-    *.qgs
-   </code>
-   et les configurations Lizmap
-   <code>
-    *.qgs.cfg
-   </code>
-   soient:
-  </p>
-  <ul>
-   <li>
-    <strong>
-     récupérés
-    </strong>
-    depuis le serveur central, par exemple via FTP
-   </li>
-   <li>
-    <strong>
-     adaptés
-    </strong>
-    pour utiliser les données de la base PostgreSQL
-    <strong>
-     clone
-    </strong>
-    de la tablette, en modifiant les informations de connexion
-   </li>
-   <li>
-    <strong>
-     chargés sur le clone (tablette)
-    </strong>
-    pour être consultés via Lizmap
-   </li>
-  </ul>
-  <p>
-   L’extension
-   <strong>
-    LizSync
-   </strong>
-   pour QGIS propose des algorithmes qui facilient le transfert des projets QGIS depuis le serveur FTP central vers les clones.
-  </p>
-  <h2 id="installation-et-configuration-dans-qgis">
-   Installation et configuration dans QGIS
-  </h2>
-  <p>
-   Dans QGIS, il faut:
-  </p>
-  <ul>
-   <li>
-    installer le plugin LizSync
-   </li>
-   <li>
-    configurer les connexions PostgreSQL vers la
-    <strong>
-     base centrale
-    </strong>
-    et les
-    <strong>
-     bases clone
-    </strong>
-   </li>
-  </ul>
-  <h3 id="installation-de-lextension-lizsync-pour-qgis">
-   Installation de l’extension LizSync pour QGIS
-  </h3>
-  <p>
-   L’extension
-   <strong>
-    LizSync
-   </strong>
-   peut être installé dans QGIS avec le
-   <strong>
-    gestionnaire d’extension
-   </strong>
-   . Tant que l’extension n’est pas incluse dans les dépôts officiels de QGIS, elle peut être récupérée en ajoutant manuellement le dépôt d’extension:
-  </p>
-  <ul>
-   <li>
-    ouvrir le
-    <strong>
-     Gestionnaire d’extension
-    </strong>
-    via le menu
-    <strong>
-     Extension
-    </strong>
-    de QGIS.
-   </li>
-   <li>
-    dans l’onglet
-    <strong>
-     Paramètres
-    </strong>
-    , dans le groupe
-    <strong>
-     Dépôts d’extensions
-    </strong>
-    , cliquer sur le bouton
-    <strong>
-     Ajouter
-    </strong>
-    , puis renseigner les champs suivants
-    <ul>
-     <li>
-      <strong>
-       Nom
-      </strong>
-      : 3liz extension LizSync Github
-     </li>
-     <li>
-      <strong>
-       URL
-      </strong>
-      :
-      <a href="https://github.com/3liz/qgis-lizsync-plugin/releases/latest/download/plugins.xml">
-       https://github.com/3liz/qgis-lizsync-plugin/releases/latest/download/plugins.xml
-      </a>
-     </li>
-     <li>
-      <strong>
-       Authentification
-      </strong>
-      : laisser vide
-     </li>
-     <li>
-      <strong>
-       Compatible
-      </strong>
-      : laissé coché
-     </li>
-    </ul>
-   </li>
-   <li>
-    <strong>
-     Valider
-    </strong>
-    , puis cliquer sur le bouton
-    <strong>
-     Recharger tous les dépôts
-    </strong>
-   </li>
-  </ul>
-  <p>
-   Ensuite, chercher l’extension dans la liste via l’onglet
-   <strong>
-    Tout
-   </strong>
-   en tapant
-   <code>
-    lizsync
-   </code>
-   dans le champ
-   <strong>
-    Rechercher
-   </strong>
-   , puis l’installer.
-  </p>
-  <h3 id="les-algorithmes-du-plugin-lizsync">
-   Les algorithmes du plugin LizSync
-  </h3>
-  <p>
-   L’extension
-   <strong>
-    LizSync
-   </strong>
-   a ajouté des
-   <strong>
-    algorithmes
-   </strong>
-   dans le
-   <strong>
-    menu Traitement
-   </strong>
-   de QGIS, qui permettent de suivre les différentes étapes précisées dans le scénario d’utilisation. Pour voir la liste des algorithmes disponibles, il faut ouvrir le panneau
-   <strong>
-    Boîte à outils de traitements
-   </strong>
-   à partir du menu
-   <strong>
-    Traitement
-   </strong>
-   de QGIS, puis chercher
-   <strong>
-    LizSync
-   </strong>
-  </p>
-  <p>
-   <img alt="Les algorithmes LizSync du menu Traitement Android" src="media/qgis_menu_traitement_boite_a_outils_lizsync.jpeg"/>
-  </p>
-  <p>
-   Chaque algorithme joue un rôle dans le scénario classique d’utilisation.
-  </p>
-  <h3 id="configurer-les-acces-postgresql-dans-qgis">
-   Configurer les accès PostgreSQL dans QGIS
-  </h3>
-  <p>
-   Avant de pouvoir utiliser l’extension
-   <strong>
-    LizSync
-   </strong>
-   , vous devez configurer les connexions PostgreSQL à la base de données centrale, et à la base de données clone.
-  </p>
-  <p>
-   Pour cela, utiliser le menu
-   <strong>
-    Couches / Ajouter une couche vecteur / Ajouter une couche PostGIS
-   </strong>
-   et cliquer sur le bouton
-   <strong>
-    Nouveau
-   </strong>
-   situé sous la liste déroulante. Renseignez-bien:
-  </p>
-  <ul>
-   <li>
-    le
-    <strong>
-     nom
-    </strong>
-    est libre. Veillez bien à utiliser un nom qui caractérise de manière unique la base de données. Par exemple
-    <strong>
-     Base centrale
-    </strong>
-    ,
-    <strong>
-     Clone A
-    </strong>
-    ou
-    <strong>
-     Tablette XYZ
-    </strong>
-   </li>
-   <li>
-    le
-    <strong>
-     service
-    </strong>
-    : il doit être laissé vide si vous souhaitez renseigner les champs suivants (hôte, port, etc.). Si vous indiquez un nom, il doit correspondre à un service valide. Voir la documentation de QGIS:
-    <a href="https://docs.qgis.org/3.4/fr/docs/user_manual/managing_data_source/opening_data.html#postgresql-service-connection-file">
-     https://docs.qgis.org/3.4/fr/docs/user_manual/managing_data_source/opening_data.html#postgresql-service-connection-file
-    </a>
-   </li>
-   <li>
-    l’
-    <strong>
-     hôte
-    </strong>
-    : renseigner l’adresse IP du serveur
-   </li>
-   <li>
-    le
-    <strong>
-     port
-    </strong>
-    : donner le port, par défaut 5432
-   </li>
-   <li>
-    la
-    <strong>
-     base de données
-    </strong>
-    : préciser le nom de la base de données
-   </li>
-   <li>
-    Authentification de base
-    <ul>
-     <li>
-      <strong>
-       Nom d’utilisateur
-      </strong>
-      : l’utilisateur qui peut se connecter. Cocher la case
-      <strong>
-       Stocker
-      </strong>
-     </li>
-     <li>
-      <strong>
-       Mot de passe
-      </strong>
-      : son mot de passe. Cocher la case
-      <strong>
-       Stocker
-      </strong>
-     </li>
-    </ul>
-   </li>
-   <li>
-    Cliquer sur le bouton
-    <strong>
-     Tester la connexion
-    </strong>
-   </li>
-   <li>
-    Cocher la case
-    <strong>
-     Utiliser la table de métadonnées estimées
-    </strong>
-   </li>
-  </ul>
-  <p>
-   Dans la suite de ce document, nous appellerons
-   <strong>
-    centrale
-   </strong>
-   et
-   <strong>
-    clone a
-   </strong>
-   les deux bases de données configurées.
-  </p>
-  <h3 id="base-clone-sur-le-geopoppy">
-   Base clone sur le GeoPoppy
-  </h3>
-  <p>
-   Lorsque le clone est une
-   <strong>
-    tablette Android
-   </strong>
-   sur laquelle est installé l’outil
-   <strong>
-    GeoPoppy
-   </strong>
-   (via le logiciel UserLand), vous devez au préalable:
-  </p>
-  <ul>
-   <li>
-    <strong>
-     connecter la tablette en WIFI
-    </strong>
-    sur le même réseau que votre ordinateur
-   </li>
-   <li>
-    lancer la
-    <strong>
-     session GeoPoppy
-    </strong>
-    via le logiciel UserLand
-   </li>
-   <li>
-    Renseigner le
-    <strong>
-     mot de passe
-    </strong>
-    <code>
-     geopoppy
-    </code>
-   </li>
-   <li>
-    Les services sont lancés, et à la fin un message fourni l’
-    <strong>
-     adresse IP de la tablette
-    </strong>
-    .
-   </li>
-  </ul>
-  <p>
-   Dans votre logiciel QGIS, vous pouvez maintenant créer une connexion PostgreSQL, avec les informations suivantes:
-  </p>
-  <ul>
-   <li>
-    <strong>
-     Nom
-    </strong>
-    : libre, par exemple
-    <strong>
-     Tablette GeoPoppy
-    </strong>
-   </li>
-   <li>
-    <strong>
-     hôte
-    </strong>
-    : l’IP de la tablette sur le réseau WIFI, affichée dans la session. Par example
-    <code>
-     192.168.1.7
-    </code>
-   </li>
-   <li>
-    <strong>
-     base de données
-    </strong>
-    :
-    <code>
-     geopoppy
-    </code>
-   </li>
-   <li>
-    <strong>
-     utilisateur
-    </strong>
-    :
-    <code>
-     geopoppy
-    </code>
-   </li>
-   <li>
-    <strong>
-     mot de passe
-    </strong>
-    :
-    <code>
-     geopoppy
-    </code>
-   </li>
-  </ul>
-  <p>
-   <img alt="Connexion GeoPoppy Android" src="media/qgis_creer_connexion_geopoppy_android.jpeg"/>
-  </p>
-  <p>
-   Vous pouvez
-   <strong>
-    tester
-   </strong>
-   que la connexion fonctionne bien, par exemple avec le
-   <strong>
-    gestionnaire de bases de données
-   </strong>
-   de QGIS: menu
-   <code>
-    Base de données / Gestionnaire de base de données
-   </code>
-   .
-  </p>
-  <h2 id="synchronisation-des-donnees-postgresql">
-   Synchronisation des données PostgreSQL
-  </h2>
-  <h3 id="rappel-des-etapes-cles-de-mise-en-oeuvre">
-   Rappel des étapes clés de mise-en-oeuvre
-  </h3>
-  <p>
-   Une
-   <strong>
-    base de données centrale
-   </strong>
-   contient les données. On souhaite exporter certaines de ces données dans des
-   <strong>
-    bases clone
-   </strong>
-   , modifier les données, puis synchroniser les modifications entre les bases. Les étapes sont les suivantes:
-  </p>
-  <ul>
-   <li>
-    les
-    <strong>
-     outils LizSync sont isntallés
-    </strong>
-    sur la base de données centrale
-   </li>
-   <li>
-    <strong>
-     la base centrale est préparée
-    </strong>
-    : ajout des métadonnées lizsync, des champs uid sur les tables, des triggers d’audits, etc.
-   </li>
-   <li>
-    une
-    <strong>
-     archive ZIP est créée
-    </strong>
-    à partir des données de la base centrale
-   </li>
-   <li>
-    <strong>
-     l’archive est chargée
-    </strong>
-    sur un ou plusieurs
-    <strong>
-     clones
-    </strong>
-    , ce qui est considéré comme une
-    <strong>
-     synchronisation complète
-    </strong>
-    .
-   </li>
-   <li>
-    <strong>
-     les données sont modifiées
-    </strong>
-    sur la base centrale et les clones: ajout, suppression, modification
-   </li>
-   <li>
-    <strong>
-     une synchronisation bidirectionnelle
-    </strong>
-    est lancée depuis chaque clone lorsque les clones sont connectés à internet
-   </li>
-  </ul>
-  <h3 id="choix-techniques-de-lizsync">
-   Choix techniques de LizSync
-  </h3>
-  <p>
-   Certains choix
-   <strong>
-    méthodologiques et techniques
-   </strong>
-   ont été faits pour assurer la synchronisation bidirectionnelle.
-  </p>
-  <ul>
-   <li>
-    la base centrale stocke dans les schéma
-    <code>
-     lizsync
-    </code>
-    et
-    <code>
-     audit
-    </code>
-    les données nécessaires aux synchronisations.
-   </li>
-   <li>
-    les données du schéma
-    <code>
-     public
-    </code>
-    ne sont
-    <strong>
-     jamais synchronisées
-    </strong>
-   </li>
-   <li>
-    les tables doivent avoir une
-    <strong>
-     clé primaire de type entier, autoincrémentée
-    </strong>
-    . Cet identifiant pourrait diverger entre la base centrale et les clones. Il n’est utile que localement pour certaines applications (QGIS préfère qu’il y ait une clé primaire entière)
-   </li>
-   <li>
-    les tables doivent toutes posséder un champ
-    <strong>
-     uid
-    </strong>
-    de type
-    <strong>
-     uuid
-    </strong>
-    (valeur exemple:
-    <code>
-     5d3d503c-6d97-f11e-a2a4-5db030060f6d
-    </code>
-    ) avec une valeur par défaut automatique. Ce champ est le pivot de la synchronisation. Il permet de reconnaître de manière unique un objet entre toutes les bases de données.
-   </li>
-   <li>
-    les références de
-    <strong>
-     clés étrangères
-    </strong>
-    doivent se baser sur le champ
-    <strong>
-     uid
-    </strong>
-    de la table parente, et non sur la clé primaire, car les clés primaires peuvent diverger entre bases.
-   </li>
-   <li>
-    lors de la synchronisation bidirectionnelle, les modifications de la base centrale sont récupérées, puis comparées à celles du clone pour gérer les conflits d’édition. Elles sont ensuite rejouées sur le clone et la base centrale.
-   </li>
-   <li>
-    les modifications de données sont rejouées seulement pour les champs modifiés.
-   </li>
-  </ul>
-  <h3 id="utilisation-de-lextension-lizsync-pour-la-synchronisation-postgresql">
-   Utilisation de l’extension LizSync pour la synchronisation PostgreSQL
-  </h3>
-  <h4 id="installer-les-outils-lizsync-sur-la-base-centrale">
-   Installer les outils LizSync sur la base centrale
-  </h4>
-  <p>
-   Cet algorithme va créer
-   <strong>
-    2 nouveaux schémas
-   </strong>
-   <code>
-    lizsync
-   </code>
-   et
-   <code>
-    audit
-   </code>
-   sur la base de données centrale:
-  </p>
-  <ul>
-   <li>
-    Un schéma
-    <strong>
-     audit
-    </strong>
-    avec les fonctions et tables d’audit, c’est-à-dire de suivi des modifications dans les tables (ajout, modification et suppression de données)
-   </li>
-   <li>
-    Un schéma
-    <strong>
-     lizsync
-    </strong>
-    avec les tables et fonctions nécessaires pour faire fonctionner la synchronisation.
-   </li>
-  </ul>
-  <p>
-   Attention ! Si vous cochez la case
-   <strong>
-    écraser
-   </strong>
-   , vous perdrez toutes les données existantes dans le schéma audit et/ou le schéma lizsync !
-  </p>
-  <p>
-   <img alt="Installer les outils LizSync" src="media/qgis_installer_outils_sur_base_centrale.jpeg"/>
-  </p>
-  <h4 id="preparer-la-base-centrale">
-   Préparer la base centrale
-  </h4>
-  <p>
-   Prépare la base de données PostgreSQL du serveur central avec les informations nécessaires pour l’outil LizSync.
-  </p>
-  <p>
-   LizSync a besoin :
-  </p>
-  <ul>
-   <li>
-    d’un
-    <strong>
-     ID de serveur
-    </strong>
-    stocké dans la table
-    <code>
-     lizsync.server_metadata
-    </code>
-   </li>
-   <li>
-    Toutes les tables des schémas choisis doivent avoir une
-    <strong>
-     colonne d’identifiant unique
-    </strong>
-    (uid) contenant un UUID
-   </li>
-   <li>
-    Toutes les tables des schémas choisis doivent être
-    <strong>
-     suivies par les triggers d’audit
-    </strong>
-   </li>
-  </ul>
-  <p>
-   Vous pouvez fournir une
-   <strong>
-    liste de schémas
-   </strong>
-   PostgreSQL de la base centrale, cet algorithme ajoutera les éléments nécessaires si besoin.
-  </p>
-  <p>
-   <img alt="Préparer la base centrale" src="media/qgis_preparer_la_base_centrale.jpeg"/>
-  </p>
-  <h4 id="creer-une-archive-de-donnees-depuis-la-base-centrale">
-   Créer une archive de données depuis la base centrale
-  </h4>
-  <p>
-   Récupère des données depuis la base de données centrale, pour un futur chargement sur un ou plusieurs clone(s).
-  </p>
-  <p>
-   Ce script sauvegarde
-   <strong>
-    toutes les données de la liste de schémas
-   </strong>
-   spécifiée vers une
-   <strong>
-    archive ZIP
-   </strong>
-   , nommée par défaut
-   <code>
-    central_database_package.zip
-   </code>
-   .
-  </p>
-  <p>
-   Vous pouvez ajouter un
-   <strong>
-    fichier SQL optionnel
-   </strong>
-   qui sera lancé sur le clone après chargement des données de l’archive. Ce fichier doit contenir des
-   <strong>
-    requêtes PostgreSQL valides
-   </strong>
-   , et peut être utilisé pour:
-  </p>
-  <ul>
-   <li>
-    ajouter des fonctions PostgreSQL utiles
-   </li>
-   <li>
-    supprimer certains triggers
-   </li>
-   <li>
-    enlever certaines contraintes sur les champs
-   </li>
-  </ul>
-  <p>
-   L’idée est d’adapter le contenu de la base à l’usage local sur le clone.
-  </p>
-  <p>
-   Une
-   <strong>
-    connexion internet vers la base centrale est nécessaire
-   </strong>
-   pour pouvoir créer un item d’historique de synchronisation sur la base centrale dans la table
-   <code>
-    lizsync.history
-   </code>
-   , et naturellement pour pouvoir télécharger les données de la base de données centrale.
-  </p>
-  <p>
-   <img alt="Creer une archive depuis la base centrale" src="media/qgis_creer_une_archive.jpeg"/>
-  </p>
-  <h4 id="charger-larchive-vers-le-clone">
-   Charger l’archive vers le clone
-  </h4>
-  <p>
-   Charger une
-   <strong>
-    archive ZIP
-   </strong>
-   , générée précédemment via l’algorithme
-   <code>
-    Créer une archive de données depuis la base centrale
-   </code>
-   , vers le clone choisi. Cette archive ZIP, nommée par défaut
-   <code>
-    central_database_package.zip
-   </code>
-   , contient les données sauvegardées depuis la base
-   <strong>
-    PostgreSQL centrale
-   </strong>
-   .
-  </p>
-  <p>
-   <img alt="Charger une archive vers le clone" src="media/qgis_charger_archive_vers_le_clone.jpeg"/>
-  </p>
-  <p>
-   <strong>
-    A la fin de cette étape, les données sont prêtes à être modifiées sur le clone et sur la base centrale.
-   </strong>
-  </p>
-  <h4 id="synchronisation-bi-directionnelle">
-   Synchronisation bi-directionnelle
-  </h4>
-  <p>
-   Ce script lance une
-   <strong>
-    synchronisation bi-directionnelle
-   </strong>
-   entre la base de données centrale et le clone.
-  </p>
-  <p>
-   Les données à synchroniser sont récupérées en lisant le contenu de la table
-   <code>
-    audit.logged_actions
-   </code>
-   de chaque base de données, depuis la
-   <strong>
-    dernière synchronisation
-   </strong>
-   ou le
-   <strong>
-    dernier chargement d’une archive ZIP
-   </strong>
-   (synchronisation complète).
-  </p>
-  <p>
-   Les logs de modification des données sont transformés en commandes SQL
-   <code>
-    INSERT
-   </code>
-   ,
-   <code>
-    UPDATE
-   </code>
-   ,
-   <code>
-    DELETE
-   </code>
-   qui sont jouées sur les bases de données dans cet ordre:
-  </p>
-  <ul>
-   <li>
-    Depuis le serveur central vers le clone
-   </li>
-   <li>
-    Depuis le clone vers le serveur central
-   </li>
-  </ul>
-  <p>
-   Pour les
-   <code>
-    UPDATE
-   </code>
-   , les logs sont comparés pour gérer les conflits, c’est-à-dire les modifications effectuées sur une
-   <strong>
-    même table, un même objet et sur un même champ
-   </strong>
-   . La modification réalisée la dernière (date de modification sur la base) est conservée, la plus ancienne est rejetée.
-  </p>
-  <p>
-   La base de données centrale stocke quels sont les clones qui ont rejoués les logs de modification, et garde un
-   <strong>
-    historique des synchronisations
-   </strong>
-   . Les conflits sont listés dans la table
-   <code>
-    lizsync.conflicts
-   </code>
-   de la
-   <strong>
-    base centrale
-   </strong>
-   .
-  </p>
-  <p>
-   <img alt="Synchronisation bidirectionnelle" src="media/qgis_synchronisation_bidirectionnelle.jpeg"/>
-  </p>
-  <h2 id="synchronisation-des-projets-qgis-et-des-fichiers">
-   Synchronisation des projets QGIS et des fichiers
-  </h2>
-  <p>
-   L’application Lizmap du GeoPoppy a besoin de
-   <strong>
-    projets QGIS
-   </strong>
-   configurés avec le plugin
-   <strong>
-    Lizmap
-   </strong>
-   . Ces projets QGIS peuvent être des projets existants, mais doivent être
-   <strong>
-    adaptés au contexte du GeoPoppy
-   </strong>
-   , notamment les informations de connexion PostgreSQL, pour que les données utilisées soient les
-   <strong>
-    données locales du GeoPoppy
-   </strong>
-   (base clone) et non les données sur la base centrale.
-  </p>
-  <p>
-   Cela permet ainsi de partir avec la tablette en mode déconnecté (sans connection internet). Les données visualisées et modifiées sont stockées
-   <strong>
-    dans la base de données PostgreSQL de la tablette
-   </strong>
-   (clone), et pourront être synchronisées une fois la connexion internet retrouvée.
-  </p>
-  <h3 id="recuperer-les-projets-qgis-et-les-fichiers-depuis-le-serveur-central">
-   Récupérer les projets QGIS et les fichiers depuis le serveur central
-  </h3>
-  <p>
-   Cet algorithme permet de réaliser la
-   <strong>
-    récupération des projets QGIS, des configurations Lizmap et des fichiers
-   </strong>
-   depuis un
-   <strong>
-    serveur FTP central
-   </strong>
-   . Ce serveur FTP est souvent déjà utilisé pour publier des projets QGIS sur l’application Lizmap du serveur central.
-  </p>
-  <p>
-   Tous les fichiers non présents dans le répertoire de destination sont automatiquement récupérés. Les fichiers qui n’ont pas été modifiés ne sont pas téléchargés, pour éviter un temps trop long de téléchargement.
-  </p>
-  <p>
-   Si la dernière case est cochée, les informations de connexion à la base de données centrale seront
-   <strong>
-    remplacées par celles du Geopoppy
-   </strong>
-   : hôte, port, base de données, utilisateur et mot de passe.
-  </p>
-  <p>
-   Les projets pourront donc ensuite être
-   <strong>
-    envoyés sur le clone
-   </strong>
-   pour être consultés en mode déconnecté, puisqu’ils appellent les données locale du clone, et non de la base centrale.
-  </p>
-  <p>
-   <img alt="Récupérer les projets QGIS" src="media/qgis_recuperer_projets_qgis_depuis_serveur_central.jpeg"/>
-  </p>
-  <h3 id="envoyer-les-projets-qgis-locaux-et-les-fichiers-sur-le-clone">
-   Envoyer les projets QGIS locaux et les fichiers sur le clone
-  </h3>
-  <p>
-   Une fois les projets récupérés depuis le serveur FTP central, et adaptés pour le GeoPoppy, il faut les
-   <strong>
-    envoyer sur le clone
-   </strong>
-   (la tablette). Pour cela, vous pouvez utiliser
-   <strong>
-    2 méthodes
-   </strong>
-   :
-  </p>
-  <ul>
-   <li>
-    Par transfert via cable USB
-   </li>
-   <li>
-    Avec l’algorithme
-    <code>
-     Envoyer les projets QGIS locaux et les fichiers sur le clone via FTP
-    </code>
-   </li>
-  </ul>
-  <h4 id="transfert-par-cable-usb">
-   Transfert par cable USB
-  </h4>
-  <p>
-   Une fois la tablette branchée par
-   <strong>
-    cable USB
-   </strong>
-   à votre ordinateur, le message suivant doit s’afficher:
-   <strong>
-    Autoriser accès aux données de la tablette ?
-   </strong>
-   <em>
-    L’appareil connecté va pouvoir accéder aux données se trouvant sur cette tablette
-   </em>
-   :
-  </p>
-  <ul>
-   <li>
-    Cliquer sur le bouton
-    <strong>
-     Autoriser
-    </strong>
-    ,
-   </li>
-   <li>
-    Ouvrir votre explorateur de fichiers sur votre ordinateur
-   </li>
-   <li>
-    Trouver le point de montage correspondant à la tablette, et naviguer dans le répertoire
-    <code>
-     Android/data/tech.ula/files/storage/geopoppy/qgis/
-    </code>
-   </li>
-  </ul>
-  <p>
-   Vous pouvez ensuite copier/colller les projets QGIS et les fichiers récupérés auparavant dans le répertoire
-   <code>
-    Android/data/tech.ula/files/storage/geopoppy/qgis/
-   </code>
-   .
-  </p>
-  <p>
-   Veillez à bien avoir auparavant supprimé les fichiers inutiles pour votre session terrain, et
-   <strong>
-    adapté les projets QGIS
-   </strong>
-   à la connexion locale de la base clone de la tablette.
-  </p>
-  <p>
-   La méthode par
-   <strong>
-    connexion USB
-   </strong>
-   sera probablement la plus rapide, notamment si vous devez envoyer des
-   <strong>
-    fichiers volumineux
-   </strong>
-   (orthophotos par exemple).
-  </p>
-  <h4 id="avec-lalgorithme-envoyer-les-projets-qgis-locaux-et-les-fichiers-sur-le-clone-via-ftp">
-   Avec l’algorithme “Envoyer les projets QGIS locaux et les fichiers sur le clone via FTP”
-  </h4>
-  <p>
-   Cet algorithme supprimera les projets QGIS et les configurations Lizmap présentes sur la tablette, puis lancera la synchronisation des données.
-  </p>
-  <p>
-   <img alt="Envoyer les projets QGIS sur le clone" src="media/qgis_envoyer_projets_qgis_sur_le_clone.jpeg"/>
-  </p>
-  <p>
-   <strong>
-    Une fois les projets QGIS et les configurations Lizmap envoyés, vous pouvez utiliser l’application Lizmap installée sur la tablette pour ouvrir la carte et utiliser les fonctionnalités de visualisation et d’édition de données.
-   </strong>
-  </p>
+<div class="toc"><span class="toctitle">Table of content</span><ul>
+<li><a href="#installation-et-utilisation-de-lizsync-sur-qgis">Installation et utilisation de LizSync sur QGIS</a><ul>
+<li><a href="#introduction">Introduction</a></li>
+<li><a href="#scenario-et-concepts">Scénario et concepts</a><ul>
+<li><a href="#donnees-en-base-postgresql">Données en base PostgreSQL</a></li>
+<li><a href="#cartes-lizmap-dans-le-contexte-geopoppy">Cartes Lizmap dans le contexte GeoPoppy</a></li>
+</ul>
+</li>
+<li><a href="#installation-et-configuration-dans-qgis">Installation et configuration dans QGIS</a><ul>
+<li><a href="#installation-de-lextension-lizsync-pour-qgis">Installation de l'extension LizSync pour QGIS</a></li>
+<li><a href="#les-algorithmes-du-plugin-lizsync">Les algorithmes du plugin LizSync</a></li>
+<li><a href="#configurer-les-acces-postgresql-dans-qgis">Configurer les accès PostgreSQL dans QGIS</a></li>
+<li><a href="#base-clone-sur-le-geopoppy">Base clone sur le GeoPoppy</a></li>
+</ul>
+</li>
+<li><a href="#synchronisation-des-donnees-postgresql">Synchronisation des données PostgreSQL</a><ul>
+<li><a href="#rappel-des-etapes-cles-de-mise-en-oeuvre">Rappel des étapes clés de mise-en-oeuvre</a></li>
+<li><a href="#choix-techniques-de-lizsync">Choix techniques de LizSync</a></li>
+<li><a href="#utilisation-de-lextension-lizsync-pour-la-synchronisation-postgresql">Utilisation de l'extension LizSync pour la synchronisation PostgreSQL</a><ul>
+<li><a href="#installer-les-outils-lizsync-sur-la-base-centrale">Installer les outils LizSync sur la base centrale</a></li>
+<li><a href="#preparer-la-base-centrale">Préparer la base centrale</a></li>
+<li><a href="#creer-une-archive-de-donnees-depuis-la-base-centrale">Créer une archive de données depuis la base centrale</a></li>
+<li><a href="#charger-larchive-vers-le-clone">Charger l'archive vers le clone</a></li>
+<li><a href="#synchronisation-bi-directionnelle">Synchronisation bi-directionnelle</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#synchronisation-des-projets-qgis-et-des-fichiers">Synchronisation des projets QGIS et des fichiers</a><ul>
+<li><a href="#recuperer-les-projets-qgis-et-les-fichiers-depuis-le-serveur-central">Récupérer les projets QGIS et les fichiers depuis le serveur central</a></li>
+<li><a href="#envoyer-les-projets-qgis-locaux-et-les-fichiers-sur-le-clone">Envoyer les projets QGIS locaux et les fichiers sur le clone</a><ul>
+<li><a href="#transfert-par-cable-usb">Transfert par cable USB</a></li>
+<li><a href="#avec-lalgorithme-envoyer-les-projets-qgis-locaux-et-les-fichiers-sur-le-clone-via-ftp">Avec l'algorithme "Envoyer les projets QGIS locaux et les fichiers sur le clone via FTP"</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<p><a href="../index.html">Retour</a></p>
+<h1 id="installation-et-utilisation-de-lizsync-sur-qgis">Installation et utilisation de LizSync sur QGIS</h1>
+<h2 id="introduction">Introduction</h2>
+<p>Ce document présente l'outil LizSync qui permet de mettre en oeuvre la synchronisation entre une base de données PostgreSQL centrale et une ou plusieurs bases de données clone.</p>
+<p>LizSync permet le <strong>déploiement et la synchronisation des données</strong> entre une unique base de données centrale et un ou plusieurs clones:</p>
+<ul>
+<li>base de données <strong>centrale</strong>: c'est la base de production qui contient l'ensemble des données.</li>
+<li>base de données <strong>clone</strong>: c'est une base installée sur un ordinateur, une tablette ou un autre serveur. Elle contient un sous-ensemble des schémas de la base centrale</li>
+</ul>
+<p>Une <strong>extension LizSync pour QGIS</strong> permet de lancer les différentes actions nécessaires pour faire fonctionner cet outil: installation, préparation de la base centrale, création et déploiement d'archive, synchronisation.</p>
+<h2 id="scenario-et-concepts">Scénario et concepts</h2>
+<h3 id="donnees-en-base-postgresql">Données en base PostgreSQL</h3>
+<p>Une base <strong>PostgreSQL</strong> appelée centrale contient un ensemble complet de données, organisées dans des <strong>schémas</strong>. Aucune donnée n'est stockée dans le schéma <strong>public</strong>.</p>
+<p>Avant de pouvoir utiliser <strong>LizSync</strong>, on doit d'abord l'<strong>installer sur la base centrale</strong>, afin d'ajouter les schémas, tables et fonctions qui permettent de gérer la synchronisation. Toutes les données relatives aux synchronisations seront stockées dans le schéma <code>lizsync</code>. Les tables du schéma <code>audit</code> enregistreront les modifications réalisées sur les données des autres schémas.</p>
+<p>Ensuite, il faut <strong>préparer cette base centrale</strong>, c'est-à-dire s'assurer que les tables à synchroniser comportent les champs requis, notamment un <strong>identifiant unique</strong> (UUID), et que les modifications sur ces tables sont bien enregistrées au fil de l'eau via l'outil d'audit de LizSync.</p>
+<p>Lorsque la base centrale est prête, il est alors possible de <strong>créer une archive de données</strong> pour un ou plusieurs schémas. Cette archive contient les données des schémas, mais aussi les métadonnées utiles de la base centrale (identifiant unique). La création de l'archive est vue pour LizSync comme une action de <strong>synchronisation</strong>, dite complète.</p>
+<p>Cette archive est ensuite <strong>chargée vers la base clone</strong> (vers un ou plusieurs clones), ce qui supprime l'ensemble des données du clone pour les schémas de l'archive, puis réinstalle les outils LizSync sur le clone et enfin charge les données. A l'issu de cette phase, les données du clone pour les schémas choisis sont équivalentes aux données qui étaient présentes lors de la création de l'archive.</p>
+<p>Les données des bases centrales et clone peuvent alors <strong>évoluer librement</strong> en parallèle, tant que la <strong>structure n'est pas modifiée</strong> (pas d'ajout de tables ou de champs). Par exemple via une saisie de données terrain avec des tablettes sur les bases clones.</p>
+<p>Une <strong>synchronisation bidirectionnelle</strong> peut alors être effectuée pour récupérer sur le clone les changements apparus sur la base centrale, puis envoyer sur la base centrale les modifications des données du clone.</p>
+<h3 id="cartes-lizmap-dans-le-contexte-geopoppy">Cartes Lizmap dans le contexte GeoPoppy</h3>
+<p>Pour pouvoir <strong>éditer les données</strong> dans les bases PostgreSQL, il est possible d'utiliser n'importe quel logiciel: QGIS, QField, PgAdmin, des scripts SQL lancés manuellement, etc.</p>
+<p>L'outil <strong>Lizmap Web Client</strong> peut aussi être utilisé pour réaliser ces éditions:</p>
+<ul>
+<li>sur la <strong>base centrale</strong>, avec l'application Lizmap accessible en ligne</li>
+<li>sur les <strong>bases clone</strong> embarquées sur des tablettes, via l'outil <strong>GeoPoppy pour Android</strong>, qui permet d'embarquer l'application <strong>Lizmap en mode déconnecté</strong>.</li>
+</ul>
+<p>Dans ce contexte <strong>GeoPoppy</strong>, il faut donc que les projets QGIS <code>*.qgs</code> et les configurations Lizmap <code>*.qgs.cfg</code> soient:</p>
+<ul>
+<li><strong>récupérés</strong> depuis le serveur central, par exemple via FTP</li>
+<li><strong>adaptés</strong> pour utiliser les données de la base PostgreSQL <strong>clone</strong> de la tablette, en modifiant les informations de connexion</li>
+<li><strong>chargés sur le clone (tablette)</strong> pour être consultés via Lizmap</li>
+</ul>
+<p>L'extension <strong>LizSync</strong> pour QGIS propose des algorithmes qui facilient le transfert des projets QGIS depuis le serveur FTP central vers les clones.</p>
+<h2 id="installation-et-configuration-dans-qgis">Installation et configuration dans QGIS</h2>
+<p>Dans QGIS, il faut:</p>
+<ul>
+<li>installer le plugin LizSync</li>
+<li>configurer les connexions PostgreSQL vers la <strong>base centrale</strong> et les <strong>bases clone</strong></li>
+</ul>
+<h3 id="installation-de-lextension-lizsync-pour-qgis">Installation de l'extension LizSync pour QGIS</h3>
+<p>L'extension <strong>LizSync</strong> peut être installé dans QGIS avec le <strong>gestionnaire d'extension</strong>. Tant que l'extension n'est pas incluse dans les dépôts officiels de QGIS, elle peut être récupérée en ajoutant manuellement le dépôt d'extension:</p>
+<ul>
+<li>ouvrir le <strong>Gestionnaire d'extension</strong> via le menu <strong>Extension</strong> de QGIS.</li>
+<li>dans l'onglet <strong>Paramètres</strong>, dans le groupe <strong>Dépôts d'extensions</strong>, cliquer sur le bouton <strong>Ajouter</strong>, puis renseigner les champs suivants<ul>
+<li><strong>Nom</strong>: 3liz extension LizSync Github</li>
+<li><strong>URL</strong>: https://github.com/3liz/qgis-lizsync-plugin/releases/latest/download/plugins.xml</li>
+<li><strong>Authentification</strong>: laisser vide</li>
+<li><strong>Compatible</strong>: laissé coché</li>
+</ul>
+</li>
+<li><strong>Valider</strong>, puis cliquer sur le bouton <strong>Recharger tous les dépôts</strong></li>
+</ul>
+<p>Ensuite, chercher l'extension dans la liste via l'onglet <strong>Tout</strong> en tapant <code>lizsync</code> dans le champ <strong>Rechercher</strong>, puis l'installer.</p>
+<h3 id="les-algorithmes-du-plugin-lizsync">Les algorithmes du plugin LizSync</h3>
+<p>L'extension <strong>LizSync</strong> a ajouté des <strong>algorithmes</strong> dans le <strong>menu Traitement</strong> de QGIS, qui permettent de suivre les différentes étapes précisées dans le scénario d'utilisation. Pour voir la liste des algorithmes disponibles, il faut ouvrir le panneau <strong>Boîte à outils de traitements</strong> à partir du menu <strong>Traitement</strong> de QGIS, puis chercher <strong>LizSync</strong></p>
+<p><img alt="Les algorithmes LizSync du menu Traitement Android" src="media/qgis_menu_traitement_boite_a_outils_lizsync.jpeg"></p>
+<p>Chaque algorithme joue un rôle dans le scénario classique d'utilisation.</p>
+<h3 id="configurer-les-acces-postgresql-dans-qgis">Configurer les accès PostgreSQL dans QGIS</h3>
+<p>Avant de pouvoir utiliser l'extension <strong>LizSync</strong>, vous devez configurer les connexions PostgreSQL à la base de données centrale, et à la base de données clone.</p>
+<p>Pour cela, utiliser le menu <strong>Couches / Ajouter une couche vecteur / Ajouter une couche PostGIS</strong> et cliquer sur le bouton <strong>Nouveau</strong> situé sous la liste déroulante. Renseignez-bien:</p>
+<ul>
+<li>le <strong>nom</strong> est libre. Veillez bien à utiliser un nom qui caractérise de manière unique la base de données. Par exemple <strong>Base centrale</strong>, <strong>Clone A</strong> ou <strong>Tablette XYZ</strong></li>
+<li>le <strong>service</strong> : il doit être laissé vide si vous souhaitez renseigner les champs suivants (hôte, port, etc.). Si vous indiquez un nom, il doit correspondre à un service valide. Voir la documentation de QGIS: https://docs.qgis.org/3.10/fr/docs/user_manual/managing_data_source/opening_data.html#postgresql-service-connection-file</li>
+<li>l'<strong>hôte</strong>: renseigner l'adresse IP du serveur</li>
+<li>le <strong>port</strong>: donner le port, par défaut 5432</li>
+<li>la <strong>base de données</strong>: préciser le nom de la base de données</li>
+<li>Authentification de base<ul>
+<li><strong>Nom d'utilisateur</strong>: l'utilisateur qui peut se connecter. Cocher la case <strong>Stocker</strong></li>
+<li><strong>Mot de passe</strong>: son mot de passe. Cocher la case <strong>Stocker</strong></li>
+</ul>
+</li>
+<li>Cliquer sur le bouton <strong>Tester la connexion</strong></li>
+<li>Cocher la case <strong>Utiliser la table de métadonnées estimées</strong></li>
+</ul>
+<p>Dans la suite de ce document, nous appellerons <strong>centrale</strong> et <strong>clone a</strong> les deux bases de données configurées.</p>
+<h3 id="base-clone-sur-le-geopoppy">Base clone sur le GeoPoppy</h3>
+<p>Lorsque le clone est une <strong>tablette Android</strong> sur laquelle est installé l'outil <strong>GeoPoppy</strong> (via le logiciel UserLand), vous devez au préalable:</p>
+<ul>
+<li><strong>connecter la tablette en WIFI</strong> sur le même réseau que votre ordinateur</li>
+<li>lancer la <strong>session GeoPoppy</strong> via le logiciel UserLand</li>
+<li>Renseigner le <strong>mot de passe</strong> <code>geopoppy</code></li>
+<li>Les services sont lancés, et à la fin un message fourni l'<strong>adresse IP de la tablette</strong>.</li>
+</ul>
+<p>Dans votre logiciel QGIS, vous pouvez maintenant créer une connexion PostgreSQL, avec les informations suivantes:</p>
+<ul>
+<li><strong>Nom</strong>: libre, par exemple <strong>Tablette GeoPoppy</strong></li>
+<li><strong>hôte</strong>: l'IP de la tablette sur le réseau WIFI, affichée dans la session. Par example <code>192.168.1.7</code></li>
+<li><strong>base de données</strong>: <code>geopoppy</code></li>
+<li><strong>utilisateur</strong>: <code>geopoppy</code></li>
+<li><strong>mot de passe</strong>: <code>geopoppy</code></li>
+</ul>
+<p><img alt="Connexion GeoPoppy Android" src="media/qgis_creer_connexion_geopoppy_android.jpeg"></p>
+<p>Vous pouvez <strong>tester</strong> que la connexion fonctionne bien, par exemple avec le <strong>gestionnaire de bases de données</strong> de QGIS: menu <code>Base de données / Gestionnaire de base de données</code>.</p>
+<h2 id="synchronisation-des-donnees-postgresql">Synchronisation des données PostgreSQL</h2>
+<h3 id="rappel-des-etapes-cles-de-mise-en-oeuvre">Rappel des étapes clés de mise-en-oeuvre</h3>
+<p>Une <strong>base de données centrale</strong> contient les données. On souhaite exporter certaines de ces données dans des <strong>bases clone</strong>, modifier les données, puis synchroniser les modifications entre les bases. Les étapes sont les suivantes:</p>
+<ul>
+<li>les <strong>outils LizSync sont isntallés</strong> sur la base de données centrale</li>
+<li><strong>la base centrale est préparée</strong>: ajout des métadonnées lizsync, des champs uid sur les tables, des triggers d'audits, etc.</li>
+<li>une <strong>archive ZIP est créée</strong> à partir des données de la base centrale</li>
+<li><strong>l'archive est chargée</strong> sur un ou plusieurs <strong>clones</strong>, ce qui est considéré comme une <strong>synchronisation complète</strong>.</li>
+<li><strong>les données sont modifiées</strong> sur la base centrale et les clones: ajout, suppression, modification</li>
+<li><strong>une synchronisation bidirectionnelle</strong> est lancée depuis chaque clone lorsque les clones sont connectés à internet</li>
+</ul>
+<h3 id="choix-techniques-de-lizsync">Choix techniques de LizSync</h3>
+<p>Certains choix <strong>méthodologiques et techniques</strong> ont été faits pour assurer la synchronisation bidirectionnelle.</p>
+<ul>
+<li>la base centrale stocke dans les schéma <code>lizsync</code> et <code>audit</code> les données nécessaires aux synchronisations.</li>
+<li>les données du schéma <code>public</code> ne sont <strong>jamais synchronisées</strong></li>
+<li>les tables doivent avoir une <strong>clé primaire de type entier, autoincrémentée</strong>. Cet identifiant pourrait diverger entre la base centrale et les clones. Il n'est utile que localement pour certaines applications (QGIS préfère qu'il y ait une clé primaire entière)</li>
+<li>les tables doivent toutes posséder un champ <strong>uid</strong> de type <strong>uuid</strong> (valeur exemple: <code>5d3d503c-6d97-f11e-a2a4-5db030060f6d</code>) avec une valeur par défaut automatique. Ce champ est le pivot de la synchronisation. Il permet de reconnaître de manière unique un objet entre toutes les bases de données.</li>
+<li>les références de <strong>clés étrangères</strong> doivent se baser sur le champ <strong>uid</strong> de la table parente, et non sur la clé primaire, car les clés primaires peuvent diverger entre bases.</li>
+<li>lors de la synchronisation bidirectionnelle, les modifications de la base centrale sont récupérées, puis comparées à celles du clone pour gérer les conflits d'édition. Elles sont ensuite rejouées sur le clone et la base centrale.</li>
+<li>les modifications de données sont rejouées seulement pour les champs modifiés.</li>
+</ul>
+<h3 id="utilisation-de-lextension-lizsync-pour-la-synchronisation-postgresql">Utilisation de l'extension LizSync pour la synchronisation PostgreSQL</h3>
+<h4 id="installer-les-outils-lizsync-sur-la-base-centrale">Installer les outils LizSync sur la base centrale</h4>
+<p>Cet algorithme va créer <strong>2 nouveaux schémas</strong> <code>lizsync</code> et <code>audit</code> sur la base de données centrale:</p>
+<ul>
+<li>Un schéma <strong>audit</strong> avec les fonctions et tables d'audit, c'est-à-dire de suivi des modifications dans les tables (ajout, modification et suppression de données)</li>
+<li>Un schéma <strong>lizsync</strong> avec les tables et fonctions nécessaires pour faire fonctionner la synchronisation.</li>
+</ul>
+<p>Attention ! Si vous cochez la case <strong>écraser</strong>, vous perdrez toutes les données existantes dans le schéma audit et/ou le schéma lizsync !</p>
+<p><img alt="Installer les outils LizSync" src="media/qgis_installer_outils_sur_base_centrale.jpeg"></p>
+<h4 id="preparer-la-base-centrale">Préparer la base centrale</h4>
+<p>Prépare la base de données PostgreSQL du serveur central avec les informations nécessaires pour l'outil LizSync.</p>
+<p>LizSync a besoin :</p>
+<ul>
+<li>d'un <strong>ID de serveur</strong> stocké dans la table <code>lizsync.server_metadata</code></li>
+<li>Toutes les tables des schémas choisis doivent avoir une <strong>colonne d'identifiant unique</strong> (uid) contenant un UUID</li>
+<li>Toutes les tables des schémas choisis doivent être <strong>suivies par les triggers d'audit</strong></li>
+</ul>
+<p>Vous pouvez fournir une <strong>liste de schémas</strong> PostgreSQL de la base centrale, cet algorithme ajoutera les éléments nécessaires si besoin.</p>
+<p><img alt="Préparer la base centrale" src="media/qgis_preparer_la_base_centrale.jpeg"></p>
+<h4 id="creer-une-archive-de-donnees-depuis-la-base-centrale">Créer une archive de données depuis la base centrale</h4>
+<p>Récupère des données depuis la base de données centrale, pour un futur chargement sur un ou plusieurs clone(s).</p>
+<p>Ce script sauvegarde <strong>toutes les données de la liste de schémas</strong> spécifiée vers une <strong>archive ZIP</strong>, nommée par défaut <code>central_database_package.zip</code>.</p>
+<p>Vous pouvez ajouter un <strong>fichier SQL optionnel</strong> qui sera lancé sur le clone après chargement des données de l'archive. Ce fichier doit contenir des <strong>requêtes PostgreSQL valides</strong>, et peut être utilisé pour:</p>
+<ul>
+<li>ajouter des fonctions PostgreSQL utiles</li>
+<li>supprimer certains triggers</li>
+<li>enlever certaines contraintes sur les champs</li>
+</ul>
+<p>L'idée est d'adapter le contenu de la base à l'usage local sur le clone.</p>
+<p>Une <strong>connexion internet vers la base centrale est nécessaire</strong> pour pouvoir créer un item d'historique de synchronisation sur la base centrale dans la table <code>lizsync.history</code>, et naturellement pour pouvoir télécharger les données de la base de données centrale.</p>
+<p><img alt="Creer une archive depuis la base centrale" src="media/qgis_creer_une_archive.jpeg"></p>
+<h4 id="charger-larchive-vers-le-clone">Charger l'archive vers le clone</h4>
+<p>Charger une <strong>archive ZIP</strong>, générée précédemment via l'algorithme <code>Créer une archive de données depuis la base centrale</code>, vers le clone choisi. Cette archive ZIP, nommée par défaut <code>central_database_package.zip</code>, contient les données sauvegardées depuis la base <strong>PostgreSQL centrale</strong>.</p>
+<p><img alt="Charger une archive vers le clone" src="media/qgis_charger_archive_vers_le_clone.jpeg"></p>
+<p><strong>A la fin de cette étape, les données sont prêtes à être modifiées sur le clone et sur la base centrale.</strong></p>
+<h4 id="synchronisation-bi-directionnelle">Synchronisation bi-directionnelle</h4>
+<p>Ce script lance une <strong>synchronisation bi-directionnelle</strong> entre la base de données centrale et le clone.</p>
+<p>Les données à synchroniser sont récupérées en lisant le contenu de la table <code>audit.logged_actions</code> de chaque base de données, depuis la <strong>dernière synchronisation</strong> ou le <strong>dernier chargement d'une archive ZIP</strong> (synchronisation complète).</p>
+<p>Les logs de modification des données sont transformés en commandes SQL <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code> qui sont jouées sur les bases de données dans cet ordre:</p>
+<ul>
+<li>Depuis le serveur central vers le clone</li>
+<li>Depuis le clone vers le serveur central</li>
+</ul>
+<p>Pour les <code>UPDATE</code>, les logs sont comparés pour gérer les conflits, c'est-à-dire les modifications effectuées sur une <strong>même table, un même objet et sur un même champ</strong>. La modification réalisée la dernière (date de modification sur la base) est conservée, la plus ancienne est rejetée.</p>
+<p>La base de données centrale stocke quels sont les clones qui ont rejoués les logs de modification, et garde un <strong>historique des synchronisations</strong>. Les conflits sont listés dans la table <code>lizsync.conflicts</code> de la <strong>base centrale</strong>.</p>
+<p><img alt="Synchronisation bidirectionnelle" src="media/qgis_synchronisation_bidirectionnelle.jpeg"></p>
+<h2 id="synchronisation-des-projets-qgis-et-des-fichiers">Synchronisation des projets QGIS et des fichiers</h2>
+<p>L'application Lizmap du GeoPoppy a besoin de <strong>projets QGIS</strong> configurés avec le plugin <strong>Lizmap</strong>. Ces projets QGIS peuvent être des projets existants, mais doivent être <strong>adaptés au contexte du GeoPoppy</strong>, notamment les informations de connexion PostgreSQL, pour que les données utilisées soient les <strong>données locales du GeoPoppy</strong> (base clone) et non les données sur la base centrale.</p>
+<p>Cela permet ainsi de partir avec la tablette en mode déconnecté (sans connection internet). Les données visualisées et modifiées sont stockées <strong>dans la base de données PostgreSQL de la tablette</strong> (clone), et pourront être synchronisées une fois la connexion internet retrouvée.</p>
+<h3 id="recuperer-les-projets-qgis-et-les-fichiers-depuis-le-serveur-central">Récupérer les projets QGIS et les fichiers depuis le serveur central</h3>
+<p>Cet algorithme permet de réaliser la <strong>récupération des projets QGIS, des configurations Lizmap et des fichiers</strong> depuis un <strong>serveur FTP central</strong>. Ce serveur FTP est souvent déjà utilisé pour publier des projets QGIS sur l'application Lizmap du serveur central.</p>
+<p>Tous les fichiers non présents dans le répertoire de destination sont automatiquement récupérés. Les fichiers qui n'ont pas été modifiés ne sont pas téléchargés, pour éviter un temps trop long de téléchargement.</p>
+<p>Si la dernière case est cochée, les informations de connexion à la base de données centrale seront <strong>remplacées par celles du Geopoppy</strong>: hôte, port, base de données, utilisateur et mot de passe.</p>
+<p>Les projets pourront donc ensuite être <strong>envoyés sur le clone</strong> pour être consultés en mode déconnecté, puisqu'ils appellent les données locale du clone, et non de la base centrale.</p>
+<p><img alt="Récupérer les projets QGIS" src="media/qgis_recuperer_projets_qgis_depuis_serveur_central.jpeg"></p>
+<h3 id="envoyer-les-projets-qgis-locaux-et-les-fichiers-sur-le-clone">Envoyer les projets QGIS locaux et les fichiers sur le clone</h3>
+<p>Une fois les projets récupérés depuis le serveur FTP central, et adaptés pour le GeoPoppy, il faut les <strong>envoyer sur le clone</strong> (la tablette). Pour cela, vous pouvez utiliser <strong>2 méthodes</strong>:</p>
+<ul>
+<li>Par transfert via cable USB</li>
+<li>Avec l'algorithme <code>Envoyer les projets QGIS locaux et les fichiers sur le clone via FTP</code></li>
+</ul>
+<h4 id="transfert-par-cable-usb">Transfert par cable USB</h4>
+<p>Une fois la tablette branchée par <strong>cable USB</strong> à votre ordinateur, le message suivant doit s'afficher: <strong>Autoriser accès aux données de la tablette ?</strong> <em>L'appareil connecté va pouvoir accéder aux données se trouvant sur cette tablette</em>:</p>
+<ul>
+<li>Cliquer sur le bouton <strong>Autoriser</strong>,</li>
+<li>Ouvrir votre explorateur de fichiers sur votre ordinateur</li>
+<li>Trouver le point de montage correspondant à la tablette, et naviguer dans le répertoire <code>Android/data/tech.ula/files/storage/geopoppy/qgis/</code></li>
+</ul>
+<p>Vous pouvez ensuite copier/colller les projets QGIS et les fichiers récupérés auparavant dans le répertoire <code>Android/data/tech.ula/files/storage/geopoppy/qgis/</code>.</p>
+<p>Veillez à bien avoir auparavant supprimé les fichiers inutiles pour votre session terrain, et <strong>adapté les projets QGIS</strong> à la connexion locale de la base clone de la tablette.</p>
+<p>La méthode par <strong>connexion USB</strong> sera probablement la plus rapide, notamment si vous devez envoyer des <strong>fichiers volumineux</strong> (orthophotos par exemple).</p>
+<h4 id="avec-lalgorithme-envoyer-les-projets-qgis-locaux-et-les-fichiers-sur-le-clone-via-ftp">Avec l'algorithme "Envoyer les projets QGIS locaux et les fichiers sur le clone via FTP"</h4>
+<p>Cet algorithme supprimera les projets QGIS et les configurations Lizmap présentes sur la tablette, puis lancera la synchronisation des données.</p>
+<p><img alt="Envoyer les projets QGIS sur le clone" src="media/qgis_envoyer_projets_qgis_sur_le_clone.jpeg"></p>
+<p><strong>Une fois les projets QGIS et les configurations Lizmap envoyés, vous pouvez utiliser l'application Lizmap installée sur la tablette pour ouvrir la carte et utiliser les fonctionnalités de visualisation et d'édition de données.</strong></p>
   <script src="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.1/highlight.min.js">
   </script>
   <script>

@@ -1,3 +1,11 @@
+---
+Title: Extension QGIS
+...
+
+[TOC]
+
+[Retour](../index.html)
+
 # Installation et utilisation de LizSync sur QGIS
 
 ## Introduction
@@ -82,7 +90,7 @@ Avant de pouvoir utiliser l'extension **LizSync**, vous devez configurer les con
 Pour cela, utiliser le menu **Couches / Ajouter une couche vecteur / Ajouter une couche PostGIS** et cliquer sur le bouton **Nouveau** situé sous la liste déroulante. Renseignez-bien:
 
 * le **nom** est libre. Veillez bien à utiliser un nom qui caractérise de manière unique la base de données. Par exemple **Base centrale**, **Clone A** ou **Tablette XYZ**
-* le **service** : il doit être laissé vide si vous souhaitez renseigner les champs suivants (hôte, port, etc.). Si vous indiquez un nom, il doit correspondre à un service valide. Voir la documentation de QGIS: https://docs.qgis.org/3.4/fr/docs/user_manual/managing_data_source/opening_data.html#postgresql-service-connection-file
+* le **service** : il doit être laissé vide si vous souhaitez renseigner les champs suivants (hôte, port, etc.). Si vous indiquez un nom, il doit correspondre à un service valide. Voir la documentation de QGIS: https://docs.qgis.org/3.10/fr/docs/user_manual/managing_data_source/opening_data.html#postgresql-service-connection-file
 * l'**hôte**: renseigner l'adresse IP du serveur
 * le **port**: donner le port, par défaut 5432
 * la **base de données**: préciser le nom de la base de données

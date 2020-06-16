@@ -1,818 +1,196 @@
+
 <!DOCTYPE HTML>
 <html>
  <head>
   <meta charset="utf-8"/>
-  <title>
-   Made with Remarkable!
-  </title>
+  <title>Geopoppy</title>
   <link href="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.1/styles/github.min.css" rel="stylesheet"/>
-  <style type="text/css">
-   body,table tr{background-color:#fff}table tr td,table tr th{border:1px solid #ccc;text-align:left;padding:6px 13px;margin:0}pre code,table,table tr{padding:0}hr,pre code{background:0 0}body{font:16px Helvetica,Arial,sans-serif;line-height:1.4;color:#333;word-wrap:break-word;padding:10px 15px}strong,table tr th{font-weight:700}h1{font-size:2em;margin:.67em 0;text-align:center}h2{font-size:1.75em}h3{font-size:1.5em}h4{font-size:1.25em}h1,h2,h3,h4,h5,h6{font-weight:700;position:relative;margin-top:15px;margin-bottom:15px;line-height:1.1}h1,h2{border-bottom:1px solid #eee}hr{height:0;margin:15px 0;overflow:hidden;border:0;border-bottom:1px solid #ddd}a{color:#4183C4}a.absent{color:#c00}ol,ul{padding-left:15px;margin-left:5px}ol{list-style-type:lower-roman}table tr{border-top:1px solid #ccc;margin:0}table tr:nth-child(2n){background-color:#aaa}table tr td :first-child,table tr th :first-child{margin-top:0}table tr td:last-child,table tr th :last-child{margin-bottom:0}img{max-width:100%}blockquote{padding:0 15px;border-left:4px solid #ccc}code,tt{margin:0 2px;padding:0 5px;white-space:nowrap;border:1px solid #eaeaea;background-color:#f8f8f8;border-radius:3px}pre code{margin:0;white-space:pre;border:none}.highlight pre,pre{background-color:#f8f8f8;border:1px solid #ccc;font-size:13px;line-height:19px;overflow:auto;padding:6px 10px;border-radius:3px}
-  </style>
+  <link href="../../remarkable.css" rel="stylesheet"/>
  </head>
  <body>
-  <h1 id="installation-et-lancement-du-geopoppy-sur-tablette-android">
-   Installation et lancement du GeoPoppy sur tablette Android
-  </h1>
-  <h2 id="introduction">
-   Introduction
-  </h2>
-  <p>
-   Ce document présente comment utiliser l’application
-   <strong>
-    UserLand
-   </strong>
-   pour installer et lancer l’outil
-   <strong>
-    GeoPoppy
-   </strong>
-   sur la tablette ou téléphone
-   <strong>
-    Android
-   </strong>
-   .
-  </p>
-  <h3 id="les-applications-du-geopoppy">
-   Les applications du GeoPoppy
-  </h3>
-  <p>
-   L’application principale qui sera utilisée pour visualiser les cartes et saisir des données sur le terrain est l’
-   <strong>
-    application Lizmap
-   </strong>
-   . Elle est consultable via un
-   <strong>
-    navigateur web
-   </strong>
-   . Nous conseillons vivement Firefox pour Android.
-  </p>
-  <p>
-   Si vous êtes géomaticien, vous pourrez aussi utiliser les autres services disponibles pour consulter les données, modifier les configurations, car le GeoPoppy embarque aussi:
-  </p>
-  <ul>
-   <li>
-    un serveur de base de données
-    <strong>
-     PostgreSQL
-    </strong>
-   </li>
-   <li>
-    un serveur
-    <strong>
-     FTP
-    </strong>
-    pour naviguer dans les répertoires poser des fichiers sur le GeoPoppy
-   </li>
-   <li>
-    un serveur
-    <strong>
-     QGIS
-    </strong>
-    pour proposer des cartes et des données spatiales.
-   </li>
-  </ul>
-  <p>
-   Le GeoPoppy est l’équivalent d’un
-   <strong>
-    mini-serveur
-   </strong>
-   embarqué sur la tablette. Pour pouvoir utiliser les différents services depuis son ordinateur, il faut que les deux appareils soient connectés sur le
-   <strong>
-    même réseau WIFI
-   </strong>
-   .
-  </p>
-  <h2 id="installation">
-   Installation
-  </h2>
-  <p>
-   GeoPoppy peut être utilisé sur tablette ou smartphone fonctionnant sur système d’exploitation Android. Il utilise le logiciel
-   <strong>
-    UserLand
-   </strong>
-   qui permet de charger des
-   <strong>
-    images
-   </strong>
-   contenant l’ensemble des logiciels nécessaires.
-  </p>
-  <h3 id="installer-le-logiciel-userland">
-   Installer le logiciel UserLand
-  </h3>
-  <p>
-   Pour pouvoir continuer, connecter d’abord la tablette à internet (via WIFI ou 3G), puis:
-  </p>
-  <ul>
-   <li>
-    <strong>
-     Installer
-    </strong>
-    l’application
-    <strong>
-     UserLand
-    </strong>
-    depuis l’application Google Play
-   </li>
-   <li>
-    Une fois installée,
-    <strong>
-     lancer
-    </strong>
-    cette application. Elle affiche par défaut 3 onglets:
-    <ul>
-     <li>
-      <strong>
-       Applis
-      </strong>
-     </li>
-     <li>
-      <strong>
-       Sessions
-      </strong>
-     </li>
-     <li>
-      <strong>
-       Systèmes de fichiers
-      </strong>
-     </li>
-    </ul>
-   </li>
-   <li>
-    Dans l’onglet
-    <strong>
-     Applis
-    </strong>
-    , cliquer sur le bouton
-    <strong>
-     Rafraîchir
-    </strong>
-    en haut à droite, puis attendre la fin de l’opération.
-   </li>
-  </ul>
-  <p>
-   Ce logiciel UserLand peut utiliser des images préparées à l’avance. L’
-   <strong>
-    image GeoPoppy
-   </strong>
-   doit d’abord être envoyée sur la tablette depuis votre ordinateur (ou téléchargée depuis internet si elle est disponible via une URL).
-  </p>
-  <h3 id="brancher-la-tablette-a-lordinateur">
-   Brancher la tablette à l’ordinateur
-  </h3>
-  <p>
-   Une fois la tablette branchée par cable USB à votre ordinateur, le message suivant doit s’afficher:
-   <strong>
-    Autoriser accès aux données de la tablette ?
-   </strong>
-   <em>
-    L’appareil connecté va pouvoir accéder aux données se trouvant sur cette tablette
-   </em>
-   .
-  </p>
-  <ul>
-   <li>
-    Cliquer sur le bouton
-    <strong>
-     Autoriser
-    </strong>
-    ,
-   </li>
-   <li>
-    Ouvrir votre explorateur de fichiers sur votre ordinateur
-   </li>
-   <li>
-    Trouver le disque de votre tablette puis naviguer dans le dossier de téléchargement:
-    <code>
-     Tablet / Download
-    </code>
-   </li>
-   <li>
-    Y copier le fichier image qui vous a été fourni, par exemple le fichier
-    <code>
-     geopoppy32-debian-rootfs.tar.gz
-    </code>
-   </li>
-  </ul>
-  <p>
-   Une fois le fichier d’image compressée chargé sur votre tablette, vous pouvez retourner sur la tablette pour installer cette image dans UserLand.
-  </p>
-  <h3 id="charger-limage-dans-userland">
-   Charger l’image dans UserLand
-  </h3>
-  <p>
-   Nous allons d’abord créer un système de fichiers à partir de cette image, via le logiciel UserLand:
-  </p>
-  <ul>
-   <li>
-    Ouvrir le logiciel UserLand
-   </li>
-   <li>
-    Aller dans le 3ème onglet
-    <strong>
-     Systèmes de fichiers
-    </strong>
-   </li>
-   <li>
-    Cliquer sur le bouton
-    <strong>
-     +
-    </strong>
-    en haut à droit pour créer un nouvel item. Un formulaire s’affiche, renseigner:
-   </li>
-   <li>
-    Nom du système de fichiers:
-    <strong>
-     GeoPoppy
-    </strong>
-    (libre)
-    <ul>
-     <li>
-      Nom d’utilisateur:
-      <strong>
-       geopoppy
-      </strong>
-      (en minuscules)
-     </li>
-     <li>
-      Mot de passe:
-      <strong>
-       geopoppy
-      </strong>
-      (en minuscules)
-     </li>
-     <li>
-      Mot de passe pour VNC:
-      <strong>
-       geopoppy
-      </strong>
-      (en minuscules)
-     </li>
-     <li>
-      Système de fichiers:
-      <strong>
-       Debian
-      </strong>
-     </li>
-     <li>
-      Cliquer sur
-      <em>
-       Show advanced options
-      </em>
-      puis sur le bouton
-      <strong>
-       SELECT BACKUP FILE TO IMPORT
-      </strong>
-      et sélectionner dans votre dossier
-      <strong>
-       Téléchargement
-      </strong>
-      l’image GeoPoppy, par exemple
-      <code>
-       geopoppy32-debian-rootfs.tar.gz
-      </code>
-     </li>
-    </ul>
-   </li>
-   <li>
-    Valider avec l’
-    <strong>
-     icône disquette
-    </strong>
-    en haut à droite
-   </li>
-  </ul>
-  <p>
-   <img alt="UserLand nouveau systeme de fichier" src="media/userland_creer_systeme_fichier.jpg"/>
-  </p>
-  <p>
-   Une fois le système de fichier créé, nous pouvons créer une nouvelle session à partir de ce système:
-  </p>
-  <ul>
-   <li>
-    Ouvrir l’application UserLand si besoin
-   </li>
-   <li>
-    Aller dans le 2ème onglet
-    <strong>
-     Sessions
-    </strong>
-   </li>
-   <li>
-    Cliquer sur le bouton
-    <strong>
-     +
-    </strong>
-    en haut à droit pour créer un nouvel item. Un formulaire s’affiche, renseigner:
-    <ul>
-     <li>
-      Nom de la session:
-      <strong>
-       GeoPoppy
-      </strong>
-      (libre)
-     </li>
-     <li>
-      Système de fichier: choisir le système précédemment créé, par exemple
-      <strong>
-       GeoPoppy: Debian
-      </strong>
-     </li>
-     <li>
-      Type de service:
-      <strong>
-       SSH
-      </strong>
-     </li>
-     <li>
-      Nom d’utilisateur:
-      <strong>
-       geopoppy
-      </strong>
-     </li>
-    </ul>
-   </li>
-   <li>
-    Valider avec l’
-    <strong>
-     icône disquette
-    </strong>
-    en haut à droite
-   </li>
-  </ul>
-  <p>
-   <img alt="UserLand nouvelle session" src="media/userland_creer_nouvelle_session.jpg"/>
-  </p>
-  <p>
-   <strong>
-    Une fois ces 2 étapes accomplies, nous allons pouvoir lancer l’application GeoPoppy depuis le logiciel UserLand
-   </strong>
-  </p>
-  <h2 id="lancement-de-lapplication-geopoppy">
-   Lancement de l’application GeoPoppy
-  </h2>
-  <p>
-   Maintenant que l’image du GeoPoppy a bien été chargée dans l’application UserLand, nous allons pouvoir l’utiliser.
-  </p>
-  <p>
-   Dans un premier temps, vérifier que vous êtes bien connecté en WIFI sur le même réseau que votre ordinateur, puis procéder ainsi:
-  </p>
-  <ul>
-   <li>
-    Ouvrir si besoin le logiciel
-    <strong>
-     UserLand
-    </strong>
-   </li>
-   <li>
-    Aller sur le 2ème onglet
-    <strong>
-     Sessions
-    </strong>
-   </li>
-   <li>
-    Cliquer sur le nom de la session créée précédemment, par exemple
-    <strong>
-     GeoPoppy
-    </strong>
-   </li>
-   <li>
-    Une nouvelle
-    <strong>
-     fenêtre noire
-    </strong>
-    s’affiche (un terminal ou invite de commande), et vous demande votre
-    <strong>
-     mot de passe
-    </strong>
-    .
-   </li>
-   <li>
-    Renseigner avec le clavier Android le mot de passe
-    <strong>
-     geopoppy
-    </strong>
-    (en minuscules).
-    <em>
-     Le mot tapé ne s’affiche pas, ni aucune étoile, mais c’est normal.
-    </em>
-   </li>
-   <li>
-    Une fois le mot de passe tapé,
-    <strong>
-     valider
-    </strong>
-    avec la touche
-    <strong>
-     Entrée
-    </strong>
-    ou
-    <strong>
-     Suivant
-    </strong>
-    du clavier Android.
-   </li>
-   <li>
-    Une
-    <strong>
-     série de commandes
-    </strong>
-    doit s’afficher, qui décrit le lancement des services:
-    <ul>
-     <li>
-      <em>
-       postgres
-      </em>
-      : serveur de base de données PostgreSQL, pour stocker les données
-     </li>
-     <li>
-      <em>
-       nginx
-      </em>
-      : serveur Web, pour afficher l’application Lizmap
-     </li>
-     <li>
-      <em>
-       redis
-      </em>
-      : base de données de cache, pour stocker les sessions
-     </li>
-     <li>
-      <em>
-       php
-      </em>
-      : environnement de script PHP, pour faire fonctionner Lizmap
-     </li>
-     <li>
-      <em>
-       ftpd
-      </em>
-      : serveur FTP, pour envoyer des fichiers sur la tablette
-     </li>
-     <li>
-      <em>
-       supervisor
-      </em>
-      : outil chargé de lancer le serveur cartographique
-      <em>
-       QGIS Server
-      </em>
-     </li>
-    </ul>
-   </li>
-   <li>
-    Un message final
-    <strong>
-     GEOPOPPY IP ADDRESS
-    </strong>
-    affiche l’
-    <strong>
-     adresse IP
-    </strong>
-    de la tablette, qui pourra être utilisé pour se connecter depuis l’ordinateur aux différents services (PostgreSQL, FTP)
-   </li>
-  </ul>
-  <p>
-   <strong>
-    Une fois ces services chargés, vous pouvez
-   </strong>
-   réduire la fenêtre de UserLand
-   <strong>
-    , mais surtout pas la fermer.
-   </strong>
-  </p>
-  <p>
-   <img alt="UserLand demarrage GeoPoppy" src="media/userland_demarrage_geopoppy.jpg"/>
-  </p>
-  <h2 id="utilisation">
-   Utilisation
-  </h2>
-  <p>
-   Pour lancer l’application Lizmap sur la tablette, il faut d’abord ouvrir un
-   <strong>
-    navigateur Web
-   </strong>
-   . Nous conseillons
-   <strong>
-    Chrome ou Firefox pour Android
-   </strong>
-   .
-  </p>
-  <p>
-   Ensuite, vous pouvez ouvrir l’URL
-   <a href="https://localhost:2080/lizmap/index.php">
-    https://localhost:2080/lizmap/index.php
-   </a>
-  </p>
-  <p>
-   Attention, ne pas oublier le
-   <strong>
-    s
-   </strong>
-   après http.
-  </p>
-  <p>
-   Une fois la page chargée, un message d’erreur est présenté. C’est dû au certificat utilisé pour le HTTPS, pour lequel il est nécessaire d’
-   <strong>
-    ajouter une exception
-   </strong>
-   . Par exemple sous Chrome:
-  </p>
-  <ul>
-   <li>
-    A l’arrivée de la page:
-   </li>
-  </ul>
-  <p>
-   <img alt="Erreur HTTPS 1" src="media/utilisation_exception_https_1.jpg"/>
-  </p>
-  <ul>
-   <li>
-    Cliquer sur
-    <strong>
-     Paramètres avancés
-    </strong>
-    puis cliquer sur le lien
-    <strong>
-     Continuer vers le site
-    </strong>
-    localhost
-    <strong>
-     (dangereux)
-    </strong>
-   </li>
-  </ul>
-  <p>
-   <img alt="Erreur HTTPS 2" src="media/utilisation_exception_https_2.jpg"/>
-  </p>
-  <p>
-   Vous arriverez alors à la
-   <strong>
-    page d’accueil de Lizmap.
-   </strong>
-   qui est vide. Il faut vous connecter via le bouton
-   <strong>
-    Connexion
-   </strong>
-   de la barre en haut à droite, puis utiliser
-   <strong>
-    vos identifiants OpenDFCI
-   </strong>
-   dans le formulaire affiché:
-  </p>
-  <p>
-   <img alt="Page de connexion" src="media/utilisation_lizmap_page_connexion.png"/>
-  </p>
-  <ul>
-   <li>
-    Une fois connecté, vous accédez à la
-    <strong>
-     page d’accueil
-    </strong>
-    , qui montre les cartes disponibles:
-   </li>
-  </ul>
-  <p>
-   <img alt="Page d'accueil une fois connecté" src="media/utilisation_lizmap_page_accueil_connecte.png"/>
-  </p>
-  <ul>
-   <li>
-    Pour voir une carte, il faut cliquer (taper) sur une des imagettes, par exemple
-    <strong>
-     Espace de coproduction
-    </strong>
-    dans la copie d’écran ci-dessus. Vous arrivez alors à la carte choisie.
-   </li>
-  </ul>
-  <p>
-   <img alt="Carte Espace de coproduction" src="media/utilisation_lizmap_carte_coproduction.png"/>
-  </p>
-  <h3 id="menu-geopoppy">
-   Menu GeoPoppy
-  </h3>
-  <p>
-   Dans la barre de menu de gauche, vous pouvez accéder au menu
-   <strong>
-    GeoPoppy
-   </strong>
-   via l’icône avec les doubles-flèches qui tournent. Ce menu ouvre un panneau à gauche de la carte (ou en plein écran en mode portrait), qui propose les actions suivantes:
-  </p>
-  <ul>
-   <li>
-    <strong>
-     Test connection
-    </strong>
-    Ce bouton tester la connection vers la base de données centrale, pour savoir si on peut ensuite lancer la synchronisation entre la base de données du clone et la base centrale
-   </li>
-   <li>
-    <strong>
-     Synchronize database
-    </strong>
-    Lance la synchronisation bidirectionnelle entre la base de données locale de la tablette et la base de données centrale. Les modifications du serveur central sont appliquées sur la base de la tablette, puis les modifications réalisées sur la tablette sont poussées sur le serveur central.
-   </li>
-   <li>
-    <strong>
-     Synchronize media
-    </strong>
-    Ce bouton permet d’envoyer les photos enregistrées sur la tablette lors de l’utilisation des formulaires d’édition de la carte. Ces photos sont envoyées sur le serveur FTP central.
-   </li>
-   <li>
-    <strong>
-     Fullscreen
-    </strong>
-    Ce bouton permet de passer la carte en mode plein-écran, ou de revenir au mode classique.
-   </li>
-  </ul>
-  <p>
-   Pour pouvoir fonctionner, toutes les actions, sauf
-   <strong>
-    Fullscreen
-   </strong>
-   , ont besoin d’avoir une connexion internet, pour pouvoir dialoguer avec le serveur central (base PostgreSQL ou serveur FTP).
-   <strong>
-    Vérifier que votre connexion est stable avant de lancer les synchronisations.
-   </strong>
-  </p>
-  <p>
-   <img alt="Lizmap menu GeoPoppy" src="media/utilisation_lizmap_menu_geopoppy.jpeg"/>
-  </p>
-  <h2 id="trucs-et-astuce-userland-et-geopoppy">
-   Trucs et astuce UserLand et GeoPoppy
-  </h2>
-  <p>
-   <strong>
-    UserLand
-   </strong>
-   peut être considéré comme le moteur de
-   <strong>
-    GeoPoppy
-   </strong>
-   . Voici quelques manipulations à effectuer si vous rencontrez des soucis de fonctionnement.
-  </p>
-  <h3 id="utilisation-du-gps">
-   Utilisation du GPS
-  </h3>
-  <ul>
-   <li>
-    Veillez à bien
-    <strong>
-     lancer le GPS de votre tablette
-    </strong>
-    avant de lancer le navigateur et de charger la page de la carte Lizmap.
-   </li>
-   <li>
-    Ouvrir le navigateur et
-    <strong>
-     charger la carte Lizmap
-    </strong>
-   </li>
-   <li>
-    Dans le menu de gauche, cliquer sur le bouton avec un
-    <strong>
-     disque dans un cercle
-    </strong>
-   </li>
-   <li>
-    Un message s’affiche à l’écran, vous
-    <strong>
-     demandant la permission
-    </strong>
-    d’utiliser le positionnement: autoriser.
-   </li>
-   <li>
-    Après quelques secondes, la carte doit être
-    <strong>
-     recentrée sur votre position
-    </strong>
-   </li>
-   <li>
-    Pour
-    <strong>
-     désactiver le positionnement automatique
-    </strong>
-    , vous pouvez fermer le menu ou cliquer sur le bouton
-    <strong>
-     Arrêter
-    </strong>
-   </li>
-  </ul>
-  <h3 id="relancer-lapplication-lizmap">
-   Relancer l’application Lizmap
-  </h3>
-  <p>
-   Dans votre navigateur, si votre session a expiré, ou si vous souhaitez relancer la carte, vous pouvez cliquer sur la
-   <strong>
-    flèche qui tourne
-   </strong>
-   située à côté du champ avec l’adresse. Cela permet de recharger complètement la carte.
-  </p>
-  <h3 id="redemarrage-des-services-du-geopoppy">
-   Redémarrage des services du GeoPoppy
-  </h3>
-  <p>
-   Lorsque vous avez lancé le GeoPoppy, vous avez tapé votre mot de passe, puis laissé ouvert l’invite de commande (interface avec un fond noir): voir le chapitre précédent sur le démarrage du GeoPoppy.
-  </p>
-  <p>
-   Pour
-   <strong>
-    redémarrer les service du GeoPoppy
-   </strong>
-   sans arrêter la machine virtuelle UserLand, vous pouvez enchaîner les opérations suivantes:
-  </p>
-  <ul>
-   <li>
-    Dans l’invite de commande, taper le mot
-    <code>
-     exit
-    </code>
-    puis valider avec le bouton
-    <strong>
-     Entrée
-    </strong>
-    (ou
-    <strong>
-     Aller à
-    </strong>
-    ) du clavier. Cela ferme l’invite de commande
-   </li>
-   <li>
-    Dans UserLand, dans le 2ème onglet
-    <strong>
-     Sessions
-    </strong>
-    , taper sur le nom de votre session
-    <strong>
-     GeoPoppy
-    </strong>
-    , cela réouvre l’invite de commande, et vous demander le mot de passe
-    <code>
-     geopoppy
-    </code>
-    .
-   </li>
-   <li>
-    Une fois le mot de passe validé, les services sont tous redémarrés (comme lors d’un démarrage normal).
-   </li>
-  </ul>
-  <h3 id="redemarrage-complet-du-geopoppy">
-   Redémarrage complet du GeoPoppy
-  </h3>
-  <p>
-   Si vous souhaitez redémarrer l’
-   <strong>
-    ensemble UserLand et GeoPoppy
-   </strong>
-   de manière complète, vous pouvez suivre les étapes suivantes:
-  </p>
-  <ul>
-   <li>
-    Dans l’invite de commande, taper le mot
-    <code>
-     exit
-    </code>
-    puis valider: cela ferme l’invite de commande
-   </li>
-   <li>
-    Dans UserLand, dans le 2ème onglet
-    <strong>
-     Sessions
-    </strong>
-    , appuyer longtemps sur le nom de la session, puis sélectionner
-    <strong>
-     Tuer le service
-    </strong>
-   </li>
-   <li>
-    Dans le 1er onglet
-    <strong>
-     Applis
-    </strong>
-    , appuyer longtemps sur
-    <strong>
-     Debian
-    </strong>
-    , puis sélectionner
-    <strong>
-     Arrêter l’appli
-    </strong>
-   </li>
-   <li>
-    <strong>
-     Fermer UserLand
-    </strong>
-    en cliquant sur le bouton système pour afficher toutes les applications, puis la croix
-   </li>
-  </ul>
-  <p>
-   Pour
-   <strong>
-    relancer les services
-   </strong>
-   , faire comme le démarrage: lancer UserLand, aller dans le 2ème onglet et appuyer sur la session GeoPoppy, puis à l’invite de commande, taper le mot de passe
-   <code>
-    geopoppy
-   </code>
-   puis attendre le démarrage des services.
-  </p>
+<div class="toc"><span class="toctitle">Table of content</span><ul>
+<li><a href="#installation-et-lancement-du-geopoppy-sur-tablette-android">Installation et lancement du GeoPoppy sur tablette Android</a><ul>
+<li><a href="#introduction">Introduction</a><ul>
+<li><a href="#les-applications-du-geopoppy">Les applications du GeoPoppy</a></li>
+</ul>
+</li>
+<li><a href="#installation">Installation</a><ul>
+<li><a href="#installer-le-logiciel-userland">Installer le logiciel UserLand</a></li>
+<li><a href="#brancher-la-tablette-a-lordinateur">Brancher la tablette à l'ordinateur</a></li>
+<li><a href="#charger-limage-dans-userland">Charger l'image dans UserLand</a></li>
+</ul>
+</li>
+<li><a href="#lancement-de-lapplication-geopoppy">Lancement de l'application GeoPoppy</a></li>
+<li><a href="#utilisation">Utilisation</a><ul>
+<li><a href="#menu-geopoppy">Menu GeoPoppy</a></li>
+</ul>
+</li>
+<li><a href="#trucs-et-astuce-userland-et-geopoppy">Trucs et astuce UserLand et GeoPoppy</a><ul>
+<li><a href="#utilisation-du-gps">Utilisation du GPS</a></li>
+<li><a href="#relancer-lapplication-lizmap">Relancer l'application Lizmap</a></li>
+<li><a href="#redemarrage-des-services-du-geopoppy">Redémarrage des services du GeoPoppy</a></li>
+<li><a href="#redemarrage-complet-du-geopoppy">Redémarrage complet du GeoPoppy</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<p><a href="../index.html">Retour</a></p>
+<h1 id="installation-et-lancement-du-geopoppy-sur-tablette-android">Installation et lancement du GeoPoppy sur tablette Android</h1>
+<h2 id="introduction">Introduction</h2>
+<p>Ce document présente comment utiliser l'application <strong>UserLand</strong> pour installer et lancer l'outil <strong>GeoPoppy</strong> sur la tablette ou téléphone <strong>Android</strong>.</p>
+<h3 id="les-applications-du-geopoppy">Les applications du GeoPoppy</h3>
+<p>L'application principale qui sera utilisée pour visualiser les cartes et saisir des données sur le terrain est l'<strong>application Lizmap</strong>. Elle est consultable via un <strong>navigateur web</strong>. Nous conseillons vivement Firefox pour Android.</p>
+<p>Si vous êtes géomaticien, vous pourrez aussi utiliser les autres services disponibles pour consulter les données, modifier les configurations, car le GeoPoppy embarque aussi:</p>
+<ul>
+<li>un serveur de base de données <strong>PostgreSQL</strong></li>
+<li>un serveur <strong>FTP</strong> pour naviguer dans les répertoires poser des fichiers sur le GeoPoppy</li>
+<li>un serveur <strong>QGIS</strong> pour proposer des cartes et des données spatiales.</li>
+</ul>
+<p>Le GeoPoppy est l'équivalent d'un <strong>mini-serveur</strong> embarqué sur la tablette. Pour pouvoir utiliser les différents services depuis son ordinateur, il faut que les deux appareils soient connectés sur le <strong>même réseau WIFI</strong>.</p>
+<h2 id="installation">Installation</h2>
+<p>GeoPoppy peut être utilisé sur tablette ou smartphone fonctionnant sur système d'exploitation Android. Il utilise le logiciel <strong>UserLand</strong> qui permet de charger des <strong>images</strong> contenant l'ensemble des logiciels nécessaires.</p>
+<h3 id="installer-le-logiciel-userland">Installer le logiciel UserLand</h3>
+<p>Pour pouvoir continuer, connecter d'abord la tablette à internet (via WIFI ou 3G), puis:</p>
+<ul>
+<li><strong>Installer</strong> l'application <strong>UserLand</strong> depuis l'application Google Play</li>
+<li>Une fois installée, <strong>lancer</strong> cette application. Elle affiche par défaut 3 onglets:<ul>
+<li><strong>Applis</strong></li>
+<li><strong>Sessions</strong></li>
+<li><strong>Systèmes de fichiers</strong></li>
+</ul>
+</li>
+<li>Dans l'onglet <strong>Applis</strong>, cliquer sur le bouton <strong>Rafraîchir</strong> en haut à droite, puis attendre la fin de l'opération.</li>
+</ul>
+<p>Ce logiciel UserLand peut utiliser des images préparées à l'avance. L'<strong>image GeoPoppy</strong> doit d'abord être envoyée sur la tablette depuis votre ordinateur (ou téléchargée depuis internet si elle est disponible via une URL).</p>
+<h3 id="brancher-la-tablette-a-lordinateur">Brancher la tablette à l'ordinateur</h3>
+<p>Une fois la tablette branchée par cable USB à votre ordinateur, le message suivant doit s'afficher: <strong>Autoriser accès aux données de la tablette ?</strong> <em>L'appareil connecté va pouvoir accéder aux données se trouvant sur cette tablette</em>.</p>
+<ul>
+<li>Cliquer sur le bouton <strong>Autoriser</strong>,</li>
+<li>Ouvrir votre explorateur de fichiers sur votre ordinateur</li>
+<li>Trouver le disque de votre tablette puis naviguer dans le dossier de téléchargement: <code>Tablet / Download</code></li>
+<li>Y copier le fichier image qui vous a été fourni, par exemple le fichier <code>geopoppy32-debian-rootfs.tar.gz</code></li>
+</ul>
+<p>Une fois le fichier d'image compressée chargé sur votre tablette, vous pouvez retourner sur la tablette pour installer cette image dans UserLand.</p>
+<h3 id="charger-limage-dans-userland">Charger l'image dans UserLand</h3>
+<p>Nous allons d'abord créer un système de fichiers à partir de cette image, via le logiciel UserLand:</p>
+<ul>
+<li>Ouvrir le logiciel UserLand</li>
+<li>Aller dans le 3ème onglet <strong>Systèmes de fichiers</strong></li>
+<li>Cliquer sur le bouton <strong>+</strong> en haut à droit pour créer un nouvel item. Un formulaire s'affiche, renseigner:</li>
+<li>Nom du système de fichiers: <strong>GeoPoppy</strong> (libre)<ul>
+<li>Nom d'utilisateur: <strong>geopoppy</strong> (en minuscules)</li>
+<li>Mot de passe: <strong>geopoppy</strong> (en minuscules)</li>
+<li>Mot de passe pour VNC: <strong>geopoppy</strong> (en minuscules)</li>
+<li>Système de fichiers: <strong>Debian</strong></li>
+<li>Cliquer sur <em>Show advanced options</em> puis sur le bouton <strong>SELECT BACKUP FILE TO IMPORT</strong> et sélectionner dans votre dossier <strong>Téléchargement</strong> l'image GeoPoppy, par exemple <code>geopoppy32-debian-rootfs.tar.gz</code></li>
+</ul>
+</li>
+<li>Valider avec l'<strong>icône disquette</strong> en haut à droite</li>
+</ul>
+<p><img alt="UserLand nouveau systeme de fichier" src="media/userland_creer_systeme_fichier.jpg"></p>
+<p>Une fois le système de fichier créé, nous pouvons créer une nouvelle session à partir de ce système:</p>
+<ul>
+<li>Ouvrir l'application UserLand si besoin</li>
+<li>Aller dans le 2ème onglet <strong>Sessions</strong></li>
+<li>Cliquer sur le bouton <strong>+</strong> en haut à droit pour créer un nouvel item. Un formulaire s'affiche, renseigner:<ul>
+<li>Nom de la session: <strong>GeoPoppy</strong> (libre)</li>
+<li>Système de fichier: choisir le système précédemment créé, par exemple <strong>GeoPoppy: Debian</strong></li>
+<li>Type de service: <strong>SSH</strong></li>
+<li>Nom d'utilisateur: <strong>geopoppy</strong></li>
+</ul>
+</li>
+<li>Valider avec l'<strong>icône disquette</strong> en haut à droite</li>
+</ul>
+<p><img alt="UserLand nouvelle session" src="media/userland_creer_nouvelle_session.jpg"></p>
+<p><strong>Une fois ces 2 étapes accomplies, nous allons pouvoir lancer l'application GeoPoppy depuis le logiciel UserLand</strong></p>
+<h2 id="lancement-de-lapplication-geopoppy">Lancement de l'application GeoPoppy</h2>
+<p>Maintenant que l'image du GeoPoppy a bien été chargée dans l'application UserLand, nous allons pouvoir l'utiliser.</p>
+<p>Dans un premier temps, vérifier que vous êtes bien connecté en WIFI sur le même réseau que votre ordinateur, puis procéder ainsi:</p>
+<ul>
+<li>Ouvrir si besoin le logiciel <strong>UserLand</strong></li>
+<li>Aller sur le 2ème onglet <strong>Sessions</strong></li>
+<li>Cliquer sur le nom de la session créée précédemment, par exemple <strong>GeoPoppy</strong></li>
+<li>Une nouvelle <strong>fenêtre noire</strong> s'affiche (un terminal ou invite de commande), et vous demande votre <strong>mot de passe</strong>.</li>
+<li>Renseigner avec le clavier Android le mot de passe <strong>geopoppy</strong> (en minuscules). <em>Le mot tapé ne s'affiche pas, ni aucune étoile, mais c'est normal.</em></li>
+<li>Une fois le mot de passe tapé, <strong>valider</strong> avec la touche <strong>Entrée</strong> ou <strong>Suivant</strong> du clavier Android.</li>
+<li>Une <strong>série de commandes</strong> doit s'afficher, qui décrit le lancement des services:<ul>
+<li><em>postgres</em>: serveur de base de données PostgreSQL, pour stocker les données</li>
+<li><em>nginx</em>: serveur Web, pour afficher l'application Lizmap</li>
+<li><em>redis</em>: base de données de cache, pour stocker les sessions</li>
+<li><em>php</em>: environnement de script PHP, pour faire fonctionner Lizmap</li>
+<li><em>ftpd</em>: serveur FTP, pour envoyer des fichiers sur la tablette</li>
+<li><em>supervisor</em>: outil chargé de lancer le serveur cartographique <em>QGIS Server</em></li>
+</ul>
+</li>
+<li>Un message final <strong>GEOPOPPY IP ADDRESS</strong> affiche l'<strong>adresse IP</strong> de la tablette, qui pourra être utilisé pour se connecter depuis l'ordinateur aux différents services (PostgreSQL, FTP)</li>
+</ul>
+<p><strong>Une fois ces services chargés, vous pouvez </strong>réduire la fenêtre de UserLand<strong>, mais surtout pas la fermer.</strong></p>
+<p><img alt="UserLand demarrage GeoPoppy" src="media/userland_demarrage_geopoppy.jpg"></p>
+<h2 id="utilisation">Utilisation</h2>
+<p>Pour lancer l'application Lizmap sur la tablette, il faut d'abord ouvrir un <strong>navigateur Web</strong>. Nous conseillons <strong>Chrome ou Firefox pour Android</strong>.</p>
+<p>Ensuite, vous pouvez ouvrir l'URL https://localhost:2080/lizmap/index.php</p>
+<p>Attention, ne pas oublier le <strong>s</strong> après http.</p>
+<p>Une fois la page chargée, un message d'erreur est présenté. C'est dû au certificat utilisé pour le HTTPS, pour lequel il est nécessaire d'<strong>ajouter une exception</strong>. Par exemple sous Chrome:</p>
+<ul>
+<li>A l'arrivée de la page:</li>
+</ul>
+<p><img alt="Erreur HTTPS 1" src="media/utilisation_exception_https_1.jpg"></p>
+<ul>
+<li>Cliquer sur <strong>Paramètres avancés</strong> puis cliquer sur le lien <strong>Continuer vers le site </strong>localhost<strong> (dangereux)</strong></li>
+</ul>
+<p><img alt="Erreur HTTPS 2" src="media/utilisation_exception_https_2.jpg"></p>
+<p>Vous arriverez alors à la <strong>page d'accueil de Lizmap.</strong> qui est vide. Il faut vous connecter via le bouton <strong>Connexion</strong> de la barre en haut à droite, puis utiliser <strong>vos identifiants OpenDFCI</strong> dans le formulaire affiché:</p>
+<p><img alt="Page de connexion" src="media/utilisation_lizmap_page_connexion.png"></p>
+<ul>
+<li>Une fois connecté, vous accédez à la <strong>page d'accueil</strong>, qui montre les cartes disponibles:</li>
+</ul>
+<p><img alt="Page d'accueil une fois connecté" src="media/utilisation_lizmap_page_accueil_connecte.png"></p>
+<ul>
+<li>Pour voir une carte, il faut cliquer (taper) sur une des imagettes, par exemple <strong>Espace de coproduction</strong> dans la copie d'écran ci-dessus. Vous arrivez alors à la carte choisie.</li>
+</ul>
+<p><img alt="Carte Espace de coproduction" src="media/utilisation_lizmap_carte_coproduction.png"></p>
+<h3 id="menu-geopoppy">Menu GeoPoppy</h3>
+<p>Dans la barre de menu de gauche, vous pouvez accéder au menu <strong>GeoPoppy</strong> via l'icône avec les doubles-flèches qui tournent. Ce menu ouvre un panneau à gauche de la carte (ou en plein écran en mode portrait), qui propose les actions suivantes:</p>
+<ul>
+<li><strong>Test connection</strong> Ce bouton tester la connection vers la base de données centrale, pour savoir si on peut ensuite lancer la synchronisation entre la base de données du clone et la base centrale</li>
+<li><strong>Synchronize database</strong> Lance la synchronisation bidirectionnelle entre la base de données locale de la tablette et la base de données centrale. Les modifications du serveur central sont appliquées sur la base de la tablette, puis les modifications réalisées sur la tablette sont poussées sur le serveur central.</li>
+<li><strong>Synchronize media</strong> Ce bouton permet d'envoyer les photos enregistrées sur la tablette lors de l'utilisation des formulaires d'édition de la carte. Ces photos sont envoyées sur le serveur FTP central.</li>
+<li><strong>Fullscreen</strong> Ce bouton permet de passer la carte en mode plein-écran, ou de revenir au mode classique.</li>
+</ul>
+<p>Pour pouvoir fonctionner, toutes les actions, sauf <strong>Fullscreen</strong>, ont besoin d'avoir une connexion internet, pour pouvoir dialoguer avec le serveur central (base PostgreSQL ou serveur FTP). <strong>Vérifier que votre connexion est stable avant de lancer les synchronisations.</strong></p>
+<p><img alt="Lizmap menu GeoPoppy" src="media/utilisation_lizmap_menu_geopoppy.jpeg"></p>
+<h2 id="trucs-et-astuce-userland-et-geopoppy">Trucs et astuce UserLand et GeoPoppy</h2>
+<p><strong>UserLand</strong> peut être considéré comme le moteur de <strong>GeoPoppy</strong>. Voici quelques manipulations à effectuer si vous rencontrez des soucis de fonctionnement.</p>
+<h3 id="utilisation-du-gps">Utilisation du GPS</h3>
+<ul>
+<li>Veillez à bien <strong>lancer le GPS de votre tablette</strong> avant de lancer le navigateur et de charger la page de la carte Lizmap.</li>
+<li>Ouvrir le navigateur et <strong>charger la carte Lizmap</strong></li>
+<li>Dans le menu de gauche, cliquer sur le bouton avec un <strong>disque dans un cercle</strong></li>
+<li>Un message s'affiche à l'écran, vous <strong>demandant la permission</strong> d'utiliser le positionnement: autoriser.</li>
+<li>Après quelques secondes, la carte doit être <strong>recentrée sur votre position</strong></li>
+<li>Pour <strong>désactiver le positionnement automatique</strong>, vous pouvez fermer le menu ou cliquer sur le bouton <strong>Arrêter</strong></li>
+</ul>
+<h3 id="relancer-lapplication-lizmap">Relancer l'application Lizmap</h3>
+<p>Dans votre navigateur, si votre session a expiré, ou si vous souhaitez relancer la carte, vous pouvez cliquer sur la <strong>flèche qui tourne</strong> située à côté du champ avec l'adresse. Cela permet de recharger complètement la carte.</p>
+<h3 id="redemarrage-des-services-du-geopoppy">Redémarrage des services du GeoPoppy</h3>
+<p>Lorsque vous avez lancé le GeoPoppy, vous avez tapé votre mot de passe, puis laissé ouvert l'invite de commande (interface avec un fond noir): voir le chapitre précédent sur le démarrage du GeoPoppy.</p>
+<p>Pour <strong>redémarrer les service du GeoPoppy</strong> sans arrêter la machine virtuelle UserLand, vous pouvez enchaîner les opérations suivantes:</p>
+<ul>
+<li>Dans l'invite de commande, taper le mot <code>exit</code> puis valider avec le bouton <strong>Entrée</strong> (ou <strong>Aller à</strong>) du clavier. Cela ferme l'invite de commande</li>
+<li>Dans UserLand, dans le 2ème onglet <strong>Sessions</strong>, taper sur le nom de votre session <strong>GeoPoppy</strong>, cela réouvre l'invite de commande, et vous demander le mot de passe <code>geopoppy</code>.</li>
+<li>Une fois le mot de passe validé, les services sont tous redémarrés (comme lors d'un démarrage normal).</li>
+</ul>
+<h3 id="redemarrage-complet-du-geopoppy">Redémarrage complet du GeoPoppy</h3>
+<p>Si vous souhaitez redémarrer l'<strong>ensemble UserLand et GeoPoppy</strong> de manière complète, vous pouvez suivre les étapes suivantes:</p>
+<ul>
+<li>Dans l'invite de commande, taper le mot <code>exit</code> puis valider: cela ferme l'invite de commande</li>
+<li>Dans UserLand, dans le 2ème onglet <strong>Sessions</strong>, appuyer longtemps sur le nom de la session, puis sélectionner <strong>Tuer le service</strong></li>
+<li>Dans le 1er onglet <strong>Applis</strong>, appuyer longtemps sur <strong>Debian</strong>, puis sélectionner <strong>Arrêter l'appli</strong></li>
+<li><strong>Fermer UserLand</strong> en cliquant sur le bouton système pour afficher toutes les applications, puis la croix</li>
+</ul>
+<p>Pour <strong>relancer les services</strong>, faire comme le démarrage: lancer UserLand, aller dans le 2ème onglet et appuyer sur la session GeoPoppy, puis à l'invite de commande, taper le mot de passe <code>geopoppy</code> puis attendre le démarrage des services.</p>
   <script src="http://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.1/highlight.min.js">
   </script>
   <script>

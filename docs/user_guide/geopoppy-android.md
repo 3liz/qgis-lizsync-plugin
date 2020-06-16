@@ -1,3 +1,11 @@
+---
+Title: Geopoppy
+...
+
+[TOC]
+
+[Retour](../index.html)
+
 # Installation et lancement du GeoPoppy sur tablette Android
 
 ## Introduction
