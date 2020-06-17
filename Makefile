@@ -31,3 +31,10 @@ reformat_sql:
 	@cd .docker && ./install_db.sh
 	@cd .docker && ./reformat_sql_install.sh
 	@cd .docker && ./stop.sh
+
+flake8:
+	@docker run --rm -w /plugin -v $(shell pwd):/plugin etrimaille/flake8:3.8.2
+
+github-pages:
+	@docker run --rm -w /plugin -v $(shell pwd):/plugin etrimaille/pymarkdown docs/user_guide/geopoppy-android.md docs/user_guide/geopoppy-android.html
+	@docker run --rm -w /plugin -v $(shell pwd):/plugin etrimaille/pymarkdown docs/user_guide/qgis-lizsync-plugin.md docs/user_guide/qgis-lizsync-plugin.html
