@@ -1,4 +1,4 @@
-"""Base class for tests using a database with data."""
+"""Base class for tests using a database."""
 
 import psycopg2
 import time
@@ -25,7 +25,14 @@ __revision__ = "$Format:%H$"
 
 class DatabaseTestCase(unittest.TestCase):
 
-    """Base class for tests using a database with data."""
+    """Base class for tests using a database."""
+
+    def __init__(self, methodName="runTest"):
+        super().__init__(methodName)
+        self.cursor = None
+        self.connection = None
+        self.feedback = None
+        self.provider = None
 
     def setUp(self) -> None:
         self.connection = psycopg2.connect(
@@ -53,3 +60,4 @@ class DatabaseTestCase(unittest.TestCase):
         del self.cursor
         del self.connection
         time.sleep(1)
+        super().tearDown()
