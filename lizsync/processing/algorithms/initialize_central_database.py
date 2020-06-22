@@ -209,18 +209,8 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
         return ok, msg
 
     def processAlgorithm(self, parameters, context, feedback):
-        """
-        Here is where the processing itself takes place.
-        """
-        msg = ''
-        status = 1
-        output = {
-            self.OUTPUT_STATUS: status,
-            self.OUTPUT_STRING: msg
-        }
-
         # Parameters
-        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+        connection_name_central = self.parameterAsString(parameters, self.CONNECTION_NAME_CENTRAL, context)
         add_uid_columns = self.parameterAsBool(parameters, self.ADD_UID_COLUMNS, context)
         add_server_id = self.parameterAsBool(parameters, self.ADD_SERVER_ID, context)
         add_audit_triggers = self.parameterAsBool(parameters, self.ADD_AUDIT_TRIGGERS, context)
@@ -326,8 +316,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
                     msg = tr('No UID columns were missing.')
                     feedback.pushInfo(msg)
             else:
-                m = error_message
-                raise QgsProcessingException(m)
+                raise QgsProcessingException(error_message)
 
         # ADD MISSING AUDIT TRIGGERS
         if add_audit_triggers and not tests['audit triggers']['status']:
@@ -352,27 +341,27 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
                 connection_name_central,
                 sql
             )
-            if ok:
-                status = 1
-                names = []
-                for a in data:
-                    names.append(
-                        '{0}.{1}'.format(a[0], a[1])
-                    )
-                if names:
-                    msg = tr('Audit triggers have been successfully added in the following tables:')
-                    feedback.pushInfo(msg)
-                    for n in names:
-                        feedback.pushInfo('* ' + n)
-                    msg += ', '.join(names)
-                else:
-                    msg = tr('No audit triggers were missing.')
-                    feedback.pushInfo(msg)
-            else:
+            if not ok:
                 raise QgsProcessingException(error_message)
 
+            status = 1
+            names = []
+            for a in data:
+                names.append(
+                    '{0}.{1}'.format(a[0], a[1])
+                )
+            if names:
+                msg = tr('Audit triggers have been successfully added in the following tables:')
+                feedback.pushInfo(msg)
+                for n in names:
+                    feedback.pushInfo('* ' + n)
+                msg += ', '.join(names)
+            else:
+                msg = tr('No audit triggers were missing.')
+                feedback.pushInfo(msg)
+
         output = {
-            self.OUTPUT_STATUS: status,
-            self.OUTPUT_STRING: msg
+            self.OUTPUT_STATUS: 1,
+            self.OUTPUT_STRING: 'Ok',
         }
         return output

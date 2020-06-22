@@ -1,0 +1,15 @@
+---
+- description: "Test insert a new pluviometer in clone A"
+  sequence:
+    - type: query
+      database: lizsync_clone_a
+      sql: INSERT INTO "test"."pluviometers" (id, nom, geom)
+        VALUES (
+        99, 'pluvio99', '01010000206A0800002F0DFEA05C612741B30B19D64FF75741'
+        );
+    - type: sleep
+    - type: query
+      database: test
+      sql: SELECT version();
+    - type: synchro
+      from: lizsync_clone_a
