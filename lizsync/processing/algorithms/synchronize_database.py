@@ -7,7 +7,7 @@ from qgis.core import (
     QgsProcessingException,
     QgsProcessingParameterString,
     QgsProcessingOutputString,
-    QgsProcessingOutputNumber
+    QgsProcessingOutputNumber,
 )
 from .tools import (
     lizsyncConfig,

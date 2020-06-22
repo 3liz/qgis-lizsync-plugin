@@ -25,5 +25,5 @@ services:
 
     # Only supported in version 3
     # But we need version 2 for extends
-#    healthcheck:
-#      test: "exit 0"
+    # healthcheck:
+    #  test: "exit 0"

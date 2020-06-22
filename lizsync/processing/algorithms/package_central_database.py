@@ -14,6 +14,10 @@ __date__ = '2018-12-19'
 __copyright__ = '(C) 2018 by 3liz'
 
 import os
+import tempfile
+import zipfile
+
+from platform import system as psys
 
 from qgis.core import (
     QgsProcessingException,
@@ -31,9 +35,6 @@ from .tools import (
     fetchDataFromSqlQuery,
     pg_dump,
 )
-import zipfile
-import tempfile
-from platform import system as psys
 from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
 
@@ -259,11 +260,6 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         Here is where the processing itself takes place.
         """
         msg = ''
-        status = 0
-        output = {
-            self.OUTPUT_STATUS: status,
-            self.OUTPUT_STRING: msg
-        }
 
         # Parameters
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
@@ -454,7 +450,6 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             sql
         )
         if ok:
-            status = 1
             sync_id = ''
             for a in data:
                 sync_id = a[0]
@@ -488,9 +483,6 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         except Exception:
             compression = zipfile.ZIP_STORED
 
-        status = 1
-        msg = ''
-
         with zipfile.ZipFile(zip_file, mode='w') as zf:
             for fname, fsource in sql_files.items():
                 try:
@@ -501,14 +493,13 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
                     )
                 except Exception:
                     msg += tr("Error while zipping file") + ': ' + fname
-                    m = msg
-                    raise QgsProcessingException(m)
+                    raise QgsProcessingException(msg)
 
         msg = tr('Package has been successfully created !')
         feedback.pushInfo(msg)
 
         output = {
-            self.OUTPUT_STATUS: status,
+            self.OUTPUT_STATUS: 1,
             self.OUTPUT_STRING: msg
         }
         return output
