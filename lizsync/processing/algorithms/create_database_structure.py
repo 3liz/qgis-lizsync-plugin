@@ -31,7 +31,6 @@ from qgis.core import (
 from .tools import (
     lizsyncConfig,
     getUriFromConnectionName,
-    returnError,
 )
 from ...qgis_plugin_tools.tools.database import (
     available_migrations,
@@ -207,11 +206,6 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
         return ok, msg
 
     def processAlgorithm(self, parameters, context, feedback):
-        output = {
-            self.OUTPUT_STATUS: 0,
-            self.OUTPUT_STRING: ''
-        }
-
         # Parameters
         connection_name = self.parameterAsString(
             parameters, self.CONNECTION_NAME, context
@@ -245,9 +239,7 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
                 if ok:
                     feedback.pushInfo(tr("* Schema has been dropped") + ' - ' + s.upper())
                 else:
-                    feedback.pushInfo(error_message)
-                    m = error_message
-                    return returnError(output, m, feedback)
+                    raise QgsProcessingException(error_message)
 
         # Create full structure
         sql_files = [

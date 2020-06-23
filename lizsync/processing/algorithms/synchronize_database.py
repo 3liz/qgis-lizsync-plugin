@@ -4,6 +4,7 @@ __email__ = 'info@3liz.org'
 __revision__ = '$Format:%H$'
 
 from qgis.core import (
+    QgsProcessingException,
     QgsProcessingParameterString,
     QgsProcessingOutputString,
     QgsProcessingOutputNumber
@@ -12,7 +13,6 @@ from .tools import (
     lizsyncConfig,
     getUriFromConnectionName,
     fetchDataFromSqlQuery,
-    returnError,
 )
 from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
@@ -158,10 +158,10 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
         )
         if not ok:
             m = tr('An error occured during the database synchronization') + ' ' + error_message
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
         if rowCount == 0:
             m = tr('An unknown error has been raised during the database synchronization')
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
 
         for line in data:
             number_replayed_to_central = line[0]

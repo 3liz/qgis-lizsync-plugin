@@ -17,7 +17,6 @@ from qgis.core import (
 from .tools import (
     lizsyncConfig,
     getUriFromConnectionName,
-    returnError,
 )
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
 from ...qgis_plugin_tools.tools.database import (
@@ -178,7 +177,7 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
         # Drop schema if needed
         if not runit:
             m = tr('You must check the box to run the upgrade !')
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
 
         # get database version
         sql = '''
@@ -192,15 +191,13 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
             sql
         )
         if not ok:
-            m = error_message
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(error_message)
         db_version = None
         for a in data:
             db_version = a[0]
         if not db_version:
             error_message = tr('No installed version found in the database !')
-            m = error_message
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(error_message)
         feedback.pushInfo(tr('Database structure version') + ' = %s' % db_version)
 
         # Get plugin version

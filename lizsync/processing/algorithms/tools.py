@@ -748,20 +748,6 @@ def setQgisProjectOffline(qgis_directory, connection_name_central, feedback):
     return True, 'Success'
 
 
-def returnError(output, msg, feedback):
-    """
-    Report errors
-    """
-    output_string = 'OUTPUT_STRING'
-    feedback.reportError(msg)
-    if output_string in output:
-        output[output_string] = msg
-    # raise Exception(msg)
-    # raise QgsProcessingException(msg)
-
-    return output
-
-
 from configparser import ConfigParser
 from shutil import copyfile
 
