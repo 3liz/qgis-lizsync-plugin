@@ -16,6 +16,7 @@ __copyright__ = '(C) 2018 by 3liz'
 import os
 
 from qgis.core import (
+    QgsProcessingException,
     QgsProcessingParameterString,
     QgsProcessingParameterNumber,
     QgsProcessingParameterFile,
@@ -30,7 +31,6 @@ from .tools import (
     ftp_sync,
     get_ftp_password,
     lizsyncConfig,
-    returnError,
 )
 from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
@@ -250,7 +250,7 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
         feedback.pushInfo(tr('CHECK LOCAL PROJECT DIRECTORY'))
         if not localdir or not os.path.isdir(localdir):
             m = tr('QGIS project local directory not found')
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
         else:
             m = tr('QGIS project local directory ok')
             feedback.pushInfo(m)
@@ -259,12 +259,12 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
         if not ftppassword:
             ok, password, msg = get_ftp_password(ftphost, ftpport, ftplogin)
             if not ok:
-                return returnError(output, msg, feedback)
+                raise QgsProcessingException(msg)
         else:
             password = ftppassword
         ok, msg = check_ftp_connection(ftphost, ftpport, ftplogin, password)
         if not ok:
-            return returnError(output, msg, feedback)
+            raise QgsProcessingException(msg)
 
         # Check if ftpdir exists
         ok = True
@@ -274,7 +274,7 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
         ftp.login(ftplogin, password)
         try:
             ftp.cwd(ftpdir)
-            # do the code for successfull cd
+            # do the code for successful cd
             m = tr('Remote directory exists in the central server')
             for file_name in ftp.nlst():
                 if file_name.endswith('.qgs') or file_name.endswith('.qgs.cfg'):
@@ -286,7 +286,7 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
         finally:
             ftp.close()
         if not ok:
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
 
         # Run FTP sync
         feedback.pushInfo(tr('Local directory') + ' %s' % localdir)
@@ -298,8 +298,7 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
             excluded_directories, feedback
         )
         if not ok:
-            m = msg
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(msg)
 
         status = 1
         msg = tr("Synchronization successfull")

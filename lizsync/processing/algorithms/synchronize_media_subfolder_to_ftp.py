@@ -16,6 +16,7 @@ __copyright__ = '(C) 2018 by 3liz'
 import os
 
 from qgis.core import (
+    QgsProcessingException,
     QgsProcessingParameterString,
     QgsProcessingParameterNumber,
     QgsProcessingParameterFile,
@@ -30,7 +31,6 @@ from .tools import (
     ftp_sync,
     get_ftp_password,
     lizsyncConfig,
-    returnError,
 )
 from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
@@ -209,18 +209,18 @@ class SynchronizeMediaSubfolderToFtp(BaseProcessingAlgorithm):
         feedback.pushInfo(tr('CHECK LOCAL PROJECT DIRECTORY'))
         if not localdir or not os.path.isdir(localdir):
             m = tr('QGIS project local directory not found')
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
 
         # Check ftp
         if not ftppassword:
             ok, password, msg = get_ftp_password(ftphost, ftpport, ftplogin)
             if not ok:
-                return returnError(output, msg, feedback)
+                raise QgsProcessingException(msg)
         else:
             password = ftppassword
         ok, msg = check_ftp_connection(ftphost, ftpport, ftplogin, password)
         if not ok:
-            return returnError(output, msg, feedback)
+            raise QgsProcessingException(msg)
 
         # Check if ftpdir exists
         ok = True
@@ -238,7 +238,7 @@ class SynchronizeMediaSubfolderToFtp(BaseProcessingAlgorithm):
         finally:
             ftp.close()
         if not ok:
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
 
         # Check if media/upload exists locally
         feedback.pushInfo(tr('START FTP DIRECTORY SYNCHRONIZATION TO SERVER') + ' %s' % ftpdir)
@@ -251,12 +251,10 @@ class SynchronizeMediaSubfolderToFtp(BaseProcessingAlgorithm):
             direction = 'to'
             ok, msg = ftp_sync(ftphost, ftpport, ftplogin, password, localdir, ftpdir, direction, '', feedback)
             if not ok:
-                m = msg
-                return returnError(output, m, feedback)
+                raise QgsProcessingException(m)
         else:
             m = tr('Local directory does not exists. No synchronization needed.')
             feedback.pushInfo(m)
-            msg = m
 
         status = 1
         msg = tr('Media upload subfolder sucessfully synchronized to the central server')

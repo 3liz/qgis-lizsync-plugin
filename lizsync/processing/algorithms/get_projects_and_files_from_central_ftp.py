@@ -16,6 +16,7 @@ __copyright__ = '(C) 2018 by 3liz'
 import os
 
 from qgis.core import (
+    QgsProcessingException,
     QgsProcessingParameterString,
     QgsProcessingParameterNumber,
     QgsProcessingParameterFile,
@@ -31,7 +32,6 @@ from .tools import (
     ftp_sync,
     get_ftp_password,
     lizsyncConfig,
-    returnError,
     run_command,
     setQgisProjectOffline,
 )
@@ -247,7 +247,7 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
         feedback.pushInfo(tr('CHECK LOCAL PROJECT DIRECTORY'))
         if not localdir or not os.path.isdir(localdir):
             m = tr('QGIS project local directory not found')
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
         else:
             m = tr('QGIS project local directory ok')
             feedback.pushInfo(m)
@@ -256,12 +256,12 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
         if not ftppassword:
             ok, password, msg = get_ftp_password(ftphost, ftpport, ftplogin)
             if not ok:
-                return returnError(output, msg, feedback)
+                raise QgsProcessingException(msg)
         else:
             password = ftppassword
         ok, msg = check_ftp_connection(ftphost, ftpport, ftplogin, password)
         if not ok:
-            return returnError(output, msg, feedback)
+            raise QgsProcessingException(msg)
 
         # Check if ftpdir exists
         ok = True
@@ -279,7 +279,7 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
         finally:
             ftp.close()
         if not ok:
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
 
         # Remove existing QGIS project files with subprocess to avoid a nasty bug
         # in Userland context
@@ -309,8 +309,7 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
 
         ok, msg = ftp_sync(ftphost, ftpport, ftplogin, password, localdir, ftpdir, direction, excludedirs, feedback)
         if not ok:
-            m = msg
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(msg)
 
         # Adapt QGIS project to Geopoppy
         # Mainly change database connection parameters (central -> clone)
@@ -318,8 +317,7 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
             feedback.pushInfo(tr('ADAPT QGIS PROJECTS FOR OFFLINE USE'))
             ok, msg = setQgisProjectOffline(localdir, connection_name_central, feedback)
             if not ok:
-                m = msg
-                return returnError(output, m, feedback)
+                raise QgsProcessingException(msg)
 
         status = 1
         msg = tr("QGIS projects and file successfully synchronized from the central FTP server")

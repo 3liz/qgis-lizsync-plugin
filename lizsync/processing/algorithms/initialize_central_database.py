@@ -18,6 +18,7 @@ __copyright__ = '(C) 2018 by 3liz'
 __revision__ = '$Format:%H$'
 
 from qgis.core import (
+    QgsProcessingException,
     QgsProcessingParameterString,
     QgsProcessingParameterBoolean,
     QgsProcessingOutputNumber,
@@ -28,7 +29,6 @@ from .tools import (
     lizsyncConfig,
     getUriFromConnectionName,
     fetchDataFromSqlQuery,
-    returnError,
 )
 from db_manager.db_plugins import createDbPlugin
 from ...qgis_plugin_tools.tools.i18n import tr
@@ -261,7 +261,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
                 'Lizsync has not been installed in the central database.'
                 ' Run the script "Create database structure"'
             )
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
 
         feedback.pushInfo(tr('Lizsync structure OK'))
 
@@ -289,7 +289,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
                 m = tr('Error adding server name in server_metadata table.')
                 m += ' '
                 m += error_message
-                return returnError(output, m, feedback)
+                raise QgsProcessingException(m)
 
         # Add UID columns for given schema names
         if add_uid_columns and not tests['uid columns']['status']:
@@ -327,7 +327,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
                     feedback.pushInfo(msg)
             else:
                 m = error_message
-                return returnError(output, m, feedback)
+                raise QgsProcessingException(m)
 
         # ADD MISSING AUDIT TRIGGERS
         if add_audit_triggers and not tests['audit triggers']['status']:
@@ -369,8 +369,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
                     msg = tr('No audit triggers were missing.')
                     feedback.pushInfo(msg)
             else:
-                m = error_message
-                return returnError(output, m, feedback)
+                raise QgsProcessingException(error_message)
 
         output = {
             self.OUTPUT_STATUS: status,

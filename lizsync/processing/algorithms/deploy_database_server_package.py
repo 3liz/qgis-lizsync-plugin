@@ -17,6 +17,7 @@ import os
 import tempfile
 
 from qgis.core import (
+    QgsProcessingException,
     QgsProcessingParameterString,
     QgsProcessingParameterFile,
     QgsProcessingOutputString,
@@ -27,7 +28,6 @@ from .tools import (
     getUriFromConnectionName,
     get_connection_password_from_ini,
     fetchDataFromSqlQuery,
-    returnError,
     run_command,
 )
 from platform import system as psys
@@ -232,7 +232,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         # Check archive
         if not os.path.exists(database_archive_file):
             m = tr('Package not found') + ' : %s' % database_archive_file
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
 
         msg = ''
         # Uncompress package
@@ -245,7 +245,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                 feedback.pushInfo(tr('Package uncompressed successfully'))
         except Exception:
             m = tr('Package extraction error')
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
 
         # Check needed files
         feedback.pushInfo(tr('CHECK UNCOMPRESSED FILES'))
@@ -260,7 +260,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         for f in sql_file_list:
             if not os.path.exists(os.path.join(dir_path, f)):
                 m = tr('One mandatory file has not been found in the ZIP archive') + '  - %s' % f
-                return returnError(output, m, feedback)
+                raise QgsProcessingException(m)
         feedback.pushInfo(tr('All the mandatory files have been sucessfully found'))
 
         # CLONE DATABASE
@@ -284,8 +284,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                     has_sync = True
                     feedback.pushInfo(tr('Clone database already has sync metadata table'))
         else:
-            m = error_message
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(error_message)
 
         # get existing server_id
         if has_sync:
@@ -306,8 +305,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                     feedback.pushInfo(tr('* server id') + ' = {0}'.format(clone_id))
                     feedback.pushInfo(tr('* server name') + ' = {0}'.format(clone_name))
             else:
-                m = error_message
-                return returnError(output, m, feedback)
+                raise QgsProcessingException(error_message)
 
         # Get last synchro and
         # check if no newer bi-directionnal (partial sync)
@@ -318,7 +316,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             sync_id = f.readline().strip()
         if not sync_id:
             m = tr('No synchronization ID has been found in the file sync_id.txt')
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
         sql = '''
             SELECT sync_id
             FROM lizsync.history
@@ -345,21 +343,20 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         )
         if not ok:
             m = error_message + ' ' + sql
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
         for a in data:
             last_sync = a[0]
         if last_sync:
             m = tr('Synchronization has already been made on this clone since the deployment of this package. Abort the current deployment')
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
 
         # Get synchronized schemas
         feedback.pushInfo(tr('GET THE LIST OF SYNCHRONIZED SCHEMAS FROM THE FILE sync_schemas.txt'))
-        sync_schemas = ''
         with open(os.path.join(dir_path, 'sync_schemas.txt')) as f:
             sync_schemas = f.readline().strip()
         if sync_schemas == '':
             m = tr('No schema to syncronize')
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
 
         feedback.pushInfo(tr('Schema list found in sync_schemas.txt') + ' %s' % sync_schemas)
 
@@ -372,10 +369,10 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         d_sql = os.path.join(dir_path, '04_lizsync.sql')
         if not os.path.exists(a_sql) or not os.path.exists(b_sql) or not os.path.exists(c_sql):
             m = tr('SQL files not found')
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
         sql_files = [a_sql, b_sql, c_sql, d_sql]
 
-        # Add addionnal SQL file if present
+        # Add additional SQL file if present
         last_sql = os.path.join(dir_path, '99_last.sql')
         if os.path.exists(last_sql):
             sql_files.append(last_sql)
@@ -385,7 +382,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         if not status or not uri:
             m = tr('Error getting database connection information')
             m += ' ' + error_message
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
 
         if uri.service():
             cmdo = [
@@ -441,7 +438,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                 os.remove(i)
             except Exception:
                 m = tr('Error loading file') + ' {0}'.format(i)
-                return returnError(output, m, feedback)
+                raise QgsProcessingException(m)
 
             finally:
                 feedback.pushInfo('* {0} has been loaded'.format(i.replace(dir_path, '')))
@@ -480,7 +477,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         else:
             m = tr('Error while adding server id in clone metadata table')
             m+= ' ' + error_message
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
 
         # CENTRAL DATABASE
         # Add an item in lizsync.synchronized_schemas
@@ -509,14 +506,14 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         else:
             m = tr('Error while adding the synchronized schemas in the central database')
             m+= ' ' + error_message
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
 
         # CLONE DATABASE
         # Add foreign server and foreign schemas for synced schemas
         # We need full connection params: host, port, dbname, user, password
         ok, uri, msg = getUriFromConnectionName(connection_name_central, True)
         if not ok:
-            return returnError(output, msg, feedback)
+            raise QgsProcessingException(msg)
 
         # Get password if not found in URI
         if not uri.password():
@@ -524,7 +521,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             uri.setPassword(password)
         if not uri.password():
             msg = tr('No password found for the central database connection !')
-            return returnError(output, msg, feedback)
+            raise QgsProcessingException(msg)
 
         # Add foreign server in the clone database
         feedback.pushInfo(tr('ADDING THE FOREING SERVER AND SCHEMAS ID IN THE CLONE DATABASE'))
@@ -548,7 +545,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         else:
             m = tr('Error while adding the foregin server and schemas in clone database')
             m+= ' ' + error_message
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
 
         # CENTRAL DATABASE - Add clone Id in the lizsync.history line
         # corresponding to this deployed package
@@ -576,7 +573,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             else:
                 m = tr('Error while updating the history item for this archive deployement')
                 m+= ' ' + error_message
-                return returnError(output, m, feedback)
+                raise QgsProcessingException(m)
 
         output = {
             self.OUTPUT_STATUS: 1,

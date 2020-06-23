@@ -16,6 +16,7 @@ __copyright__ = '(C) 2018 by 3liz'
 import os
 
 from qgis.core import (
+    QgsProcessingException,
     QgsProcessingParameterString,
     QgsProcessingParameterFile,
     QgsProcessingParameterFileDestination,
@@ -29,7 +30,6 @@ from .tools import (
     getUriFromConnectionName,
     fetchDataFromSqlQuery,
     pg_dump,
-    returnError,
 )
 import zipfile
 import tempfile
@@ -288,7 +288,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         # First run some test in database
         test, m = self.checkCentralDatabase(parameters, feedback)
         if not test:
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
 
         # Create temporary files
         sql_file_list = [
@@ -368,7 +368,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             feedback.pushInfo(pmessage)
         if not pstatus:
             m = ' '.join(pmessages)
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
 
         # 3/ 03_after.sql
         ####
@@ -413,7 +413,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             feedback.pushInfo(pmessage)
         if not pstatus:
             m = ' '.join(pmessages)
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
 
         # 5/ sync_schemas.txt
         # Add schemas into file
@@ -471,13 +471,13 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
                 m += msg
                 m += ' '
                 m += error_message
-                return returnError(output, m, feedback)
+                raise QgsProcessingException(m)
         else:
             m = tr('No synchronization item could be added !')
             m += ' ' + error_message
-            return returnError(output, m, feedback)
+            raise QgsProcessingException(m)
 
-        # Additionnal SQL file to run
+        # Additional SQL file to run
         if additionnal_sql_file and os.path.isfile(additionnal_sql_file):
             sql_files['99_last.sql'] = additionnal_sql_file
 
@@ -500,10 +500,10 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
                         compress_type=compression
                     )
                 except Exception:
-                    status = 0
                     msg += tr("Error while zipping file") + ': ' + fname
                     m = msg
-                    return returnError(output, m, feedback)
+                    raise QgsProcessingException(m)
+
         msg = tr('Package has been successfully created !')
         feedback.pushInfo(msg)
 
