@@ -604,7 +604,7 @@ def ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, ex
     return True, 'Success'
 
 
-def pg_dump(feedback, postgresql_binary_path, connection_name, output_file_name, schemas, additionnal_parameters=[]):
+def pg_dump(feedback, postgresql_binary_path, connection_name, output_file_name, schemas, additional_parameters=[]):
     messages = []
     status = False
 
@@ -656,9 +656,9 @@ def pg_dump(feedback, postgresql_binary_path, connection_name, output_file_name,
     for s in schemas:
         cmd.append('-n {0}'.format(s))
 
-    # Add additionnal parameters
-    if additionnal_parameters:
-        cmd = cmd + additionnal_parameters
+    # Add additional parameters
+    if additional_parameters:
+        cmd = cmd + additional_parameters
 
     # Run command
     # print(" ".join(cmd))
