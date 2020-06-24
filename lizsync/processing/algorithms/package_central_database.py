@@ -50,7 +50,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
     SCHEMAS = 'SCHEMAS'
     POSTGRESQL_BINARY_PATH = 'POSTGRESQL_BINARY_PATH'
     ZIP_FILE = 'ZIP_FILE'
-    ADDITIONNAL_SQL_FILE = 'ADDITIONNAL_SQL_FILE'
+    ADDITIONAL_SQL_FILE = 'ADDITIONAL_SQL_FILE'
     OUTPUT_STATUS = 'OUTPUT_STATUS'
     OUTPUT_STRING = 'OUTPUT_STRING'
 
@@ -135,23 +135,23 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         )
 
         # Additionnal SQL file to run on the clone
-        additionnal_sql_file = ls.variable('general/additionnal_sql_file')
+        additional_sql_file = ls.variable('general/additional_sql_file')
         # Userland context
         if os.path.isdir('/storage/internal/geopoppy') and psys().lower().startswith('linux'):
             self.addParameter(
                 QgsProcessingParameterString(
-                    self.ADDITIONNAL_SQL_FILE,
+                    self.ADDITIONAL_SQL_FILE,
                     tr('Additionnal SQL file to run in the clone after the ZIP deployement'),
-                    defaultValue=additionnal_sql_file,
+                    defaultValue=additional_sql_file,
                     optional=True
                 )
             )
         else:
             self.addParameter(
                 QgsProcessingParameterFile(
-                    self.ADDITIONNAL_SQL_FILE,
+                    self.ADDITIONAL_SQL_FILE,
                     tr('Additionnal SQL file to run in the clone after the ZIP deployement'),
-                    defaultValue=additionnal_sql_file,
+                    defaultValue=additional_sql_file,
                     behavior=QgsProcessingParameterFile.File,
                     optional=True,
                     extension='sql'
@@ -269,9 +269,9 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
         synchronized_schemas = parameters[self.SCHEMAS]
-        additionnal_sql_file = self.parameterAsString(
+        additional_sql_file = self.parameterAsString(
             parameters,
-            self.ADDITIONNAL_SQL_FILE,
+            self.ADDITIONAL_SQL_FILE,
             context
         )
         zip_file = parameters[self.ZIP_FILE]
@@ -281,7 +281,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         ls.setVariable('postgresql:central/name', connection_name_central)
         ls.setVariable('binaries/postgresql', postgresql_binary_path)
         ls.setVariable('postgresql:central/schemas', synchronized_schemas)
-        ls.setVariable('general/additionnal_sql_file', additionnal_sql_file)
+        ls.setVariable('general/additional_sql_file', additional_sql_file)
         ls.setVariable('general/database_archive_file', zip_file)
         ls.save()
 
@@ -478,8 +478,8 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             raise QgsProcessingException(m)
 
         # Additional SQL file to run
-        if additionnal_sql_file and os.path.isfile(additionnal_sql_file):
-            sql_files['99_last.sql'] = additionnal_sql_file
+        if additional_sql_file and os.path.isfile(additional_sql_file):
+            sql_files['99_last.sql'] = additional_sql_file
 
         # Create ZIP archive
         try:

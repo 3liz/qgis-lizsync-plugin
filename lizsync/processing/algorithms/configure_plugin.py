@@ -59,7 +59,7 @@ class ConfigurePlugin(BaseProcessingAlgorithm):
     CLONE_QGIS_PROJECT_FOLDER = 'CLONE_QGIS_PROJECT_FOLDER'
 
     ZIP_FILE = 'ZIP_FILE'
-    ADDITIONNAL_SQL_FILE = 'ADDITIONNAL_SQL_FILE'
+    ADDITIONAL_SQL_FILE = 'ADDITIONAL_SQL_FILE'
     EXCLUDED_COLUMNS = 'EXCLUDED_COLUMNS'
 
     OUTPUT_STATUS = 'OUTPUT_STATUS'
@@ -283,23 +283,23 @@ class ConfigurePlugin(BaseProcessingAlgorithm):
         )
 
         # Additionnal SQL file to run on the clone
-        additionnal_sql_file = ls.variable('general/additionnal_sql_file')
+        additional_sql_file = ls.variable('general/additional_sql_file')
         # Userland context
         if os.path.isdir('/storage/internal/geopoppy') and psys().lower().startswith('linux'):
             self.addParameter(
                 QgsProcessingParameterString(
-                    self.ADDITIONNAL_SQL_FILE,
+                    self.ADDITIONAL_SQL_FILE,
                     tr('Additionnal SQL file to run in the clone after the ZIP deployement'),
-                    defaultValue=additionnal_sql_file,
+                    defaultValue=additional_sql_file,
                     optional=True
                 )
             )
         else:
             self.addParameter(
                 QgsProcessingParameterFile(
-                    self.ADDITIONNAL_SQL_FILE,
+                    self.ADDITIONAL_SQL_FILE,
                     tr('Additionnal SQL file to run in the clone after the ZIP deployement'),
-                    defaultValue=additionnal_sql_file,
+                    defaultValue=additional_sql_file,
                     behavior=QgsProcessingParameterFile.File,
                     optional=True,
                     extension='sql'
@@ -388,9 +388,9 @@ class ConfigurePlugin(BaseProcessingAlgorithm):
             self.ZIP_FILE,
             context
         )
-        additionnal_sql_file = self.parameterAsString(
+        additional_sql_file = self.parameterAsString(
             parameters,
-            self.ADDITIONNAL_SQL_FILE,
+            self.ADDITIONAL_SQL_FILE,
             context
         )
         excluded_columns = parameters[self.EXCLUDED_COLUMNS].strip()
@@ -449,8 +449,8 @@ class ConfigurePlugin(BaseProcessingAlgorithm):
         ls.setVariable('clone/qgis_project_folder', clone_qgis_project_folder)
         feedback.pushInfo(tr('Clone QGIS project folder') + ' = ' + clone_qgis_project_folder)
 
-        ls.setVariable('general/additionnal_sql_file', additionnal_sql_file)
-        feedback.pushInfo(tr('Additionnal SQL file to run in the clone after the ZIP deployement') + ' = ' + additionnal_sql_file)
+        ls.setVariable('general/additional_sql_file', additional_sql_file)
+        feedback.pushInfo(tr('Additionnal SQL file to run in the clone after the ZIP deployement') + ' = ' + additional_sql_file)
 
         ls.setVariable('general/database_archive_file', database_archive_file)
         feedback.pushInfo(tr('Database ZIP archive default path') + ' = ' + database_archive_file)

@@ -36,7 +36,7 @@ python3 lizsync/processing/standalone_processing_runner.py "${PARAMS}"
 echo ""
 echo "Create a package from the central database"
 echo "##########################"
-PARAMS="lizsync:package_master_database" '{"CONNECTION_NAME_CENTRAL":"lizsync_central","POSTGRESQL_BINARY_PATH":"/usr/bin/","SCHEMAS":"test","ZIP_FILE":"/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/qgis_3liz_fake_ftp_remote_server/test/archives/archive.zip", "ADDITIONNAL_SQL_FILE": "/home/mdouchin/Documents/3liz/qgis/QGIS3/plugins/lizsync/install/test_data/additionnal_sql_commande.sql"}'
+PARAMS="lizsync:package_master_database" '{"CONNECTION_NAME_CENTRAL":"lizsync_central","POSTGRESQL_BINARY_PATH":"/usr/bin/","SCHEMAS":"test","ZIP_FILE":"/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/qgis_3liz_fake_ftp_remote_server/test/archives/archive.zip", "ADDITIONAL_SQL_FILE": "/home/mdouchin/Documents/3liz/qgis/QGIS3/plugins/lizsync/install/test_data/additional_sql_commande.sql"}'
 python3 lizsync/processing/standalone_processing_runner.py "${PARAMS}"
 
 # Deploy a database package to the clone
