@@ -10,3 +10,7 @@
     - type: sleep
     - type: synchro
       from: lizsync_clone_a
+    - type: compare
+      from: lizsync_clone_a
+      schema: test
+      table: pluviometers

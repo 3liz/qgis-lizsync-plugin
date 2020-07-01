@@ -210,6 +210,13 @@ class TestSyncDatabase(unittest.TestCase):
                     _, _, _, ok, error_message = fetch_data_from_sql_query(item['database'], item['sql'])
                     self.assertTrue(ok, error_message)
                     LOGGER.info('Query "{}" executed on {}'.format(item['sql'], item['database']))
+                elif item['type'] == 'compare':
+                    sql = "SELECT * FROM lizsync.compare_tables('{}', '{}')".format(
+                        item['schema'],
+                        item['table']
+                    )
+                    _, _, rowCount, ok, error_message = fetch_data_from_sql_query(item['from'], sql)
+                    self.assertEqual(0, rowCount)
                 else:
                     raise NotImplementedError(item['type'])
             LOGGER.info('Test ended : {}'.format(test['description']))
