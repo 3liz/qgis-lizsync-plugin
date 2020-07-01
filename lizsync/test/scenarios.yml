@@ -1,15 +1,12 @@
 ---
-- description: "Test insert a new pluviometer in clone A"
+- description: "Update 1 feature 1 field in central"
   sequence:
     - type: query
-      database: lizsync_clone_a
-      sql: INSERT INTO "test"."pluviometers" (id, nom, geom)
-        VALUES (
-        99, 'pluvio99', '01010000206A0800002F0DFEA05C612741B30B19D64FF75741'
-        );
-    - type: sleep
-    - type: query
       database: test
-      sql: SELECT version();
+      sql:
+        UPDATE "test"."pluviometers" SET
+        nom = concat(nom, ' by central')
+        WHERE id = 0;
+    - type: sleep
     - type: synchro
       from: lizsync_clone_a
