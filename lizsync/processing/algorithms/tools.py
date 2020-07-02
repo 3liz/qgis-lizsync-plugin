@@ -299,7 +299,7 @@ def run_command(cmd, myenv, feedback):
             except Exception:
                 output = "{}".format(line.rstrip())
             if not pattern.search(output):
-                print(output)
+                feedback.pushInfo(output)
             if output == '' and process.poll() is not None:
                 break
             if output:

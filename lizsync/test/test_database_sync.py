@@ -1,5 +1,4 @@
 """Base class for tests using a database."""
-import logging
 import os
 import psycopg2
 import time
@@ -14,7 +13,7 @@ from qgis.testing import unittest
 
 from ..qgis_plugin_tools.tools.database import fetch_data_from_sql_query
 from ..qgis_plugin_tools.tools.logger_processing import LoggerProcessingFeedBack
-from ..qgis_plugin_tools.tools.resources import plugin_test_data_path, plugin_path, plugin_name
+from ..qgis_plugin_tools.tools.resources import plugin_test_data_path, plugin_path
 from ..processing.provider import LizsyncProvider as ProcessingProvider
 
 __copyright__ = "Copyright 2020, 3Liz"
@@ -22,9 +21,8 @@ __license__ = "GPL version 3"
 __email__ = "info@3liz.org"
 __revision__ = "$Format:%H$"
 
-LOGGER = logging.getLogger(plugin_name())
 SCHEMA_DATA = 'test'
-DEBUG = True
+DEBUG = False
 
 
 class TestSyncDatabase(unittest.TestCase):
@@ -191,12 +189,11 @@ class TestSyncDatabase(unittest.TestCase):
             config = yaml.safe_load(stream)
 
         for test in config:
-            LOGGER.info('Beginning test : {}…'.format(test['description']))
+            self.feedback.pushInfo('Beginning test : {}…'.format(test['description']))
             for item in test['sequence']:
-                print(item)
                 if item['type'] == 'sleep':
                     time.sleep(0.5)
-                    LOGGER.info('Sleep 0.5')
+                    self.feedback.pushInfo('Sleep 0.5')
                 elif item['type'] == 'synchro':
                     params = {
                         "CONNECTION_NAME_CENTRAL": "test",
@@ -209,7 +206,7 @@ class TestSyncDatabase(unittest.TestCase):
                 elif item['type'] == 'query':
                     _, _, _, ok, error_message = fetch_data_from_sql_query(item['database'], item['sql'])
                     self.assertTrue(ok, error_message)
-                    LOGGER.info('Query "{}" executed on {}'.format(item['sql'], item['database']))
+                    self.feedback.pushInfo('Query "{}" executed on {}'.format(item['sql'], item['database']))
                 elif item['type'] == 'compare':
                     sql = "SELECT * FROM lizsync.compare_tables('{}', '{}')".format(
                         item['schema'],
@@ -219,4 +216,4 @@ class TestSyncDatabase(unittest.TestCase):
                     self.assertEqual(0, rowCount)
                 else:
                     raise NotImplementedError(item['type'])
-            LOGGER.info('Test ended : {}'.format(test['description']))
+            self.feedback.pushInfo('Test ended : {}'.format(test['description']))
