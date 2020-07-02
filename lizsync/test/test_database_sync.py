@@ -52,7 +52,9 @@ class TestSyncDatabase(unittest.TestCase):
         self.clone_b_cursor = self.clone_b_server.cursor()
 
         self.provider = ProcessingProvider()
-        QgsApplication.processingRegistry().addProvider(self.provider)
+        registry = QgsApplication.processingRegistry()
+        if not registry.providerById(self.provider.id()):
+            registry.addProvider(self.provider)
 
         self.feedback = LoggerProcessingFeedBack()
         feedback = self.feedback if DEBUG else None
