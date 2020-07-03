@@ -21,13 +21,18 @@ import re
 import subprocess
 import fileinput
 from platform import system as psys
+
 from db_manager.db_plugins.plugin import BaseError
 from db_manager.db_plugins.postgis.connector import PostGisDBConnector
 from qgis.core import (
+    Qgis,
     QgsApplication,
     QgsDataSourceUri
 )
-from processing.tools.postgis import uri_from_name
+if Qgis.QGIS_VERSION_INT > 31000:
+    from qgis.core import QgsProviderRegistry
+else:
+    from processing.tools.postgis import uri_from_name
 
 from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.resources import plugin_path
@@ -177,7 +182,12 @@ def getUriFromConnectionName(connection_name, must_connect=True):
 
     # Otherwise check QGIS QGIS3.ini settings for connection name
     status = True
-    uri = uri_from_name(connection_name)
+    if Qgis.QGIS_VERSION_INT > 31000:
+        metadata = QgsProviderRegistry.instance().providerMetadata('postgres')
+        connection = metadata.findConnection(connection_name)
+        uri = connection.uri()
+    else:
+        uri = uri_from_name(connection_name)
 
     # Try to connect if asked
     if must_connect:
