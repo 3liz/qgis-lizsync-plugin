@@ -19,15 +19,24 @@ __revision__ = '$Format:%H$'
 
 import os
 
-from db_manager.db_plugins import createDbPlugin
 from qgis.core import (
-    QgsProcessingParameterString,
+    Qgis,
     QgsProcessingParameterBoolean,
     QgsProcessingException,
     QgsProcessingOutputNumber,
     QgsProcessingOutputString,
     QgsProcessingParameterDefinition
 )
+if Qgis.QGIS_VERSION_INT > 31000:
+    from qgis.core import QgsProviderRegistry
+else:
+    from db_manager.db_plugins import createDbPlugin
+
+if Qgis.QGIS_VERSION_INT >= 31400:
+    from qgis.core import QgsProcessingParameterProviderConnection
+else:
+    from qgis.core import QgsProcessingParameterString
+
 from .tools import (
     lizsyncConfig,
     getUriFromConnectionName,
@@ -94,17 +103,25 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
 
         # INPUTS
         connection_name = ls.variable('postgresql:central/name')
-        db_param_a = QgsProcessingParameterString(
-            self.CONNECTION_NAME,
-            tr('PostgreSQL connection to the central database'),
-            defaultValue=connection_name,
-        )
-        db_param_a.setMetadata({
-            'widget_wrapper': {
-                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
-            }
-        })
-        self.addParameter(db_param_a)
+        label = tr('PostgreSQL connection to the central database')
+        if Qgis.QGIS_VERSION_INT >= 31400:
+            self.addParameter(QgsProcessingParameterProviderConnection(
+                self.CONNECTION_NAME,
+                label,
+                "postgres"
+            ))
+        else:
+            db_param_a = QgsProcessingParameterString(
+                self.CONNECTION_NAME,
+                label,
+                defaultValue=connection_name,
+            )
+            db_param_a.setMetadata({
+                'widget_wrapper': {
+                    'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
+                }
+            })
+            self.addParameter(db_param_a)
 
         # Hidden parameters which allow to drop the schemas
         # Hidden to avoid misuse and data loss
@@ -140,18 +157,30 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
         )
 
     def checkParameterValues(self, parameters, context):
+        if Qgis.QGIS_VERSION_INT >= 314000:
+            connection_name = self.parameterAsConnectionName(
+                parameters, self.CONNECTION_NAME, context)
+        else:
+            connection_name = self.parameterAsString(
+                parameters, self.CONNECTION_NAME, context
+            )
 
-        # Check that it corresponds to an existing connection
-        connection_name = parameters[self.CONNECTION_NAME]
-        dbpluginclass = createDbPlugin('postgis')
-        connections = [c.connectionName() for c in dbpluginclass.connections()]
-        if connection_name not in connections:
-            return False, tr('The configured connection name does not exists in QGIS')
+        message = tr('The configured connection name does not exists in QGIS')
+        if Qgis.QGIS_VERSION_INT > 31000:
+            metadata = QgsProviderRegistry.instance().providerMetadata('postgres')
+            connection = metadata.findConnection(connection_name)
+            if not connection:
+                return False, message
+        else:
+            dbpluginclass = createDbPlugin('postgis')
+            connections = [c.connectionName() for c in dbpluginclass.connections()]
+            if connection_name not in connections:
+                return False, message
 
-        # Check connection
-        ok, uri, msg = getUriFromConnectionName(connection_name, True)
-        if not ok:
-            return False, msg
+            # Check connection
+            ok, uri, msg = getUriFromConnectionName(connection_name, True)
+            if not ok:
+                return False, msg
 
         # Check audit schema
         ok, msg = self.checkSchema('audit', parameters, context)
@@ -174,9 +203,13 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
         '''.format(
             schema_name
         )
-        connection_name = self.parameterAsString(
-            parameters, self.CONNECTION_NAME, context
-        )
+        if Qgis.QGIS_VERSION_INT >= 314000:
+            connection_name = self.parameterAsConnectionName(
+                parameters, self.CONNECTION_NAME, context)
+        else:
+            connection_name = self.parameterAsString(
+                parameters, self.CONNECTION_NAME, context
+            )
         header, data, rowCount, ok, error_message = fetch_data_from_sql_query(
             connection_name,
             sql
@@ -207,9 +240,13 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
 
     def processAlgorithm(self, parameters, context, feedback):
         # Parameters
-        connection_name = self.parameterAsString(
-            parameters, self.CONNECTION_NAME, context
-        )
+        if Qgis.QGIS_VERSION_INT >= 314000:
+            connection_name = self.parameterAsConnectionName(
+                parameters, self.CONNECTION_NAME, context)
+        else:
+            connection_name = self.parameterAsString(
+                parameters, self.CONNECTION_NAME, context
+            )
         override_audit = self.parameterAsBool(parameters, self.OVERRIDE_AUDIT, context)
         override_lizsync = self.parameterAsBool(parameters, self.OVERRIDE_LIZSYNC, context)
 
