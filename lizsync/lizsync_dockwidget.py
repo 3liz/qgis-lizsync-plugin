@@ -16,7 +16,7 @@ from qgis.core import (
 )
 
 from webbrowser import open_new
-from processing import execAlgorithmDialog
+# from processing import execAlgorithmDialog
 from lizsync.qgis_plugin_tools.tools.i18n import tr
 from lizsync.qgis_plugin_tools.tools.resources import load_ui, plugin_name
 
@@ -72,7 +72,8 @@ class LizsyncDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
         # Run alg
         param = {}
         alg_name = 'lizsync:{0}'.format(name)
-        execAlgorithmDialog(alg_name, param)
+        # TODO fix me
+        # execAlgorithmDialog(alg_name, param)
 
     @staticmethod
     def help_database():

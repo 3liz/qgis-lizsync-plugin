@@ -27,10 +27,10 @@ from .tools import (
     lizsyncConfig,
     getUriFromConnectionName,
     get_connection_password_from_ini,
-    fetchDataFromSqlQuery,
     run_command,
 )
 from platform import system as psys
+from ...qgis_plugin_tools.tools.database import fetch_data_from_sql_query
 from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
 
@@ -273,7 +273,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         FROM information_schema.tables
         WHERE table_name = 'server_metadata' and table_schema = 'lizsync';
         '''
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+        header, data, rowCount, ok, error_message = fetch_data_from_sql_query(
             connection_name_clone,
             sql
         )
@@ -293,7 +293,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             FROM lizsync.server_metadata
             LIMIT 1;
             '''
-            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            header, data, rowCount, ok, error_message = fetch_data_from_sql_query(
                 connection_name_clone,
                 sql
             )
@@ -337,7 +337,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             clone_id=clone_id
         )
         last_sync = None
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+        header, data, rowCount, ok, error_message = fetch_data_from_sql_query(
             connection_name_central,
             sql
         )
@@ -463,7 +463,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             VALUES ( concat('clone',  ' ', md5((now())::text) ) )
             RETURNING server_id, server_name
             '''
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+        header, data, rowCount, ok, error_message = fetch_data_from_sql_query(
             connection_name_clone,
             sql
         )
@@ -496,7 +496,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             "', '".join([a.strip() for a in sync_schemas.split(',')])
         )
         # feedback.pushInfo(sql)
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+        header, data, rowCount, ok, error_message = fetch_data_from_sql_query(
             connection_name_central,
             sql
         )
@@ -536,7 +536,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             uri.password()
         )
         feedback.pushInfo(sql)
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+        header, data, rowCount, ok, error_message = fetch_data_from_sql_query(
             connection_name_clone,
             sql
         )
@@ -562,7 +562,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                 sync_id
             )
             # feedback.pushInfo(sql)
-            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            header, data, rowCount, ok, error_message = fetch_data_from_sql_query(
                 connection_name_central,
                 sql
             )

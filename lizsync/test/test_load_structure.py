@@ -4,17 +4,13 @@ import os
 import psycopg2
 import time
 
+import processing
+
 from qgis.core import (
     QgsApplication,
     QgsProcessingException,
-    Qgis,
 )
 from qgis.testing import unittest
-
-if Qgis.QGIS_VERSION_INT >= 30800:
-    from qgis import processing
-else:
-    import processing
 
 from ..processing.provider import LizsyncProvider as ProcessingProvider
 from ..qgis_plugin_tools.tools.database import available_migrations

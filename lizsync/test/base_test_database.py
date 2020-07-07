@@ -5,14 +5,10 @@ import time
 
 from qgis.core import (
     QgsApplication,
-    Qgis,
 )
 from qgis.testing import unittest
 
-if Qgis.QGIS_VERSION_INT >= 30800:
-    from qgis import processing
-else:
-    import processing
+import processing
 
 from ..qgis_plugin_tools.tools.logger_processing import LoggerProcessingFeedBack
 from ..processing.provider import LizsyncProvider as ProcessingProvider

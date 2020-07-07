@@ -25,7 +25,7 @@ from qgis.core import (
     QgsProcessingException,
     QgsProcessingOutputNumber,
     QgsProcessingOutputString,
-    QgsProcessingParameterDefinition
+    QgsProcessingParameterDefinition, QgsProviderConnectionException
 )
 if Qgis.QGIS_VERSION_INT > 31000:
     from qgis.core import QgsProviderRegistry
@@ -168,8 +168,9 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
         message = tr('The configured connection name does not exists in QGIS')
         if Qgis.QGIS_VERSION_INT > 31000:
             metadata = QgsProviderRegistry.instance().providerMetadata('postgres')
-            connection = metadata.findConnection(connection_name)
-            if not connection:
+            try:
+                metadata.findConnection(connection_name)
+            except QgsProviderConnectionException:
                 return False, message
         else:
             dbpluginclass = createDbPlugin('postgis')

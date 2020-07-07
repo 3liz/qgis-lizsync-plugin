@@ -28,9 +28,9 @@ from .tools import (
     check_lizsync_installation_status,
     lizsyncConfig,
     getUriFromConnectionName,
-    fetchDataFromSqlQuery,
 )
 from db_manager.db_plugins import createDbPlugin
+from ...qgis_plugin_tools.tools.database import fetch_data_from_sql_query
 from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
 
@@ -193,7 +193,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
             WHERE schema_name = 'lizsync';
         '''
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+        header, data, rowCount, ok, error_message = fetch_data_from_sql_query(
             connection_name_central,
             sql
         )
@@ -268,7 +268,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
             '''.format(
                 server_name=server_name
             )
-            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name_central, sql)
+            header, data, rowCount, ok, error_message = fetch_data_from_sql_query(connection_name_central, sql)
             server_id = None
             if ok:
                 if rowCount == 1:
@@ -294,7 +294,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
             '''.format(
                 schemas_sql
             )
-            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            header, data, rowCount, ok, error_message = fetch_data_from_sql_query(
                 connection_name_central,
                 sql
             )
@@ -337,7 +337,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
             '''.format(
                 schemas_sql
             )
-            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            header, data, rowCount, ok, error_message = fetch_data_from_sql_query(
                 connection_name_central,
                 sql
             )

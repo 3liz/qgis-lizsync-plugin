@@ -32,9 +32,9 @@ from .tools import (
     check_lizsync_installation_status,
     lizsyncConfig,
     getUriFromConnectionName,
-    fetchDataFromSqlQuery,
     pg_dump,
 )
+from ...qgis_plugin_tools.tools.database import fetch_data_from_sql_query
 from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
 
@@ -445,7 +445,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             )
             RETURNING sync_id;
         '''
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+        header, data, rowCount, ok, error_message = fetch_data_from_sql_query(
             connection_name_central,
             sql
         )

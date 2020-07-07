@@ -22,7 +22,7 @@ __email__ = "info@3liz.org"
 __revision__ = "$Format:%H$"
 
 SCHEMA_DATA = 'test'
-DEBUG = False
+DEBUG = True
 
 
 class TestSyncDatabase(unittest.TestCase):

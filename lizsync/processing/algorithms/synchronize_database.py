@@ -12,8 +12,8 @@ from qgis.core import (
 from .tools import (
     lizsyncConfig,
     getUriFromConnectionName,
-    fetchDataFromSqlQuery,
 )
+from ...qgis_plugin_tools.tools.database import fetch_data_from_sql_query
 from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
 
@@ -152,7 +152,7 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
             SELECT *
             FROM lizsync.synchronize()
         '''
-        _, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+        _, data, rowCount, ok, error_message = fetch_data_from_sql_query(
             connection_name_clone,
             sql
         )

@@ -22,8 +22,6 @@ import subprocess
 import fileinput
 from platform import system as psys
 
-from db_manager.db_plugins.plugin import BaseError
-from db_manager.db_plugins.postgis.connector import PostGisDBConnector
 from qgis.core import (
     Qgis,
     QgsApplication,
@@ -34,6 +32,7 @@ if Qgis.QGIS_VERSION_INT > 31000:
 else:
     from processing.tools.postgis import uri_from_name
 
+from ...qgis_plugin_tools.tools.database import fetch_data_from_sql_query
 from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.resources import plugin_path
 
@@ -237,55 +236,6 @@ def getUriFromConnectionNameUserland(connection_name, must_connect=True):
     return status, uri, ''
 
 
-def fetchDataFromSqlQuery(connection_name, sql):
-    data = []
-    header = []
-    rowCount = 0
-
-    # Get URI
-    status, uri, error_message = getUriFromConnectionName(connection_name, True)
-    if not uri or not status:
-        ok = False
-        return header, data, rowCount, ok, error_message
-    try:
-        connector = PostGisDBConnector(uri)
-    except Exception:
-        error_message = tr('Cannot connect to database')
-        ok = False
-        return header, data, rowCount, ok, error_message
-
-    c = None
-    ok = True
-    # print "run query"
-    try:
-        c = connector._execute(None, str(sql))
-        data = []
-        header = connector._get_cursor_columns(c)
-        if header is None:
-            header = []
-        if len(header) > 0:
-            data = connector._fetchall(c)
-        rowCount = c.rowcount
-        if rowCount == -1:
-            rowCount = len(data)
-
-    except BaseError as e:
-        ok = False
-        error_message = e.msg
-        return header, data, rowCount, ok, error_message
-    finally:
-        if c:
-            c.close()
-            del c
-
-    # Log errors
-    if not ok:
-        error_message = tr('Unknown error occurred while fetching data')
-        return header, data, rowCount, ok, error_message
-
-    return header, data, rowCount, ok, error_message
-
-
 def run_command(cmd, myenv, feedback):
     """
     Run any command using subprocess
@@ -345,7 +295,7 @@ def check_lizsync_installation_status(connection_name, test_list=['structure', '
         sql += " WHERE t.table_schema = 'lizsync'"
         sql += " AND t.table_name = 'server_metadata'"
 
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
+        header, data, rowCount, ok, error_message = fetch_data_from_sql_query(connection_name, sql)
         if ok:
             if rowCount != 1:
                 global_status = False
@@ -363,7 +313,7 @@ def check_lizsync_installation_status(connection_name, test_list=['structure', '
         test = {'status': True, 'message': tr('Server id is not empty')}
         sql = ''
         sql += " SELECT server_id FROM lizsync.server_metadata LIMIT 1"
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
+        header, data, rowCount, ok, error_message = fetch_data_from_sql_query(connection_name, sql)
         if ok:
             if rowCount != 1:
                 global_status = False
@@ -395,7 +345,7 @@ def check_lizsync_installation_status(connection_name, test_list=['structure', '
         sqlc = sql.format(
             schemas_sql
         )
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sqlc)
+        header, data, rowCount, ok, error_message = fetch_data_from_sql_query(connection_name, sqlc)
         missing = []
         if ok:
             for a in data:
@@ -426,7 +376,7 @@ def check_lizsync_installation_status(connection_name, test_list=['structure', '
         sqlc = sql.format(
             schemas_sql
         )
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sqlc)
+        header, data, rowCount, ok, error_message = fetch_data_from_sql_query(connection_name, sqlc)
         missing = []
         if ok:
             if rowCount > 0:
@@ -801,7 +751,7 @@ class lizsyncConfig:
 
     def getAddressFromAlias(self, alias):
         """
-        Parse addres like ftp:central/host into ['ftp:central', 'host']
+        Parse address like ftp:central/host into ['ftp:central', 'host']
         """
         variables = alias.split('/')
         if len(variables) != 2 or variables[0] not in self.sections:
