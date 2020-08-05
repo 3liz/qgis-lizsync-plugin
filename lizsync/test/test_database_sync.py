@@ -56,7 +56,7 @@ class TestSyncDatabase(unittest.TestCase):
         if not registry.providerById(self.provider.id()):
             registry.addProvider(self.provider)
 
-        self.feedback = LoggerProcessingFeedBack()
+        self.feedback = LoggerProcessingFeedBack(use_logger=True)
         feedback = self.feedback if DEBUG else None
 
         self.feedback.pushInfo('Recreating schemas…')
@@ -186,17 +186,20 @@ class TestSyncDatabase(unittest.TestCase):
         super().tearDown()
 
     def test_yml_file(self):
-        """Test reading the YML file."""
+        """Test synchronization scenarios from YAML file"""
         with open(plugin_path("test", "scenarios.yml"), 'r') as stream:
             config = yaml.safe_load(stream)
 
         for test in config:
+            self.feedback.pushInfo('===========================')
             self.feedback.pushInfo('Beginning test : {}…'.format(test['description']))
             for item in test['sequence']:
                 if item['type'] == 'sleep':
                     time.sleep(0.5)
                     self.feedback.pushInfo('Sleep 0.5')
+
                 elif item['type'] == 'synchro':
+                    self.feedback.pushInfo('Run synchro')
                     params = {
                         "CONNECTION_NAME_CENTRAL": "test",
                         "CONNECTION_NAME_CLONE": item['from'],
@@ -205,17 +208,32 @@ class TestSyncDatabase(unittest.TestCase):
                         "lizsync:synchronize_database", params, feedback=self.feedback
                     )
                     self.assertEqual(1, result['OUTPUT_STATUS'])
+
                 elif item['type'] == 'query':
                     _, _, _, ok, error_message = fetch_data_from_sql_query(item['database'], item['sql'])
                     self.assertTrue(ok, error_message)
                     self.feedback.pushInfo('Query "{}" executed on {}'.format(item['sql'], item['database']))
+
                 elif item['type'] == 'compare':
+                    self.feedback.pushInfo(
+                        'Compare table data between databases: "{}"."{}"'.format(
+                            item['schema'],
+                            item['table']
+                        )
+                    )
                     sql = "SELECT * FROM lizsync.compare_tables('{}', '{}')".format(
                         item['schema'],
                         item['table']
                     )
                     _, _, rowCount, ok, error_message = fetch_data_from_sql_query(item['from'], sql)
                     self.assertEqual(0, rowCount)
+
+                elif item['type'] == 'verify':
+                    self.feedback.pushInfo('Verify data in database {}'.format(item['database']))
+                    _, data, _, ok, error_message = fetch_data_from_sql_query(item['database'], item['sql'])
+                    self.assertEqual(data[0][0], item['expected'])
+
                 else:
                     raise NotImplementedError(item['type'])
+
             self.feedback.pushInfo('Test ended : {}'.format(test['description']))
