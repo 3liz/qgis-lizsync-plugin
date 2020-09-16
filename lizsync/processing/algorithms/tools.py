@@ -350,7 +350,7 @@ def check_lizsync_installation_status(connection_name, test_list=['structure', '
 
     # Check server id
     if 'server id' in test_list:
-        test = {'status': True, 'message': tr('Server id is not empty')}
+        test = {'status': True, 'message': tr('Server id is set')}
         sql = ''
         sql += " SELECT server_id FROM lizsync.server_metadata LIMIT 1"
         header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
@@ -422,10 +422,15 @@ def check_lizsync_installation_status(connection_name, test_list=['structure', '
             if rowCount > 0:
                 for a in data:
                     missing.append('"{0}"."{1}"'.format(a[0], a[1]))
-                global_status = False
-                message = tr('Some tables are not monitored by the audit trigger tool')
+                message = tr('Some tables are not monitored by the audit trigger tool.')
+                message += '\n' + tr('THEY WON\'T BE SYNCHRONIZED')
+                message += '\n****************'
                 message += ':\n{0}'.format(',\n '.join(missing))
-                test['status'] = False
+                message += '\n****************'
+                message += '\n'
+                # We do not set status to False
+                # So that the user can decide to go on or not
+                # We do not want to force all the tables of a schema to be audited
                 test['message'] = message
         else:
             global_status = False

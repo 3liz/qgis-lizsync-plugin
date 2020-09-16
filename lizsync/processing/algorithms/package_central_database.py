@@ -218,18 +218,21 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         )
         if not status:
             msg = tr('Some needed configuration are missing in the central database. Please correct them before proceeding.')
-            feedback.pushInfo(msg)
-            for name, test in tests.items():
-                if not test['status']:
-                    item_msg = '* {name} - {message}'.format(
-                        name=name.upper(),
-                        message=test['message'].replace('"', '')
-                    )
-                    feedback.pushInfo(item_msg)
-            return False, msg
         else:
             msg = tr('Every test has passed successfully !')
-        return True, msg
+        feedback.pushInfo(msg)
+
+        # Loop through test results
+        for name, test in tests.items():
+            item_msg = '* {name} - {message}'.format(
+                name=name.upper(),
+                message=test['message'].replace('"', '')
+            )
+            feedback.pushInfo(item_msg)
+        if not status:
+            return False, msg
+        else:
+            return True, msg
 
     def checkParameterValues(self, parameters, context):
 
@@ -312,6 +315,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
 
         # 1/ 01_before.sql
         ####
+        feedback.pushInfo('')
         feedback.pushInfo(tr('CREATE SCRIPT 01_before.sql'))
         sql = 'BEGIN;'
 
@@ -351,6 +355,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
 
         # 2/ 02_data.sql
         ####
+        feedback.pushInfo('')
         feedback.pushInfo(tr('CREATE SCRIPT 02_data.sql'))
         pstatus, pmessages = pg_dump(
             feedback,
@@ -368,6 +373,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
 
         # 3/ 03_after.sql
         ####
+        feedback.pushInfo('')
         feedback.pushInfo(tr('CREATE SCRIPT 03_after.sql'))
         sql = ''
 
@@ -396,6 +402,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         #  4/ 04_lizsync.sql
         # Add lizsync schema structure
         # We get it from central database to be sure everything will be compatible
+        feedback.pushInfo('')
         feedback.pushInfo(tr('CREATE SCRIPT 04_lizsync.sql'))
         pstatus, pmessages = pg_dump(
             feedback,
@@ -414,6 +421,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         # 5/ sync_schemas.txt
         # Add schemas into file
         ####
+        feedback.pushInfo('')
         feedback.pushInfo(tr('ADD SCHEMAS TO FILE sync_schemas.txt'))
         schemas = [
             "{0}".format(a.strip())
@@ -429,6 +437,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         # Add new sync history item in the central database
         # and get sync_id
         ####
+        feedback.pushInfo('')
         feedback.pushInfo(tr('ADD NEW SYNC HISTORY ITEM IN CENTRAL DATABASE'))
         sql = '''
             INSERT INTO lizsync.history
@@ -496,6 +505,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
                     raise QgsProcessingException(msg)
 
         msg = tr('Package has been successfully created !')
+        feedback.pushInfo('')
         feedback.pushInfo(msg)
 
         output = {
