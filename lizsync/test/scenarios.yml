@@ -3,7 +3,7 @@
   sequence:
     - type: query
       database: test
-      sql:
+      sql: >-
         UPDATE "test"."pluviometers"
         SET nom = concat(nom, ' by central - U1')
         WHERE id = 0;
@@ -19,7 +19,7 @@
   sequence:
     - type: query
       database: lizsync_clone_a
-      sql:
+      sql: >-
         UPDATE "test"."pluviometers"
         SET nom = concat(nom, ' by clone - U2')
         WHERE id = 1;
@@ -35,14 +35,14 @@
   sequence:
     - type: query
       database: test
-      sql:
+      sql: >-
         UPDATE "test"."montpellier_districts"
         SET "libquart" = concat("libquart", ' by central - U3')
         WHERE fid = 1;
     - type: sleep
     - type: query
       database: lizsync_clone_a
-      sql:
+      sql: >-
         UPDATE "test"."montpellier_sub_districts"
         SET "libsquart" = concat("libsquart", ' by clone a - U3')
         WHERE squartmno = 'HOS';
@@ -61,14 +61,14 @@
   sequence:
     - type: query
       database: test
-      sql:
+      sql: >-
         UPDATE "test"."montpellier_districts"
         SET "libquart" = concat("libquart", ' by central - U4')
         WHERE quartmno = 'PA';
     - type: sleep
     - type: query
       database: lizsync_clone_a
-      sql:
+      sql: >-
         UPDATE "test"."montpellier_districts"
         SET "libquart" = concat("libquart", ' by clone a - U4')
         WHERE quartmno = 'CV';
@@ -80,14 +80,14 @@
       table: montpellier_districts
     - type: verify
       database: lizsync_clone_a
-      sql:
+      sql: >-
         SELECT libquart
         FROM "test"."montpellier_districts"
         WHERE quartmno = 'PA';
       expected: MOSSON by central - U4
     - type: verify
       database: test
-      sql:
+      sql: >-
         SELECT libquart
         FROM "test"."montpellier_districts"
         WHERE quartmno = 'CV';
@@ -97,14 +97,14 @@
   sequence:
     - type: query
       database: test
-      sql:
+      sql: >-
         UPDATE "test"."montpellier_districts"
         SET "libquart" = concat("libquart", ' by central - U5')
         WHERE quartmno = 'MI';
     - type: sleep
     - type: query
       database: lizsync_clone_a
-      sql:
+      sql: >-
         UPDATE "test"."montpellier_districts"
         SET "url" = 'http://3liz.com - by clone a - U5'
         WHERE quartmno = 'MI';
@@ -116,14 +116,14 @@
       table: montpellier_districts
     - type: verify
       database: lizsync_clone_a
-      sql:
+      sql: >-
         SELECT libquart
         FROM "test"."montpellier_districts"
         WHERE quartmno = 'MI';
       expected: PORT MARIANNE by central - U5
     - type: verify
       database: test
-      sql:
+      sql: >-
         SELECT url
         FROM "test"."montpellier_districts"
         WHERE quartmno = 'MI';
