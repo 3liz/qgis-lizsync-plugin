@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<database name="gis" schema="lizsync" type="PostgreSQL - 10.6 (Debian 10.6-1.pgdg90+1)">
+<database name="gis" schema="lizsync" type="PostgreSQL - 10.14 (Debian 10.14-1.pgdg100+1)">
    <sequences>
       <sequence increment="1" name="conflicts_id_seq" startValue="1"/>
       <sequence increment="1" name="sys_structure_metadonnee_id_seq" startValue="1"/>
@@ -233,6 +233,51 @@ BEGIN
     -- Return data
     RETURN QUERY
     SELECT p_ids, p_min_event_id, p_max_event_id, p_max_action_tstamp_tx;
+END;
+]]></definition>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="compare_tables" returnType="SETOF record" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="PLPGSQL"><![CDATA[
+DECLARE
+    pkeys text[];
+    sqltemplate text;
+BEGIN
+
+    -- Get array of primary key field(s)
+    SELECT array_agg(uid_column) as pkey_fields
+    INTO pkeys
+    FROM audit.logged_relations r
+    WHERE relation_name = (quote_ident(p_schema_name) || '.' || quote_ident(p_table_name))
+    ;
+
+    -- Compare data
+    sqltemplate = '
+    SELECT
+        coalesce(t1.uid, t2.uid) AS uid,
+        CASE
+            WHEN t1.uid IS NULL THEN ''not in table 1''
+            WHEN t2.uid IS NULL THEN ''not in table 2''
+            ELSE ''table 1 != table 2''
+        END AS status,
+        (hstore(t1.*) - ''%1$s''::text[]) - (hstore(t2) - ''%1$s''::text[]) AS values_in_table_1,
+        (hstore(t2.*) - ''%1$s''::text[]) - (hstore(t1) - ''%1$s''::text[]) AS values_in_table_2
+    FROM "%2$s"."%3$s" AS t1
+    FULL JOIN "central_%2$s"."%3$s" AS t2
+        ON t1.uid = t2.uid
+    WHERE
+        ((hstore(t1.*) - ''%1$s''::text[]) != (hstore(t2.*) - ''%1$s''::text[]))
+        OR (t1.uid IS NULL)
+        OR (t2.uid IS NULL)
+    ';
+
+    RETURN QUERY
+    EXECUTE format(sqltemplate,
+        pkeys,
+        p_schema_name,
+        p_table_name
+    );
+
 END;
 ]]></definition>
       </routine>
