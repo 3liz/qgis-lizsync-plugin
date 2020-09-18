@@ -20,8 +20,6 @@ __revision__ = '$Format:%H$'
 import os
 import tempfile
 
-from platform import system as psys
-
 from qgis.core import (
     QgsProcessingParameterNumber,
     QgsProcessingParameterString,
@@ -284,27 +282,16 @@ class ConfigurePlugin(BaseProcessingAlgorithm):
 
         # Additionnal SQL file to run on the clone
         additional_sql_file = ls.variable('general/additional_sql_file')
-        # Userland context
-        if os.path.isdir('/storage/internal/geopoppy') and psys().lower().startswith('linux'):
-            self.addParameter(
-                QgsProcessingParameterString(
-                    self.ADDITIONAL_SQL_FILE,
-                    tr('Additionnal SQL file to run in the clone after the ZIP deployement'),
-                    defaultValue=additional_sql_file,
-                    optional=True
-                )
+        self.addParameter(
+            QgsProcessingParameterFile(
+                self.ADDITIONAL_SQL_FILE,
+                tr('Additionnal SQL file to run in the clone after the ZIP deployement'),
+                defaultValue=additional_sql_file,
+                behavior=QgsProcessingParameterFile.File,
+                optional=True,
+                extension='sql'
             )
-        else:
-            self.addParameter(
-                QgsProcessingParameterFile(
-                    self.ADDITIONAL_SQL_FILE,
-                    tr('Additionnal SQL file to run in the clone after the ZIP deployement'),
-                    defaultValue=additional_sql_file,
-                    behavior=QgsProcessingParameterFile.File,
-                    optional=True,
-                    extension='sql'
-                )
-            )
+        )
 
         database_archive_file = ls.variable('general/database_archive_file')
         if not database_archive_file:
@@ -312,26 +299,15 @@ class ConfigurePlugin(BaseProcessingAlgorithm):
                 tempfile.gettempdir(),
                 'central_database_package.zip'
             )
-        # Useland context: use only string
-        if os.path.isdir('/storage/internal/geopoppy') and psys().lower().startswith('linux'):
-            self.addParameter(
-                QgsProcessingParameterString(
-                    self.ZIP_FILE,
-                    tr('Database ZIP archive default path'),
-                    optional=False,
-                    defaultValue=database_archive_file
-                )
+        self.addParameter(
+            QgsProcessingParameterFileDestination(
+                self.ZIP_FILE,
+                tr('Database ZIP archive default path'),
+                fileFilter='zip',
+                optional=False,
+                defaultValue=database_archive_file
             )
-        else:
-            self.addParameter(
-                QgsProcessingParameterFileDestination(
-                    self.ZIP_FILE,
-                    tr('Database ZIP archive default path'),
-                    fileFilter='zip',
-                    optional=False,
-                    defaultValue=database_archive_file
-                )
-            )
+        )
 
         excluded_columns = ls.variable('general/excluded_columns')
         self.addParameter(

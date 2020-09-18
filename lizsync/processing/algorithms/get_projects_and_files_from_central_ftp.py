@@ -32,10 +32,8 @@ from .tools import (
     ftp_sync,
     get_ftp_password,
     lizsyncConfig,
-    run_command,
     setQgisProjectOffline,
 )
-from platform import system as psys
 
 from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
@@ -281,24 +279,6 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
         if not ok:
             raise QgsProcessingException(m)
 
-        # Remove existing QGIS project files with subprocess to avoid a nasty bug
-        # in Userland context
-        if os.path.isdir('/storage/internal/geopoppy') and psys().lower().startswith('linux'):
-            cmd = [
-                'rm',
-                '-v',
-                '{}/*.qgs*'.format(
-                    os.path.abspath(localdir)
-                )
-            ]
-            feedback.pushInfo(tr('USELAND CONTEXT: Remove old QGIS project files to avoid bug'))
-            feedback.pushInfo(" ".join(cmd))
-            myenv = {**os.environ}
-            run_command(cmd, myenv, feedback)
-
-        # import time
-        # time.sleep(1)
-
         # Run FTP sync
         feedback.pushInfo(tr('Local directory') + ' %s' % localdir)
         feedback.pushInfo(tr('FTP directory') + ' %s' % ftpdir)
@@ -311,7 +291,7 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
         if not ok:
             raise QgsProcessingException(msg)
 
-        # Adapt QGIS project to Geopoppy
+        # Adapt QGIS project to Clone
         # Mainly change database connection parameters (central -> clone)
         if adapt_qgis_projects:
             feedback.pushInfo(tr('ADAPT QGIS PROJECTS FOR OFFLINE USE'))

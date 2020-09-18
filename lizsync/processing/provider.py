@@ -17,8 +17,6 @@ __copyright__ = '(C) 2019 by 3liz'
 
 __revision__ = '$Format:%H$'
 
-import os
-
 from qgis.core import QgsProcessingProvider
 from qgis.PyQt.QtGui import QIcon
 
@@ -46,12 +44,10 @@ class LizsyncProvider(QgsProcessingProvider):
         self.addAlgorithm(GetProjectsAndFilesFromCentralFtp())
         self.addAlgorithm(SynchronizeMediaSubfolderToFtp())
 
-        # Userland context: do not load some algs
-        if not os.path.isdir('/storage/internal/geopoppy'):
-            self.addAlgorithm(CreateDatabaseStructure())
-            self.addAlgorithm(UpgradeDatabaseStructure())
-            self.addAlgorithm(InitializeCentralDatabase())
-            self.addAlgorithm(SendProjectsAndFilesToCloneFtp())
+        self.addAlgorithm(CreateDatabaseStructure())
+        self.addAlgorithm(UpgradeDatabaseStructure())
+        self.addAlgorithm(InitializeCentralDatabase())
+        self.addAlgorithm(SendProjectsAndFilesToCloneFtp())
 
     def id(self):
         return 'lizsync'

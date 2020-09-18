@@ -141,27 +141,16 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
 
         # Additionnal SQL file to run on the clone
         additional_sql_file = ls.variable('general/additional_sql_file')
-        # Userland context
-        if os.path.isdir('/storage/internal/geopoppy') and psys().lower().startswith('linux'):
-            self.addParameter(
-                QgsProcessingParameterString(
-                    self.ADDITIONAL_SQL_FILE,
-                    tr('Additionnal SQL file to run in the clone after the ZIP deployement'),
-                    defaultValue=additional_sql_file,
-                    optional=True
-                )
+        self.addParameter(
+            QgsProcessingParameterFile(
+                self.ADDITIONAL_SQL_FILE,
+                tr('Additionnal SQL file to run in the clone after the ZIP deployement'),
+                defaultValue=additional_sql_file,
+                behavior=QgsProcessingParameterFile.File,
+                optional=True,
+                extension='sql'
             )
-        else:
-            self.addParameter(
-                QgsProcessingParameterFile(
-                    self.ADDITIONAL_SQL_FILE,
-                    tr('Additionnal SQL file to run in the clone after the ZIP deployement'),
-                    defaultValue=additional_sql_file,
-                    behavior=QgsProcessingParameterFile.File,
-                    optional=True,
-                    extension='sql'
-                )
-            )
+        )
 
         # Output zip file destination
         database_archive_file = ls.variable('general/database_archive_file')
@@ -170,26 +159,15 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
                 tempfile.gettempdir(),
                 'central_database_package.zip'
             )
-        # Userland context
-        if os.path.isdir('/storage/internal/geopoppy') and psys().lower().startswith('linux'):
-            self.addParameter(
-                QgsProcessingParameterString(
-                    self.ZIP_FILE,
-                    tr('Database ZIP archive path'),
-                    defaultValue=database_archive_file,
-                    optional=True
-                )
+        self.addParameter(
+            QgsProcessingParameterFileDestination(
+                self.ZIP_FILE,
+                tr('Output archive file (ZIP)'),
+                fileFilter='zip',
+                optional=False,
+                defaultValue=database_archive_file
             )
-        else:
-            self.addParameter(
-                QgsProcessingParameterFileDestination(
-                    self.ZIP_FILE,
-                    tr('Output archive file (ZIP)'),
-                    fileFilter='zip',
-                    optional=False,
-                    defaultValue=database_archive_file
-                )
-            )
+        )
 
         # OUTPUTS
         # Add output for message

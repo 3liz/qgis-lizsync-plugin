@@ -25,7 +25,6 @@ from db_manager.db_plugins.plugin import BaseError
 from db_manager.db_plugins.postgis.connector import PostGisDBConnector
 from qgis.core import (
     QgsApplication,
-    QgsDataSourceUri
 )
 from processing.tools.postgis import uri_from_name
 
@@ -170,12 +169,8 @@ def check_postgresql_connection(uri, timeout=5):
 
 
 def getUriFromConnectionName(connection_name, must_connect=True):
-    # In UserLand context, use directly information
-    # given in LizSync.ini file
-    if os.path.isdir('/storage/internal/geopoppy') and psys().lower().startswith('linux'):
-        return getUriFromConnectionNameUserland(connection_name, must_connect)
 
-    # Otherwise check QGIS QGIS3.ini settings for connection name
+    # Check QGIS QGIS3.ini settings for connection name
     status = True
     uri = uri_from_name(connection_name)
 
@@ -185,46 +180,6 @@ def getUriFromConnectionName(connection_name, must_connect=True):
         return ok, uri, msg
     else:
         return status, uri, ''
-
-
-def getUriFromConnectionNameUserland(connection_name, must_connect=True):
-    # Use LizSync.ini content to find all connection parameters
-    ls = lizsyncConfig()
-    status = True
-    uri = None
-    c_list = ('central', 'clone')
-    for c in c_list:
-        c_name = ls.variable('postgresql:%s/name' % c)
-        if c_name == connection_name:
-            uri = QgsDataSourceUri()
-            if ls.variable('postgresql:%s/service' % c):
-                uri.setConnection(
-                    ls.variable('postgresql:%s/service' % c),
-                    '', '', ''
-                )
-            else:
-                if ls.variable('postgresql:%s/host' % c) \
-                        and ls.variable('postgresql:%s/port' % c) \
-                        and ls.variable('postgresql:%s/dbname' % c) \
-                        and ls.variable('postgresql:%s/user' % c) \
-                        and ls.variable('postgresql:%s/password' % c):
-                    uri.setConnection(
-                        ls.variable('postgresql:%s/host' % c),
-                        ls.variable('postgresql:%s/port' % c),
-                        ls.variable('postgresql:%s/dbname' % c),
-                        ls.variable('postgresql:%s/user' % c),
-                        ls.variable('postgresql:%s/password' % c)
-                    )
-                else:
-                    continue
-            if must_connect:
-                ok, msg = check_postgresql_connection(uri)
-                return ok, uri, msg
-            else:
-                return True, uri, ''
-            break
-
-    return status, uri, ''
 
 
 def fetchDataFromSqlQuery(connection_name, sql):
