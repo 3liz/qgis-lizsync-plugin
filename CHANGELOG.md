@@ -1,5 +1,14 @@
 # CHANGELOG
 
+### 0.4.5 - 18/09/2020
+
+* Prepare the central database - Allow to not add automatically the audit triggers
+* Create a package - Do not block the creation if some tables of the synchronized schemas are not audited.
+* Deploy a package - Apply the audit triggers only on tables audited in the central database
+* Deploy a package - Add a checkbox to force the re-creation of the clone server ID in the metadata table (usefull to start fresh)
+* Add unit tests for database synchronization with scenarios
+* Autodocumentation of the algorithms https://3liz.github.io/qgis-lizsync-plugin/processing/
+
 ### 0.4.4 - 08/06/2020
 
 * Interface - Dock: simplify button labels & add tooltips
@@ -55,7 +64,7 @@
 * Add missing flag for processing provider in metadata.txt
 * Minor code cleanup
 * Fix travis path when pushing QM to github
-* Update translations from Transifex          
+* Update translations from Transifex
 
 ### 0.3.3 - 09/04/2020
 
