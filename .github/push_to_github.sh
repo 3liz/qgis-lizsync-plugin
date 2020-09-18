@@ -6,6 +6,12 @@ setup_git() {
   git checkout -b master
 }
 
+commit_processing_files() {
+  make processing-doc
+  git add docs/processing
+  git commit --message "Update processing documentation to version : $TRAVIS_TAG" --message "[skip travis]"
+}
+
 commit_i18n_files() {
   git add lizsync/i18n/*.qm
   git commit --message "Update translations to version : $TRAVIS_TAG" --message "[skip travis]"
@@ -13,7 +19,7 @@ commit_i18n_files() {
 
 commit_schemaspy_files() {
   make schemaspy
-  git add docs/
+  git add docs/database
   git commit --message "Update database documentation to version : $TRAVIS_TAG" --message "[skip travis]"
 }
 
@@ -25,5 +31,5 @@ upload_files() {
 setup_git
 commit_i18n_files
 commit_schemaspy_files
+commit_processing_files
 upload_files
-

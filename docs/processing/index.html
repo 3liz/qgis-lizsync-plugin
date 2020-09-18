@@ -1,0 +1,870 @@
+
+<!DOCTYPE HTML>
+<html>
+ <head>
+  <meta charset="utf-8"/>
+  <title>Lizsync</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.1/styles/github.min.css" rel="stylesheet"/>
+  <link href="https://3liz.github.io/remarkable.css" rel="stylesheet"/>
+  <link href="../icon.png" rel="icon" type="image/png" >
+ </head>
+ <body>
+ <header class="header-container" style="">
+    <h1>Lizsync</h1>
+ </header>
+ <article>
+ <p><a href="../">Up</a></p>
+<div class="toc"><span class="toctitle">Table of content</span><ul>
+<li><a href="#lizsync">Lizsync</a><ul>
+<li><a href="#01-installation">01 Installation</a><ul>
+<li><a href="#install-lizsync-tools-on-the-central-database">Install Lizsync tools on the central database</a><ul>
+<li><a href="#parameters">Parameters</a></li>
+<li><a href="#outputs">Outputs</a></li>
+</ul>
+</li>
+<li><a href="#prepare-the-central-database">Prepare the central database</a><ul>
+<li><a href="#parameters_1">Parameters</a></li>
+<li><a href="#outputs_1">Outputs</a></li>
+</ul>
+</li>
+<li><a href="#upgrade-lizsync-tools-in-the-central-database">Upgrade LizSync tools in the central database</a><ul>
+<li><a href="#parameters_2">Parameters</a></li>
+<li><a href="#outputs_2">Outputs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#02-postgresql-synchronization">02 PostgreSQL synchronization</a><ul>
+<li><a href="#deploy-a-database-package-to-the-clone">Deploy a database package to the clone</a><ul>
+<li><a href="#parameters_3">Parameters</a></li>
+<li><a href="#outputs_3">Outputs</a></li>
+</ul>
+</li>
+<li><a href="#create-a-package-from-the-central-database">Create a package from the central database</a><ul>
+<li><a href="#parameters_4">Parameters</a></li>
+<li><a href="#outputs_4">Outputs</a></li>
+</ul>
+</li>
+<li><a href="#two-way-database-synchronization">Two-way database synchronization</a><ul>
+<li><a href="#parameters_5">Parameters</a></li>
+<li><a href="#outputs_5">Outputs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><a href="#03-geopoppy-file-synchronization">03 GeoPoppy file synchronization</a><ul>
+<li><a href="#get-projects-and-files-from-the-central-ftp-server">Get projects and files from the central FTP server</a><ul>
+<li><a href="#parameters_6">Parameters</a></li>
+<li><a href="#outputs_6">Outputs</a></li>
+</ul>
+</li>
+<li><a href="#send-local-qgis-projects-and-files-to-the-clone-ftp-server">Send local QGIS projects and files to the clone FTP server</a><ul>
+<li><a href="#parameters_7">Parameters</a></li>
+<li><a href="#outputs_7">Outputs</a></li>
+</ul>
+</li>
+<li><a href="#synchronize-the-clone-media-subfolder-to-the-central-ftp-server">Synchronize the clone media subfolder to the central FTP server</a><ul>
+<li><a href="#parameters_8">Parameters</a></li>
+<li><a href="#outputs_8">Outputs</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+<h1 id="lizsync">Lizsync</h1>
+<h2 id="01-installation">01 Installation</h2>
+<h3 id="install-lizsync-tools-on-the-central-database">Install Lizsync tools on the central database</h3>
+<p>Install the LizSync schema with tables and function on the central database.</p>
+<p>This script will add
+ * An audit schema with auditing functions and tables
+ * A lizsync schema with tables and functions</p>
+<p>Beware ! If the schema lizsync or audit already exists in the database, not installation will be made. You will need to manually correct the situation (drop or modifiy the schemas, tables and functions.</p>
+<p><img alt="algo_id" src="./lizsync-create_database_structure.png"></p>
+<h4 id="parameters">Parameters</h4>
+<table>
+<thead>
+<tr>
+<th align="center">ID</th>
+<th align="center">Description</th>
+<th align="center">Type</th>
+<th align="center">Info</th>
+<th align="center">Required</th>
+<th align="center">Advanced</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">CONNECTION_NAME</td>
+<td align="center">PostgreSQL connection to the central database</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">OVERRIDE_AUDIT</td>
+<td align="center">Drop audit schema and all data ?</td>
+<td align="center">Boolean</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">OVERRIDE_LIZSYNC</td>
+<td align="center">Drop lizsync schema and all data ?</td>
+<td align="center">Boolean</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<h4 id="outputs">Outputs</h4>
+<table>
+<thead>
+<tr>
+<th align="center">ID</th>
+<th align="center">Description</th>
+<th align="center">Type</th>
+<th align="center">Info</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">OUTPUT_STATUS</td>
+<td align="center">Output status</td>
+<td align="center">Number</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">OUTPUT_STRING</td>
+<td align="center">Output message</td>
+<td align="center">String</td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="prepare-the-central-database">Prepare the central database</h3>
+<p>Prepare the central server PostgreSQL database with the needed data for LizSync tool.</p>
+<p>LizSync needs to have :
+ * A server ID stored in the lizsync.server_metadata table
+ * All tables from the given schema must have a unique identifier column (uid) with standard uuid inside
+ * All tables from the given schema must be audited (trigger of the audit tool)</p>
+<p>You can pass a list of PostgreSQL central database schemas and this alg will add the necessary data and tools</p>
+<p><img alt="algo_id" src="./lizsync-initialize_central_database.png"></p>
+<h4 id="parameters_1">Parameters</h4>
+<table>
+<thead>
+<tr>
+<th align="center">ID</th>
+<th align="center">Description</th>
+<th align="center">Type</th>
+<th align="center">Info</th>
+<th align="center">Required</th>
+<th align="center">Advanced</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">CONNECTION_NAME_CENTRAL</td>
+<td align="center">PostgreSQL connection to the central database</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">ADD_SERVER_ID</td>
+<td align="center">Add server id in metadata table</td>
+<td align="center">Boolean</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">ADD_UID_COLUMNS</td>
+<td align="center">Add unique identifiers in all tables</td>
+<td align="center">Boolean</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">ADD_AUDIT_TRIGGERS</td>
+<td align="center">Add audit triggers in all tables</td>
+<td align="center">Boolean</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">SCHEMAS</td>
+<td align="center">Restrict to comma separated schema names. NB: schemas public, lizsync &amp; audit are never processed</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<h4 id="outputs_1">Outputs</h4>
+<table>
+<thead>
+<tr>
+<th align="center">ID</th>
+<th align="center">Description</th>
+<th align="center">Type</th>
+<th align="center">Info</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">OUTPUT_STATUS</td>
+<td align="center">Output status</td>
+<td align="center">Number</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">OUTPUT_STRING</td>
+<td align="center">Output message</td>
+<td align="center">String</td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="upgrade-lizsync-tools-in-the-central-database">Upgrade LizSync tools in the central database</h3>
+<p>Upgrade the Lizsync tables and functions in the central database.</p>
+<p>If you have upgraded your QGIS LizSync plugin, you can run this script to upgrade your central database to the new plugin version.</p>
+<p><img alt="algo_id" src="./lizsync-upgrade_database_structure.png"></p>
+<h4 id="parameters_2">Parameters</h4>
+<table>
+<thead>
+<tr>
+<th align="center">ID</th>
+<th align="center">Description</th>
+<th align="center">Type</th>
+<th align="center">Info</th>
+<th align="center">Required</th>
+<th align="center">Advanced</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">CONNECTION_NAME</td>
+<td align="center">PostgreSQL connection to the central database</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">RUNIT</td>
+<td align="center">Check this box to upgrade. No action will be done otherwise</td>
+<td align="center">Boolean</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<h4 id="outputs_2">Outputs</h4>
+<table>
+<thead>
+<tr>
+<th align="center">ID</th>
+<th align="center">Description</th>
+<th align="center">Type</th>
+<th align="center">Info</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">OUTPUT_STATUS</td>
+<td align="center">Output status</td>
+<td align="center">Number</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">OUTPUT_STRING</td>
+<td align="center">Output message</td>
+<td align="center">String</td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="02-postgresql-synchronization">02 PostgreSQL synchronization</h2>
+<h3 id="deploy-a-database-package-to-the-clone">Deploy a database package to the clone</h3>
+<p>Deploy a ZIP archive, previously saved with the "Package central database" algorithm, to the chosen clone. This ZIP archive, named by default "central_database_package.zip" contains data from the central PostgreSQL database.</p>
+<p><img alt="algo_id" src="./lizsync-deploy_database_server_package.png"></p>
+<h4 id="parameters_3">Parameters</h4>
+<table>
+<thead>
+<tr>
+<th align="center">ID</th>
+<th align="center">Description</th>
+<th align="center">Type</th>
+<th align="center">Info</th>
+<th align="center">Required</th>
+<th align="center">Advanced</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">CONNECTION_NAME_CENTRAL</td>
+<td align="center">PostgreSQL connection to the central database</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">CONNECTION_NAME_CLONE</td>
+<td align="center">PostgreSQL connection to the clone database</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">POSTGRESQL_BINARY_PATH</td>
+<td align="center">PostgreSQL binary path</td>
+<td align="center">File</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">ZIP_FILE</td>
+<td align="center">Database ZIP archive path</td>
+<td align="center">File</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<h4 id="outputs_3">Outputs</h4>
+<table>
+<thead>
+<tr>
+<th align="center">ID</th>
+<th align="center">Description</th>
+<th align="center">Type</th>
+<th align="center">Info</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">OUTPUT_STATUS</td>
+<td align="center">Output status</td>
+<td align="center">Number</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">OUTPUT_STRING</td>
+<td align="center">Output message</td>
+<td align="center">String</td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="create-a-package-from-the-central-database">Create a package from the central database</h3>
+<p>Package data from the central database, for future deployement on one or several clone(s).</p>
+<p>This script backups all data from the given list of schemas to a ZIP archive, named by default "central_database_package.zip".</p>
+<p>You can add an optionnal SQL file to run in the clone after the deployment of the archive. This file must contain valid PostgreSQL queries and can be used to drop some triggers in the clone or remove some constraints. For example "DELETE FROM pg_trigger WHERE tgname = 'name_of_trigger';"</p>
+<p>An internet connection is needed because a synchronization item must be written to the central database "lizsync.history" table during the process. and obviously data must be downloaded from the central database</p>
+<p><img alt="algo_id" src="./lizsync-package_master_database.png"></p>
+<h4 id="parameters_4">Parameters</h4>
+<table>
+<thead>
+<tr>
+<th align="center">ID</th>
+<th align="center">Description</th>
+<th align="center">Type</th>
+<th align="center">Info</th>
+<th align="center">Required</th>
+<th align="center">Advanced</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">CONNECTION_NAME_CENTRAL</td>
+<td align="center">PostgreSQL connection to the central database</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">POSTGRESQL_BINARY_PATH</td>
+<td align="center">PostgreSQL binary path</td>
+<td align="center">File</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">SCHEMAS</td>
+<td align="center">List of schemas to package, separated by commas. (schemas public, lizsync &amp; audit are never processed)</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">ADDITIONAL_SQL_FILE</td>
+<td align="center">Additionnal SQL file to run in the clone after the ZIP deployement</td>
+<td align="center">File</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">ZIP_FILE</td>
+<td align="center">Output archive file (ZIP)</td>
+<td align="center">FileDestination</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<h4 id="outputs_4">Outputs</h4>
+<table>
+<thead>
+<tr>
+<th align="center">ID</th>
+<th align="center">Description</th>
+<th align="center">Type</th>
+<th align="center">Info</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">ZIP_FILE</td>
+<td align="center">Output archive file (ZIP)</td>
+<td align="center">File</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">OUTPUT_STATUS</td>
+<td align="center">Output status</td>
+<td align="center">Number</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">OUTPUT_STRING</td>
+<td align="center">Output message</td>
+<td align="center">String</td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="two-way-database-synchronization">Two-way database synchronization</h3>
+<p>This scripts run a two-way data synchronization between the central and clone database.</p>
+<p>The data to synchronize are listed by reading the content of the "audit.logged_actions" of each database, since the last synchronization or the last deployement of ZIP package.</p>
+<p>This audit data are transformed into INSERT/UPDATE/DELETE SQL queries which are played in the databases in this order:
+ 1/ From the CENTRAL to the CLONE database
+ 2/ From the CLONE to the CENTRAL database</p>
+<p>The central database stores which clone has replayed which audited modification, and keeps an history of synchronization items.</p>
+<p><img alt="algo_id" src="./lizsync-synchronize_database.png"></p>
+<h4 id="parameters_5">Parameters</h4>
+<table>
+<thead>
+<tr>
+<th align="center">ID</th>
+<th align="center">Description</th>
+<th align="center">Type</th>
+<th align="center">Info</th>
+<th align="center">Required</th>
+<th align="center">Advanced</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">CONNECTION_NAME_CENTRAL</td>
+<td align="center">PostgreSQL connection to the central database</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">CONNECTION_NAME_CLONE</td>
+<td align="center">PostgreSQL connection to the clone database</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<h4 id="outputs_5">Outputs</h4>
+<table>
+<thead>
+<tr>
+<th align="center">ID</th>
+<th align="center">Description</th>
+<th align="center">Type</th>
+<th align="center">Info</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">OUTPUT_STATUS</td>
+<td align="center">Output status</td>
+<td align="center">Number</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">OUTPUT_STRING</td>
+<td align="center">Output message</td>
+<td align="center">String</td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2 id="03-geopoppy-file-synchronization">03 GeoPoppy file synchronization</h2>
+<h3 id="get-projects-and-files-from-the-central-ftp-server">Get projects and files from the central FTP server</h3>
+<p>Get QGIS projects and files from the give FTP server and remote directory and adapt QGIS projects for the local clone database by replacing PostgreSQL connection data with the local PostgreSQL server data. An internet connection is needed to use this algorithm</p>
+<p><img alt="algo_id" src="./lizsync-get_projects_and_files_from_central_ftp.png"></p>
+<h4 id="parameters_6">Parameters</h4>
+<table>
+<thead>
+<tr>
+<th align="center">ID</th>
+<th align="center">Description</th>
+<th align="center">Type</th>
+<th align="center">Info</th>
+<th align="center">Required</th>
+<th align="center">Advanced</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">CONNECTION_NAME_CENTRAL</td>
+<td align="center">PostgreSQL connection to the central database</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">CENTRAL_FTP_HOST</td>
+<td align="center">Central FTP Server host</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">CENTRAL_FTP_PORT</td>
+<td align="center">Central FTP Server port</td>
+<td align="center">Number</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">CENTRAL_FTP_LOGIN</td>
+<td align="center">Central FTP Server login</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">CENTRAL_FTP_PASSWORD</td>
+<td align="center">Central FTP Server password</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">CENTRAL_FTP_REMOTE_DIR</td>
+<td align="center">Central FTP Server remote directory</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">FTP_EXCLUDE_REMOTE_SUBDIRS</td>
+<td align="center">List of sub-directory to exclude from synchro, separated by commas.</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">CLONE_QGIS_PROJECT_FOLDER</td>
+<td align="center">Clone QGIS project folder</td>
+<td align="center">File</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">REPLACE_DATASOURCE_IN_QGIS_PROJECT</td>
+<td align="center">Adapt PostgreSQL connection parameters for GeoPoppy database ?</td>
+<td align="center">Boolean</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<h4 id="outputs_6">Outputs</h4>
+<table>
+<thead>
+<tr>
+<th align="center">ID</th>
+<th align="center">Description</th>
+<th align="center">Type</th>
+<th align="center">Info</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">OUTPUT_STATUS</td>
+<td align="center">Output status</td>
+<td align="center">Number</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">OUTPUT_STRING</td>
+<td align="center">Output message</td>
+<td align="center">String</td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="send-local-qgis-projects-and-files-to-the-clone-ftp-server">Send local QGIS projects and files to the clone FTP server</h3>
+<p>Send QGIS projects and files to the clone FTP server remote directory.</p>
+<p>This script can be used by the geomatician in charge of the deployment of data to one or several clone(s).</p>
+<p>It synchronizes the files from the given local QGIS project folder to the clone remote folder by using the given FTP connexion. This means all the files from the clone folder will be overwritten by the files from the local QGIS project folder.</p>
+<p>Beware ! This script does not adapt projects for the clone database (no modification of the PostgreSQL connexion data inside the QGIS project files) !</p>
+<p><img alt="algo_id" src="./lizsync-send_projects_and_files_to_clone_ftp.png"></p>
+<h4 id="parameters_7">Parameters</h4>
+<table>
+<thead>
+<tr>
+<th align="center">ID</th>
+<th align="center">Description</th>
+<th align="center">Type</th>
+<th align="center">Info</th>
+<th align="center">Required</th>
+<th align="center">Advanced</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">CONNECTION_NAME_CENTRAL</td>
+<td align="center">PostgreSQL connection to the central database</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">LOCAL_QGIS_PROJECT_FOLDER</td>
+<td align="center">Local desktop QGIS project folder</td>
+<td align="center">File</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">CLONE_FTP_HOST</td>
+<td align="center">Clone FTP Server host</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">CLONE_FTP_PORT</td>
+<td align="center">Clone FTP Server port</td>
+<td align="center">Number</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">CLONE_FTP_LOGIN</td>
+<td align="center">Clone FTP Server login</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">CLONE_FTP_PASSWORD</td>
+<td align="center">Clone FTP Server password</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">CLONE_FTP_REMOTE_DIR</td>
+<td align="center">Clone FTP Server remote directory</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">FTP_EXCLUDE_REMOTE_SUBDIRS</td>
+<td align="center">List of sub-directory to exclude from synchro, separated by commas.</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<h4 id="outputs_7">Outputs</h4>
+<table>
+<thead>
+<tr>
+<th align="center">ID</th>
+<th align="center">Description</th>
+<th align="center">Type</th>
+<th align="center">Info</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">OUTPUT_STATUS</td>
+<td align="center">Output status</td>
+<td align="center">Number</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">OUTPUT_STRING</td>
+<td align="center">Output message</td>
+<td align="center">String</td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h3 id="synchronize-the-clone-media-subfolder-to-the-central-ftp-server">Synchronize the clone media subfolder to the central FTP server</h3>
+<p>Send media files, such as new images, stored in the clone QGIS "media/upload/" folder, TO the central FTP server remote directory "media/upload/"</p>
+<p>These media files can for example have been added by using Lizmap editing form.</p>
+<p>Every file existing in the clone "media/upload/" folder but not in the central server "media/upload/" folder will be sent.</p>
+<p><img alt="algo_id" src="./lizsync-synchronize_media_subfolder_to_ftp.png"></p>
+<h4 id="parameters_8">Parameters</h4>
+<table>
+<thead>
+<tr>
+<th align="center">ID</th>
+<th align="center">Description</th>
+<th align="center">Type</th>
+<th align="center">Info</th>
+<th align="center">Required</th>
+<th align="center">Advanced</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">LOCAL_QGIS_PROJECT_FOLDER</td>
+<td align="center">Local QGIS project folder</td>
+<td align="center">File</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">CENTRAL_FTP_HOST</td>
+<td align="center">Central FTP Server host</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">CENTRAL_FTP_PORT</td>
+<td align="center">Central FTP Server port</td>
+<td align="center">Number</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">CENTRAL_FTP_LOGIN</td>
+<td align="center">Central FTP Server login</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">CENTRAL_FTP_PASSWORD</td>
+<td align="center">Central FTP Server password</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center"></td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">CENTRAL_FTP_REMOTE_DIR</td>
+<td align="center">Central FTP Server remote directory</td>
+<td align="center">String</td>
+<td align="center"></td>
+<td align="center">✓</td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<h4 id="outputs_8">Outputs</h4>
+<table>
+<thead>
+<tr>
+<th align="center">ID</th>
+<th align="center">Description</th>
+<th align="center">Type</th>
+<th align="center">Info</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="center">OUTPUT_STATUS</td>
+<td align="center">Output status</td>
+<td align="center">Number</td>
+<td align="center"></td>
+</tr>
+<tr>
+<td align="center">OUTPUT_STRING</td>
+<td align="center">Output message</td>
+<td align="center">String</td>
+<td align="center"></td>
+</tr>
+</tbody>
+</table>
+<hr>
+  </article>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.1/highlight.min.js">
+  </script>
+  <script>
+   hljs.initHighlightingOnLoad();
+  </script>
+  <script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript">
+  </script>
+  <script type="text/javascript">
+   MathJax.Hub.Config({"showProcessingMessages" : false,"messageStyle" : "none","tex2jax": { inlineMath: [ [ "$", "$" ] ] }});
+  </script>
+ </body>
+</html>
