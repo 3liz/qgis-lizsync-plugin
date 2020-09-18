@@ -20,6 +20,7 @@ from qgis.core import (
     QgsProcessingException,
     QgsProcessingParameterString,
     QgsProcessingParameterFile,
+    QgsProcessingParameterBoolean,
     QgsProcessingOutputString,
     QgsProcessingOutputNumber
 )
@@ -47,6 +48,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
     CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     CONNECTION_NAME_CLONE = 'CONNECTION_NAME_CLONE'
     POSTGRESQL_BINARY_PATH = 'POSTGRESQL_BINARY_PATH'
+    RECREATE_CLONE_SERVER_ID = 'RECREATE_CLONE_SERVER_ID'
     ZIP_FILE = 'ZIP_FILE'
 
     OUTPUT_STATUS = 'OUTPUT_STATUS'
@@ -143,6 +145,15 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             )
         )
 
+        self.addParameter(
+            QgsProcessingParameterBoolean(
+                self.RECREATE_CLONE_SERVER_ID,
+                tr('Recreate clone server id. Do it only to fully reset the clone ID !'),
+                defaultValue=False,
+                optional=False
+            )
+        )
+
         # OUTPUTS
         # Add output for message
         self.addOutput(
@@ -210,6 +221,10 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
         postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
+        recreate_clone_server_id = self.parameterAsBool(
+            parameters, self.RECREATE_CLONE_SERVER_ID,
+            context
+        )
 
         # store parameters
         ls = lizsyncConfig()
@@ -237,6 +252,8 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             m = tr('Package extraction error')
             raise QgsProcessingException(m)
 
+        feedback.pushInfo('')
+
         # Check needed files
         feedback.pushInfo(tr('CHECK UNCOMPRESSED FILES'))
         sql_file_list = [
@@ -253,9 +270,12 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                 raise QgsProcessingException(m)
         feedback.pushInfo(tr('All the mandatory files have been sucessfully found'))
 
+        feedback.pushInfo('')
+
         # CLONE DATABASE
+        # Check if clone database already has a lizsync structure installed
         # Get existing data to avoid recreating server_id for this machine
-        feedback.pushInfo(tr('GET EXISTING METADATA TO AVOID RECREATING SERVER_ID FOR THIS CLONE'))
+        feedback.pushInfo(tr('GET EXISTING CLONE DATABASE ID TO AVOID RECREATING SERVER_ID FOR THIS CLONE'))
         clone_id = None
         clone_name = None
         sql = '''
@@ -297,50 +317,61 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             else:
                 raise QgsProcessingException(error_message)
 
+        feedback.pushInfo('')
+
         # Get last synchro and
         # check if no newer bi-directionnal (partial sync)
         # or archive deployment (full sync)
         # have been made since last deployment
-        feedback.pushInfo(tr('CHECK LAST SYNCHRONIZATION'))
-        with open(os.path.join(dir_path, 'sync_id.txt')) as f:
-            sync_id = f.readline().strip()
-        if not sync_id:
-            m = tr('No synchronization ID has been found in the file sync_id.txt')
-            raise QgsProcessingException(m)
-        sql = '''
-            SELECT sync_id
-            FROM lizsync.history
-            WHERE TRUE
-            AND sync_time > (
-                SELECT sync_time
+        if has_sync and clone_id:
+            feedback.pushInfo(tr('CHECK LAST SYNCHRONIZATION'))
+            with open(os.path.join(dir_path, 'sync_id.txt')) as f:
+                sync_id = f.readline().strip()
+            if not sync_id:
+                m = tr('No synchronization ID has been found in the file sync_id.txt')
+                raise QgsProcessingException(m)
+            sql = '''
+                SELECT sync_id
                 FROM lizsync.history
-                WHERE sync_id::text = '{sync_id}'
+                WHERE TRUE
+                AND sync_time > (
+                    SELECT sync_time
+                    FROM lizsync.history
+                    WHERE sync_id::text = '{sync_id}'
+                )
+                AND server_from::text = (
+                    SELECT server_id::text
+                    FROM lizsync.server_metadata
+                    LIMIT 1
+                )
+                AND '{clone_id}' = ANY (server_to)
+            '''.format(
+                sync_id=sync_id,
+                clone_id=clone_id
             )
-            AND server_from::text = (
-                SELECT server_id::text
-                FROM lizsync.server_metadata
-                LIMIT 1
+            last_sync = None
+            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+                connection_name_central,
+                sql
             )
-            AND '{clone_id}' = ANY (server_to)
-        '''.format(
-            sync_id=sync_id,
-            clone_id=clone_id
-        )
-        last_sync = None
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
-            connection_name_central,
-            sql
-        )
-        if not ok:
-            m = error_message + ' ' + sql
-            raise QgsProcessingException(m)
-        for a in data:
-            last_sync = a[0]
-        if last_sync:
-            m = tr('Synchronization has already been made on this clone since the deployment of this package. Abort the current deployment')
-            raise QgsProcessingException(m)
+            if not ok:
+                m = error_message + ' ' + sql
+                raise QgsProcessingException(m)
+            for a in data:
+                last_sync = a[0]
+            if last_sync:
+                m = tr(
+                    'Bi-directionnal synchronization has already been made on this clone'
+                    ' since the deployment of this package. Abort the current deployment.'
+                )
+                raise QgsProcessingException(m)
+            else:
+                feedback.pushInfo(tr(
+                    'No previous bi-directionnal synchronization found since the deployment'
+                    ' of this package. Everything is ok.'
+                ))
 
-        # Get synchronized schemas
+        # Get synchronized schemas from text file
         feedback.pushInfo(tr('GET THE LIST OF SYNCHRONIZED SCHEMAS FROM THE FILE sync_schemas.txt'))
         with open(os.path.join(dir_path, 'sync_schemas.txt')) as f:
             sync_schemas = f.readline().strip()
@@ -348,7 +379,9 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             m = tr('No schema to syncronize')
             raise QgsProcessingException(m)
 
-        feedback.pushInfo(tr('Schema list found in sync_schemas.txt') + ' %s' % sync_schemas)
+        feedback.pushInfo(tr('Schema list found in sync_schemas.txt') + ': %s' % sync_schemas)
+
+        feedback.pushInfo('')
 
         # CLONE DATABASE
         # Run SQL scripts from archive with PSQL command
@@ -426,17 +459,31 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
 
                 # Delete SQL scripts
                 os.remove(i)
+
             except Exception:
                 m = tr('Error loading file') + ' {0}'.format(i)
                 raise QgsProcessingException(m)
 
             finally:
                 feedback.pushInfo('* {0} has been loaded'.format(i.replace(dir_path, '')))
+                feedback.pushInfo('')
+
+        feedback.pushInfo('')
 
         # CLONE DATABASE
         # Add server_id in lizsync.server_metadata if needed
-        feedback.pushInfo(tr('ADDING THE SERVER ID IN THE CLONE metadata table'))
-        if clone_id and clone_name:
+        if not clone_id or recreate_clone_server_id:
+            # Generate a new ID
+            feedback.pushInfo(tr('ADDING THE SERVER ID IN THE CLONE metadata table'))
+            sql = '''
+            DELETE FROM lizsync.server_metadata;
+            INSERT INTO lizsync.server_metadata (server_name)
+            VALUES ( concat('clone',  ' ', md5((now())::text) ) )
+            RETURNING server_id, server_name
+            '''
+        else:
+            # Keep the already present ID
+            feedback.pushInfo(tr('KEEP THE SERVER ID IN THE CLONE metadata table'))
             sql = '''
             DELETE FROM lizsync.server_metadata;
             INSERT INTO lizsync.server_metadata (server_id, server_name)
@@ -446,13 +493,6 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                 clone_id,
                 clone_name
             )
-        else:
-            sql = '''
-            DELETE FROM lizsync.server_metadata;
-            INSERT INTO lizsync.server_metadata (server_name)
-            VALUES ( concat('clone',  ' ', md5((now())::text) ) )
-            RETURNING server_id, server_name
-            '''
         header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
             connection_name_clone,
             sql
@@ -461,13 +501,15 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             for a in data:
                 clone_id = a[0]
                 clone_name = a[1]
-                feedback.pushInfo(tr('Server metadata added in the clone database'))
+                feedback.pushInfo(tr('Server metadata in the clone database'))
                 feedback.pushInfo(tr('* server id') + ' = {0}'.format(clone_id))
                 feedback.pushInfo(tr('* server name') + ' = {0}'.format(clone_name))
         else:
             m = tr('Error while adding server id in clone metadata table')
             m+= ' ' + error_message
             raise QgsProcessingException(m)
+
+        feedback.pushInfo('')
 
         # CENTRAL DATABASE
         # Add an item in lizsync.synchronized_schemas
@@ -498,6 +540,8 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             m+= ' ' + error_message
             raise QgsProcessingException(m)
 
+        feedback.pushInfo('')
+
         # CLONE DATABASE
         # Add foreign server and foreign schemas for synced schemas
         # We need full connection params: host, port, dbname, user, password
@@ -525,7 +569,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             uri.username(),
             uri.password()
         )
-        feedback.pushInfo(sql)
+        # feedback.pushInfo(sql)
         header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
             connection_name_clone,
             sql
@@ -536,6 +580,8 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             m = tr('Error while adding the foregin server and schemas in clone database')
             m+= ' ' + error_message
             raise QgsProcessingException(m)
+
+        feedback.pushInfo('')
 
         # CENTRAL DATABASE - Add clone Id in the lizsync.history line
         # corresponding to this deployed package
@@ -564,6 +610,8 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                 m = tr('Error while updating the history item for this archive deployement')
                 m+= ' ' + error_message
                 raise QgsProcessingException(m)
+
+        feedback.pushInfo('')
 
         output = {
             self.OUTPUT_STATUS: 1,
