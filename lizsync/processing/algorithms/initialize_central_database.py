@@ -25,7 +25,10 @@ from qgis.core import (
     QgsProcessingOutputString
 )
 from .tools import (
-    check_lizsync_installation_status,
+    check_database_structure,
+    check_database_server_metadata_content,
+    check_database_uid_columns,
+    check_database_audit_triggers,
     lizsyncConfig,
     getUriFromConnectionName,
     fetchDataFromSqlQuery,
@@ -222,20 +225,6 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
         ls.setVariable('postgresql:central/schemas', synchronized_schemas)
         ls.save()
 
-        # First run all tests
-        test_list = ['structure', 'server id', 'uid columns', 'audit triggers']
-        status, tests = check_lizsync_installation_status(
-            connection_name_central,
-            test_list,
-            synchronized_schemas
-        )
-        if status:
-            msg = tr('Everything is OK. No action needed')
-            return {
-                self.OUTPUT_STATUS: 1,
-                self.OUTPUT_STRING: msg
-            }
-
         # compile SQL schemas
         schemas = [
             "'{0}'".format(a.strip())
@@ -244,19 +233,26 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
         ]
         schemas_sql = ', '.join(schemas)
 
-        # Check structure
+        # Structure
         feedback.pushInfo(tr('CHECK LIZSYNC STRUCTURE'))
-        if not tests['structure']['status']:
-            m = tr(
-                'Lizsync has not been installed in the central database.'
-                ' Run the script "Create database structure"'
-            )
-            raise QgsProcessingException(m)
+        status, message = check_database_structure(
+            connection_name_central
+        )
+        if not status:
+            raise QgsProcessingException(message)
+        else:
+            feedback.pushInfo(message)
+        feedback.pushInfo('')
 
-        feedback.pushInfo(tr('Lizsync structure OK'))
+        # Metadata content
+        feedback.pushInfo(tr('CHECK METADATA CONTENT'))
+        status, message = check_database_server_metadata_content(
+            connection_name_central
+        )
+        feedback.pushInfo(message)
 
-        # ADD SERVER ID IN METADATA TABLE
-        if add_server_id and not tests['server id']['status']:
+        # Add server id metadata
+        if add_server_id and not status:
             feedback.pushInfo(tr('ADD SERVER ID IN THE METADATA TABLE'))
             server_name = 'central'
             sql = '''
@@ -280,9 +276,18 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
                 m += ' '
                 m += error_message
                 raise QgsProcessingException(m)
+        feedback.pushInfo('')
+
+        # UID columns
+        feedback.pushInfo(tr('CHECK UID COLUMNS'))
+        status, message = check_database_uid_columns(
+            connection_name_central,
+            synchronized_schemas
+        )
+        feedback.pushInfo(message)
 
         # Add UID columns for given schema names
-        if add_uid_columns and not tests['uid columns']['status']:
+        if add_uid_columns and not status:
             feedback.pushInfo(tr('ADD UID COLUMNS IN ALL THE TABLES OF THE SPECIFIED SCHEMAS'))
             sql = '''
                 SELECT table_schema, table_name,
@@ -299,12 +304,11 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
                 sql
             )
             if ok:
-                status = 1
                 names = []
                 for a in data:
                     if a[2]:
                         names.append(
-                            '{0}.{1}'.format(a[0], a[1])
+                            '"{0}"."{1}"'.format(a[0], a[1])
                         )
                 if names:
                     msg = tr('UID columns have been successfully added in the following tables:')
@@ -318,8 +322,18 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
             else:
                 raise QgsProcessingException(error_message)
 
-        # ADD MISSING AUDIT TRIGGERS
-        if add_audit_triggers and not tests['audit triggers']['status']:
+        feedback.pushInfo('')
+
+        # audit triggers
+        feedback.pushInfo(tr('CHECK AUDIT TRIGGERS'))
+        status, message = check_database_audit_triggers(
+            connection_name_central,
+            synchronized_schemas
+        )
+        feedback.pushInfo(message)
+
+        # Add missing audit triggers
+        if add_audit_triggers and not status:
             feedback.pushInfo(tr('ADD AUDIT TRIGGERS IN ALL THE TABLES OF THE GIVEN SCHEMAS'))
             sql = '''
                 SELECT table_schema, table_name,
@@ -344,11 +358,10 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
             if not ok:
                 raise QgsProcessingException(error_message)
 
-            status = 1
             names = []
             for a in data:
                 names.append(
-                    '{0}.{1}'.format(a[0], a[1])
+                    '"{0}"."{1}"'.format(a[0], a[1])
                 )
             if names:
                 msg = tr('Audit triggers have been successfully added in the following tables:')
@@ -359,6 +372,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
             else:
                 msg = tr('No audit triggers were missing.')
                 feedback.pushInfo(msg)
+        feedback.pushInfo('')
 
         output = {
             self.OUTPUT_STATUS: 1,

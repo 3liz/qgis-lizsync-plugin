@@ -26,7 +26,6 @@ ALGO="lizsync:create_database_structure"
 PARAMS='{"CONNECTION_NAME": "lizsync_central", "OVERRIDE_AUDIT": false, "OVERRIDE_LIZSYNC": false}'
 python3 lizsync/processing/standalone_processing_runner.py "${ALGO}" "${PARAMS}"
 
-
 # Prepare central database
 echo ""
 echo "Prepare central database"
@@ -34,6 +33,9 @@ echo "##########################"
 ALGO="lizsync:initialize_central_database"
 PARAMS='{"CONNECTION_NAME_CENTRAL":"lizsync_central","ADD_SERVER_ID":true,"ADD_UID_COLUMNS":true,"ADD_AUDIT_TRIGGERS":true,"SCHEMAS":"test"}'
 python3 lizsync/processing/standalone_processing_runner.py "${ALGO}" "${PARAMS}"
+
+#psql service=lizsync_central -c "SELECT audit.audit_table('test.pluviometers')"
+#psql service=lizsync_central -c "SELECT * FROM audit.logged_relations"
 
 
 # Create a package from the central database
@@ -70,14 +72,14 @@ psql service=lizsync_clone_a -f lizsync/test/data/clone_a_database_edition_sampl
 sleep 2
 psql service=lizsync_clone_b -f lizsync/test/data/clone_b_database_edition_sample.sql
 
-exit
+#exit
 
 # Run Two-way database synchronization
 echo ""
 echo "Run Two-way database synchronization"
 echo "##########################"
 ALGO="lizsync:synchronize_database"
-PARAMS= '{"CONNECTION_NAME_CENTRAL": "lizsync_central", "CONNECTION_NAME_CLONE": "lizsync_clone_a"}'
+PARAMS='{"CONNECTION_NAME_CENTRAL": "lizsync_central", "CONNECTION_NAME_CLONE": "lizsync_clone_a"}'
 python3 lizsync/processing/standalone_processing_runner.py "${ALGO}" "${PARAMS}"
 
 ALGO="lizsync:synchronize_database"

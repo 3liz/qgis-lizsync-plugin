@@ -311,14 +311,67 @@ def run_command(cmd, myenv, feedback):
     return rc, status
 
 
-def check_lizsync_installation_status(connection_name, test_list=['structure', 'server id', 'uid columns', 'audit triggers'], schemas='test'):
+def check_database_structure(connection_name):
     """
-    Checks if the central database
-    has been initialized with Lizsync tools
+    Check if database structure contains lizsync tables
     """
-    tests = {}
-    global_status = True
+    sql = ''
+    sql += " SELECT t.table_schema, t.table_name"
+    sql += " FROM information_schema.tables AS t"
+    sql += " WHERE t.table_schema = 'lizsync'"
+    sql += " AND t.table_name = 'server_metadata'"
+    header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
 
+    # Default output
+    status = True
+    message = tr('Lizsync structure has been installed')
+
+    # Tests
+    if ok:
+        if rowCount != 1:
+            status = False
+            message = tr(
+                'Lizsync has not been installed in the central database.'
+                ' Run the script "Create database structure"'
+            )
+    else:
+        status = False
+        message = error_message
+
+    return status, message
+
+
+def check_database_server_metadata_content(connection_name):
+    """
+    Check if database contains data in server_metadata
+    """
+    sql = ''
+    sql += " SELECT server_id "
+    sql += " FROM lizsync.server_metadata"
+    sql += " LIMIT 1"
+    header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
+
+    # Default output
+    status = True
+    message = tr('Server id is correctly set')
+
+    # Tests
+    if ok:
+        if rowCount != 1:
+            status = False
+            message = tr('The server id in the table lizsync.server_metadata is not set')
+    else:
+        status = False
+        message = error_message
+
+    return status, message
+
+
+def convert_textual_schema_list_to_sql(schemas):
+    """
+    Parse textual schema list and return SQL compatible list
+    for use in WHERE clause
+    """
     schemas = [
         "'{0}'".format(a.strip())
         for a in schemas.split(',')
@@ -326,120 +379,127 @@ def check_lizsync_installation_status(connection_name, test_list=['structure', '
     ]
     schemas_sql = ', '.join(schemas)
 
-    # Check metadata table
-    if 'structure' in test_list:
-        test = {'status': True, 'message': tr('Lizsync structure has been installed')}
-        sql = ''
-        sql += " SELECT t.table_schema, t.table_name"
-        sql += " FROM information_schema.tables AS t"
-        sql += " WHERE t.table_schema = 'lizsync'"
-        sql += " AND t.table_name = 'server_metadata'"
+    return schemas_sql
 
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
-        if ok:
-            if rowCount != 1:
-                global_status = False
-                message = tr('The table lizsync.metadata has not been found')
-                test['status'] = False
-                test['message'] = message
-        else:
-            global_status = False
-            test['status'] = False
-            test['message'] = error_message
-        tests['structure'] = test
 
-    # Check server id
-    if 'server id' in test_list:
-        test = {'status': True, 'message': tr('Server id is set')}
-        sql = ''
-        sql += " SELECT server_id FROM lizsync.server_metadata LIMIT 1"
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
-        if ok:
-            if rowCount != 1:
-                global_status = False
-                message = tr('The server id in lizsync.metadata is not set')
-                test['status'] = False
-                test['message'] = message
-        else:
-            global_status = False
-            test['status'] = False
-            test['message'] = error_message
-        tests['server id'] = test
+def check_database_uid_columns(connection_name, schemas='test'):
+    """
+    Check if tables contains uid columns
+    """
+    schemas_sql = convert_textual_schema_list_to_sql(schemas)
 
-    # Get missing uid columns
-    if 'uid columns' in test_list:
-        test = {'status': True, 'message': tr('No missing uid columns')}
-        sql = ''
-        sql += " SELECT t.table_schema, t.table_name, (c.column_name IS NOT NULL) AS ok"
-        sql += " FROM information_schema.tables AS t"
-        sql += " LEFT JOIN information_schema.columns c"
-        sql += "     ON True"
-        sql += "     AND c.table_schema = t.table_schema"
-        sql += "     AND c.table_name = t.table_name"
-        sql += "     AND c.column_name = 'uid'"
-        sql += " WHERE TRUE"
-        sql += " AND t.table_schema IN ( {0} )"
-        sql += " AND t.table_type = 'BASE TABLE'"
-        sql += " AND c.column_name IS NULL"
-        sql += " ORDER BY t.table_schema, t.table_name"
-        sqlc = sql.format(
-            schemas_sql
-        )
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sqlc)
-        missing = []
-        if ok:
+    status = True
+    message = tr('No missing uid columns')
+
+    sql = ''
+    sql += " SELECT t.table_schema, t.table_name, (c.column_name IS NOT NULL) AS ok"
+    sql += " FROM information_schema.tables AS t"
+    sql += " LEFT JOIN information_schema.columns c"
+    sql += "     ON True"
+    sql += "     AND c.table_schema = t.table_schema"
+    sql += "     AND c.table_name = t.table_name"
+    sql += "     AND c.column_name = 'uid'"
+    sql += " WHERE TRUE"
+    sql += " AND t.table_schema IN ( {0} )"
+    sql += " AND t.table_type = 'BASE TABLE'"
+    sql += " AND c.column_name IS NULL"
+    sql += " ORDER BY t.table_schema, t.table_name"
+    sqlc = sql.format(
+        schemas_sql
+    )
+    header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sqlc)
+    missing = []
+    if ok:
+        for a in data:
+            missing.append('* "{0}"."{1}"'.format(a[0], a[1]))
+    if missing:
+        message = tr('Some tables do not have the required uid column')
+        message += '\n{0}'.format(',\n '.join(missing))
+        status = False
+
+    return status, message
+
+
+def check_database_audit_triggers(connection_name, schemas='test'):
+    """
+    Checks if tables are audited with triggers
+    """
+    schemas_sql = convert_textual_schema_list_to_sql(schemas)
+
+    status = True
+    message = tr('No missing audit triggers')
+
+    sql = ''
+    sql += " SELECT table_schema, table_name"
+    sql += " FROM information_schema.tables"
+    sql += " WHERE True"
+    sql += " AND table_schema IN ( {0} )"
+    sql += " AND table_type = 'BASE TABLE'"
+    sql += " AND (quote_ident(table_schema) || '.' || quote_ident(table_name))::text NOT IN ("
+    sql += "     SELECT (tgrelid::regclass)::text"
+    sql += "     FROM pg_trigger"
+    sql += "     WHERE TRUE"
+    sql += "     AND tgname LIKE 'audit_trigger_%'"
+    sql += " )"
+    sqlc = sql.format(
+        schemas_sql
+    )
+    header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sqlc)
+    missing = []
+    if ok:
+        if rowCount > 0:
             for a in data:
-                missing.append('"{0}"."{1}"'.format(a[0], a[1]))
-        if missing:
-            global_status = False
-            message = tr('Some tables do not have the required uid column')
-            message += '\n{0}'.format(',\n '.join(missing))
-            test['status'] = False
-            test['message'] = message
-        tests['uid columns'] = test
+                missing.append('* "{0}"."{1}"'.format(a[0], a[1]))
+            message = tr('Some tables are not monitored by the audit trigger tool')
+            message += ':\n{0}'.format(',\n '.join(missing))
+            message += '\n' + tr('They will not be synchronized !')
+            status = False
+    else:
+        status = False
+        message = error_message
 
-    # Check missing audit triggers
-    if 'audit triggers' in test_list:
-        test = {'status': True, 'message': tr('No missing audit triggers')}
-        sql = ''
-        sql += " SELECT table_schema, table_name"
-        sql += " FROM information_schema.tables"
-        sql += " WHERE True"
-        sql += " AND table_schema IN ( {0} )"
-        sql += " AND table_type = 'BASE TABLE'"
-        sql += " AND (quote_ident(table_schema) || '.' || quote_ident(table_name))::text NOT IN ("
-        sql += "     SELECT (tgrelid::regclass)::text"
-        sql += "     FROM pg_trigger"
-        sql += "     WHERE TRUE"
-        sql += "     AND tgname LIKE 'audit_trigger_%'"
-        sql += " )"
-        sqlc = sql.format(
-            schemas_sql
-        )
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sqlc)
-        missing = []
-        if ok:
-            if rowCount > 0:
-                for a in data:
-                    missing.append('"{0}"."{1}"'.format(a[0], a[1]))
-                message = tr('Some tables are not monitored by the audit trigger tool.')
-                message += '\n' + tr('THEY WON\'T BE SYNCHRONIZED')
-                message += '\n****************'
-                message += ':\n{0}'.format(',\n '.join(missing))
-                message += '\n****************'
-                message += '\n'
-                # We do not set status to False
-                # So that the user can decide to go on or not
-                # We do not want to force all the tables of a schema to be audited
-                test['message'] = message
+    return status, message
+
+
+def get_database_audit_triggers(connection_name, schemas='test'):
+    """
+    Get all the tables audited in synchronized schemas
+    """
+    schemas_sql = convert_textual_schema_list_to_sql(schemas)
+
+    sql = ''
+    sql += " SELECT table_schema, table_name"
+    sql += " FROM information_schema.tables"
+    sql += " WHERE True"
+    sql += " AND table_schema IN ( {0} )"
+    sql += " AND table_type = 'BASE TABLE'"
+    sql += " AND (quote_ident(table_schema) || '.' || quote_ident(table_name))::text IN ("
+    sql += "     SELECT (tgrelid::regclass)::text"
+    sql += "     FROM pg_trigger"
+    sql += "     WHERE TRUE"
+    sql += "     AND tgname LIKE 'audit_trigger_%'"
+    sql += " )"
+    sqlc = sql.format(
+        schemas_sql
+    )
+    header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sqlc)
+    tables = []
+    message = ''
+    if ok:
+        if rowCount > 0:
+            message = tr('Following tables are monitored by the audit trigger tool')
+            for a in data:
+                tables.append((a[0], a[1]))
+                message += '* "{0}"."{1}"'.format(a[0], a[1])
         else:
-            global_status = False
-            test['status'] = False
-            test['message'] = error_message
+            message = tr(
+                'No tables are audited in central database for the specified schemas.'
+                ' Data synchronization WILL NOT WORK when deploying this generated package'
+            )
+    else:
+        message = error_message
 
-        tests['audit triggers'] = test
-
-    return global_status, tests
+    return ok, message, tables
 
 
 def checkFtpBinary():

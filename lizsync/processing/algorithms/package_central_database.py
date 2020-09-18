@@ -29,7 +29,11 @@ from qgis.core import (
 )
 
 from .tools import (
-    check_lizsync_installation_status,
+    check_database_structure,
+    check_database_server_metadata_content,
+    check_database_uid_columns,
+    check_database_audit_triggers,
+    get_database_audit_triggers,
     lizsyncConfig,
     getUriFromConnectionName,
     fetchDataFromSqlQuery,
@@ -208,31 +212,62 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         has been initialized
         """
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+        schemas = parameters[self.SCHEMAS]
 
         # Check if needed schema and metadata has been created
         feedback.pushInfo(tr('CHECK IF LIZSYNC HAS BEEN INSTALLED AND DATABASE INITIALIZED'))
-        status, tests = check_lizsync_installation_status(
-            connection_name_central,
-            ['structure', 'server id', 'uid columns', 'audit triggers'],
-            parameters[self.SCHEMAS]
-        )
-        if not status:
-            msg = tr('Some needed configuration are missing in the central database. Please correct them before proceeding.')
-        else:
-            msg = tr('Every test has passed successfully !')
-        feedback.pushInfo(msg)
+        checks = []
 
-        # Loop through test results
-        for name, test in tests.items():
-            item_msg = '* {name} - {message}'.format(
-                name=name.upper(),
-                message=test['message'].replace('"', '')
-            )
-            feedback.pushInfo(item_msg)
-        if not status:
-            return False, msg
+        # structure
+        status, message = check_database_structure(
+            connection_name_central
+        )
+        mandatory = True
+        checks.append((tr('structure'), status, message, mandatory))
+
+        # server_metadata content
+        status, message = check_database_server_metadata_content(
+            connection_name_central
+        )
+        mandatory = True
+        checks.append((tr('metadata'), status, message, mandatory))
+
+        # uid columns
+        status, message = check_database_uid_columns(
+            connection_name_central,
+            schemas
+        )
+        mandatory = True
+        checks.append((tr('uid columns'), status, message, mandatory))
+
+        # audit triggers
+        # NOT MANDATORY (but a your own risks)
+        # tables without trigger will not be synchronized
+        status, message = check_database_audit_triggers(
+            connection_name_central,
+            schemas
+        )
+        mandatory = False
+        checks.append((tr('audit triggers'), status, message, mandatory))
+
+        global_status = True
+        for info in checks:
+            feedback.pushInfo(info[0].upper())
+            feedback.pushInfo(info[2])
+            feedback.pushInfo('')
+            # not mandatory for audit triggers
+            if not info[1] and info[3]:
+                global_status = False
+
+        if global_status:
+            message = tr('Every required test has passed successfully !')
+            return True, message
         else:
-            return True, msg
+            message = tr(
+                'Some needed configuration are missing in the central database.'
+                ' Please correct them before proceeding.'
+            )
+            return False, message
 
     def checkParameterValues(self, parameters, context):
 
@@ -315,7 +350,6 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
 
         # 1/ 01_before.sql
         ####
-        feedback.pushInfo('')
         feedback.pushInfo(tr('CREATE SCRIPT 01_before.sql'))
         sql = 'BEGIN;'
 
@@ -353,9 +387,10 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             f.write(sql)
             feedback.pushInfo(tr('File 01_before.sql created'))
 
+        feedback.pushInfo('')
+
         # 2/ 02_data.sql
         ####
-        feedback.pushInfo('')
         feedback.pushInfo(tr('CREATE SCRIPT 02_data.sql'))
         pstatus, pmessages = pg_dump(
             feedback,
@@ -373,36 +408,55 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
 
         # 3/ 03_after.sql
         ####
-        feedback.pushInfo('')
         feedback.pushInfo(tr('CREATE SCRIPT 03_after.sql'))
         sql = ''
 
-        # Add audit trigger in all table in given schemas
-        schemas = [
-            "'{0}'".format(a.strip())
-            for a in synchronized_schemas.split(',')
-            if a.strip() not in ('public', 'lizsync', 'audit')
-        ]
-        schemas_sql = ', '.join(schemas)
-        sql += '''
-            SELECT audit.audit_table((quote_ident(table_schema) || '.' || quote_ident(table_name))::text)
-            FROM information_schema.tables
-            WHERE table_schema IN ( {0} )
-            AND table_type = 'BASE TABLE'
-            ;
-        '''.format(
-            schemas_sql
+        # Get audited tables in central database
+        status, message, tables = get_database_audit_triggers(
+            connection_name_central,
+            synchronized_schemas
         )
+        if not status:
+            raise QgsProcessingException(message)
+
+        # Add audit trigger for these tables in given schemas
+        # only for tables audited in central database
+        if tables:
+            schemas = [
+                "'{0}'".format(a.strip())
+                for a in synchronized_schemas.split(',')
+                if a.strip() not in ('public', 'lizsync', 'audit')
+            ]
+            schemas_sql = ', '.join(schemas)
+            synced_tables = [
+                "'{}@{}'".format(t[0], t[1])
+                for t in tables
+            ]
+            sql += '''
+                SELECT audit.audit_table((quote_ident(table_schema) || '.' || quote_ident(table_name))::text)
+                FROM information_schema.tables
+                WHERE table_schema IN ( {0} )
+                AND table_type = 'BASE TABLE'
+                AND concat(table_schema, '@', table_name) IN ({1})
+                ;
+            '''.format(
+                schemas_sql,
+                (', ').join(synced_tables)
+            )
+            feedback.pushInfo(sql)
+        else:
+            feedback.pushInfo(message)
 
         # write content into temp file
         with open(sql_files['03_after.sql'], 'w') as f:
             f.write(sql)
             feedback.pushInfo(tr('File 03_after.sql created'))
 
+        feedback.pushInfo('')
+
         #  4/ 04_lizsync.sql
         # Add lizsync schema structure
         # We get it from central database to be sure everything will be compatible
-        feedback.pushInfo('')
         feedback.pushInfo(tr('CREATE SCRIPT 04_lizsync.sql'))
         pstatus, pmessages = pg_dump(
             feedback,
@@ -418,10 +472,11 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             m = ' '.join(pmessages)
             raise QgsProcessingException(m)
 
+        feedback.pushInfo('')
+
         # 5/ sync_schemas.txt
         # Add schemas into file
         ####
-        feedback.pushInfo('')
         feedback.pushInfo(tr('ADD SCHEMAS TO FILE sync_schemas.txt'))
         schemas = [
             "{0}".format(a.strip())
@@ -433,11 +488,12 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             f.write(schema_list)
             feedback.pushInfo(tr('File sync_schemas.txt created'))
 
+        feedback.pushInfo('')
+
         # 6/ sync_id.txt
         # Add new sync history item in the central database
         # and get sync_id
         ####
-        feedback.pushInfo('')
         feedback.pushInfo(tr('ADD NEW SYNC HISTORY ITEM IN CENTRAL DATABASE'))
         sql = '''
             INSERT INTO lizsync.history
@@ -485,6 +541,8 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         if additional_sql_file and os.path.isfile(additional_sql_file):
             sql_files['99_last.sql'] = additional_sql_file
 
+        feedback.pushInfo('')
+
         # Create ZIP archive
         try:
             import zlib  # NOQA
@@ -505,7 +563,6 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
                     raise QgsProcessingException(msg)
 
         msg = tr('Package has been successfully created !')
-        feedback.pushInfo('')
         feedback.pushInfo(msg)
 
         output = {
