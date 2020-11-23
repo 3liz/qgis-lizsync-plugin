@@ -1,0 +1,196 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>QGIS User meeting - LizSync presentation</title>
+
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/reveal.css">
+    <link rel="stylesheet" href="css/theme/black.css">
+    <!-- Theme used for syntax highlighting of code -->
+    <link rel="stylesheet" href="lib/css/monokai.css">
+    <!--3liz style-->
+    <link rel="stylesheet" href="css/3liz.css">
+
+    <!-- Printing and PDF exports -->
+    <script>
+    var link = document.createElement( 'link' );
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = window.location.search.match( /print-pdf/gi ) ? 'css/print/pdf.css' : 'css/print/paper.css';
+    document.getElementsByTagName( 'head' )[0].appendChild( link );
+    </script>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<section>
+    <h2>LizSync</h1>
+
+    <h3>A QGIS plugin for PostgreSQL synchronisation between a central database & clones</h2>
+
+    <img src="media/logo-postgresql.png" style="height:150px;">
+    <img src="media/icon.png" style="height:150px;">
+    <img src="media/qgis-icon.png" style="height:150px;">
+
+    <h3><img src="media/Logo_car_coul.png" style="height:100px;background:rgba(255,255,255,0.8);margin:5px;"></h3>
+
+    <h4>Michaël Douchin - 3liz</h3>
+</section>
+
+<section data-markdown data-background="">
+## 3liz
+
+* **QGIS** and **PostgreSQL** lovers
+* QGIS **core** contributors (mainly server)
+* 7 employees
+* QGIS / QGIS Server / PostgreSQL / Lizmap
+* **Open Source** forever
+* Development, server hosting, consulting, support, training
+
+## ![Logo](media/Logo_car_coul.png)
+
+</section>
+
+
+<!--
+<section data-background="media/Logo_car_coul.png">&nbsp;</section>
+-->
+
+<section data-markdown data-background="">
+
+## Presentation
+
+**LizSync** is a set of tools allowing to perform PostgreSQL **database synchronisation** between a **central** database and one or many **clone** databases.
+
+Two-way synchronisation is done:
+
+* for **data of tables** in chosen schemas,
+* between tables having **the same structure**.
+* No synchronisation is made on structure changes (adding a column, creating or droping tables, etc.).
+
+### ![Logo](media/icon-small.png)
+</section>
+
+
+<section data-markdown data-background="">
+## LizSync workflow
+
+* For the 1st time
+    * **install** the needed PostgreSQL **structure** in the central database
+    * **prepare the central database**:
+        - add an **uid column** to every synchronized table
+        - add needed **audit triggers**
+* Before each campain / when structure has changed
+    * **create an archive** from the central database with data from chosen schemas
+    * **deploy** it to one or many clones
+* Whenever needed
+    * **perform** a two-way synchronisation from the clone
+
+### ![Logo](media/icon-small.png)
+</section>
+
+<section data-markdown data-background="">
+## PostgreSQL structure
+
+LizSync uses **2 dedicated schemas**:
+
+* **audit**
+    - in charge of recording every actions made on tables: **inserts, updates and deletes.**
+    - It is a slightly modified version of the [audit trigger tool](https://github.com/Oslandia/audit_trigger/blob/master/audit.sql)
+* **lizsync**
+    - stores information on central and clones databases (uid),
+    - manages the sync actions,
+    - maintain an history of synchronisations
+
+### ![Logo](media/logo-postgresql.png)
+</section>
+
+<section data-markdown data-background="">
+## Auditing changes
+
+LizSync uses a modified version of the [audit trigger tool](https://github.com/Oslandia/audit_trigger/blob/master/audit.sql) to **monitor the changes** made in the central and clone databases.
+
+The audit tool stores data in **two tables**:
+
+* **audit.logged_relations**: the list of audited tables and their primary key(s)
+* **audit.logged_actions**: the logs of every data modification made on the audited tables
+
+</section>
+
+<section data-markdown data-background="">
+## Key features
+
+* **Two-way sync**: clone 1 <-> central <-> clone B <-> central <-> clone C <-> central
+* **Field granularity**: He changes column "name" and she modifies column "description"
+* **Manage conflicts**: last edited wins
+* **SQL based**: run from any clone DB
+```sql
+SELECT lizsync.synchronize()
+```
+* **Processing algs**: can be run in CLI if needed
+* **Unit tests**: installation/upgrade/synchronisation
+
+</section>
+
+<section data-markdown data-background="">
+## Demo !
+</section>
+
+
+<section data-markdown data-background="">
+# Links
+
+* Github repository: https://github.com/3liz/qgis-lizsync-plugin/
+* Documentation: https://docs.3liz.org/qgis-lizsync-plugin/
+
+</section>
+
+<section data-background="media/beluga.jpg">
+    <h2>Thank you for your attention</h2>
+
+    <img src="media/logo-postgresql.png" style="height:150px;">
+    <img src="media/icon.png" style="height:150px;">
+    <img src="media/qgis-icon.png" style="height:150px;">
+
+    <h3><img src="media/Logo_car_coul.png" style="height:100px;background:rgba(255,255,255,0.8);margin:5px;"></h3>
+</section>
+
+<div class="footer">
+    <img src="media/logo_qgis_ch.png" style="height:20px; bottom:10px;">  <span style="margin-left:10px;">QGIS user meeting / automn 2020</span>
+</div>
+
+</div>
+</div>
+
+
+
+    <script src="js/reveal.js"></script>
+
+    <script>
+        // More info about config & dependencies:
+        // - https://github.com/hakimel/reveal.js#configuration
+        // - https://github.com/hakimel/reveal.js#dependencies
+        Reveal.initialize({
+                controls: true,
+                progress: true,
+                history: true,
+                center: true,
+
+                transition: 'slide',
+                dependencies: [
+                        { src: 'plugin/markdown/marked.js' },
+                        { src: 'plugin/markdown/markdown.js' },
+                        { src: 'plugin/notes/notes.js', async: true },
+                        { src: 'plugin/highlight/highlight.js', async: true },
+                        { src: 'plugin/zoom-js/zoom.js', async: true },
+                ]
+        });
+    </script>
+</body>
+</html>
+
+
+

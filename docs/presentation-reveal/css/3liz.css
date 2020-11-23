@@ -1,0 +1,69 @@
+.slides {
+    font-size: 0.9em;
+}
+
+.slides .header{
+  position:absolute;
+  top: 0%;
+}
+
+.reveal h1, .reveal h2 {
+    color: #94C11F;
+}
+.reveal h3 {
+    font-size: 1.2em;
+    text-transform: none;
+}
+.reveal h4 {
+    text-transform: none;
+}
+.slides section ul{
+    font-size: 1em;
+}
+
+.slides section p{
+    text-align: left;
+}
+
+.slides section.black-font ul{
+    color: black;
+    background:rgba(255,255,255,0.6);
+    padding: 10px;
+    font-size: 0.7em;
+}
+.reveal h1, .reveal h2 {
+    color: #94C11F;
+    color: lightblue;
+}
+.slides section.black-font h1, .slides section.black-font h2 {
+    color: white;
+}
+
+.slides section strong {
+    color: orange;
+/*
+    color: #94C11F;;
+*/
+}
+
+.slides a {
+    font-size: 0.5em;
+}
+
+.reveal section img{
+  background: none;
+  border: none;
+  box-shadow: none;
+}
+
+.slides div.footer{
+    position: absolute;
+    bottom: -50px;
+    left: 0px;
+    margin: 0px;
+    padding: 5px;
+    font-size: 0.4em;
+    background-color: rgba(255,255,255,0.1);
+    border-radius: 5px;
+}
+
