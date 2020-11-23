@@ -18,6 +18,7 @@
 <li><a href="#lizsync-workflow">LizSync workflow</a></li>
 <li><a href="#postgresql-structure">PostgreSQL structure</a></li>
 <li><a href="#auditing-changes">Auditing changes</a></li>
+<li><a href="#demo">Demo</a></li>
 <li><a href="#key-features">Key features</a></li>
 </ul>
 </div>
@@ -76,11 +77,17 @@
 <p>Each <strong>insert, update or delete</strong> triggers the addition of a new line in the <code>audit.logged_actions</code> table, with information about the time of the change, author, type of action, etc.</p>
 <p>We added a new column <code>audit.sync_data</code> to the table <code>audit.logged_actions</code> needed by the synchronisation. It contains the unique ID of the origin database, and the synchronisation item key.</p>
 <p>We modified the trigger to fill in this new JSON column.</p>
+<h2 id="demo">Demo</h2>
+<p>Videos on youtube:</p>
+<ul>
+<li>Database structure, preparation, create and deploy ZIP archive: <a href="https://youtu.be/l8a1Pn7CpN0">https://youtu.be/l8a1Pn7CpN0</a></li>
+<li>Data editing and 2-way synchronisation: <a href="https://youtu.be/tnWVBJGqD0M">https://youtu.be/tnWVBJGqD0M</a></li>
+</ul>
 <h2 id="key-features">Key features</h2>
 <ul>
 <li><strong>Two-way sync</strong>: clone 1 &lt;-&gt; central &lt;-&gt; clone B &lt;-&gt; central &lt;-&gt; clone C &lt;-&gt; central</li>
-<li><strong>Field granularity</strong>: He changes column "name" and she modifies column "description"</li>
-<li><strong>Manage conflicts</strong>: last edited wins</li>
+<li><strong>Field granularity</strong>: SQL Queries replay only needed changes</li>
+<li><strong>Manage conflicts</strong>: last date of edition wins (last person in the field)</li>
 <li><strong>SQL based</strong>: run from any clone DB</li>
 </ul>
 <pre><code class="sql">SELECT lizsync.synchronize()

@@ -61,6 +61,7 @@ ALGO="lizsync:deploy_database_server_package"
 PARAMS='{"CONNECTION_NAME_CENTRAL":"lizsync_central","CONNECTION_NAME_CLONE":"lizsync_clone_b","POSTGRESQL_BINARY_PATH":"/usr/bin/","ZIP_FILE":"/home/mdouchin/Documents/3liz/Valabre/GeoPoppy/Logiciel/qgis_3liz_fake_ftp_remote_server/test/archives/archive.zip"}'
 python3 lizsync/processing/standalone_processing_runner.py "${ALGO}" "${PARAMS}"
 
+exit
 # Edit data in both databases
 echo ""
 echo "Edit data in both databases"

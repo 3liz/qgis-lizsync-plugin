@@ -27,6 +27,13 @@ It is based on PostgreSQL and QGIS:
 
 You can learn about LizSync concepts and use cases by ready the [full documentation](https://3liz.github.io/qgis-lizsync-plugin/)
 
+## Demo !
+
+Videos on youtube:
+
+* Database structure, preparation, create and deploy ZIP archive: https://youtu.be/l8a1Pn7CpN0
+* Data editing and 2-way synchronisation: https://youtu.be/tnWVBJGqD0M
+
 
 ## Scripts
 

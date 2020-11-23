@@ -45,7 +45,7 @@
 
 * **QGIS** and **PostgreSQL** lovers
 * QGIS **core** contributors (mainly server)
-* 7 employees
+* 8 employees
 * QGIS / QGIS Server / PostgreSQL / Lizmap
 * **Open Source** forever
 * Development, server hosting, consulting, support, training
@@ -121,11 +121,20 @@ The audit tool stores data in **two tables**:
 </section>
 
 <section data-markdown data-background="">
+## Demo !
+
+**Videos**
+
+* 1/ Install database structure, create and deploy a ZIP archive: https://youtu.be/l8a1Pn7CpN0
+* 2/ Data editing and 2-way synchronisation: https://youtu.be/tnWVBJGqD0M
+</section>
+
+<section data-markdown data-background="">
 ## Key features
 
 * **Two-way sync**: clone 1 <-> central <-> clone B <-> central <-> clone C <-> central
-* **Field granularity**: He changes column "name" and she modifies column "description"
-* **Manage conflicts**: last edited wins
+* **Field granularity**: SQL Queries replay only needed changes
+* **Manage conflicts**: last date of modification wins (last person in the field)
 * **SQL based**: run from any clone DB
 ```sql
 SELECT lizsync.synchronize()
@@ -135,16 +144,14 @@ SELECT lizsync.synchronize()
 
 </section>
 
-<section data-markdown data-background="">
-## Demo !
-</section>
-
 
 <section data-markdown data-background="">
 # Links
 
 * Github repository: https://github.com/3liz/qgis-lizsync-plugin/
 * Documentation: https://docs.3liz.org/qgis-lizsync-plugin/
+* This presentation: https://docs.3liz.org/qgis-lizsync-plugin/presentation-reveal/
+* Twitter: https://twitter.com/kimaidou/
 
 </section>
 

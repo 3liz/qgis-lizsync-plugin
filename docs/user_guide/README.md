@@ -1,7 +1,7 @@
 ---
 Title: LizSync plugin - User guide
 Favicon: ../icon.png
-Sibling: yes
+Index: yes
 ...
 
 [TOC]

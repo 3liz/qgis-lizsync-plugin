@@ -1,7 +1,7 @@
 ---
 Title: LizSync plugin - Presentation and concepts
 Favicon: ../icon.png
-Sibling: yes
+Index: yes
 ...
 
 [TOC]
@@ -58,15 +58,22 @@ We added a new column `audit.sync_data` to the table `audit.logged_actions` need
 
 We modified the trigger to fill in this new JSON column.
 
+## Demo
+
+Videos on youtube:
+
+* Database structure, preparation, create and deploy ZIP archive: https://youtu.be/l8a1Pn7CpN0
+* Data editing and 2-way synchronisation: https://youtu.be/tnWVBJGqD0M
+
+
 ## Key features
 
 * **Two-way sync**: clone 1 <-> central <-> clone B <-> central <-> clone C <-> central
-* **Field granularity**: He changes column "name" and she modifies column "description"
-* **Manage conflicts**: last edited wins
+* **Field granularity**: SQL Queries replay only needed changes
+* **Manage conflicts**: last date of edition wins (last person in the field)
 * **SQL based**: run from any clone DB
 ```sql
 SELECT lizsync.synchronize()
 ```
 * **Processing algs**: can be run in CLI if needed
 * **Unit tests**: installation/upgrade/synchronisation
-
