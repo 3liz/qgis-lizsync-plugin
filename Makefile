@@ -1,4 +1,4 @@
-start_tests:
+çstart_tests:
 	@echo 'Start docker-compose'
 	@cd .docker && ./start.sh with-qgis
 
@@ -36,8 +36,11 @@ flake8:
 	@docker run --rm -w /plugin -v $(shell pwd):/plugin etrimaille/flake8:3.8.2
 
 github-pages:
-	@docker run --rm -w /plugin -v $(shell pwd):/plugin etrimaille/pymarkdown docs/user_guide/geopoppy-android.md docs/user_guide/geopoppy-android.html
-	@docker run --rm -w /plugin -v $(shell pwd):/plugin etrimaille/pymarkdown docs/user_guide/qgis-lizsync-plugin.md docs/user_guide/qgis-lizsync-plugin.html
+	@docker run --rm -w /plugin -v $(shell pwd):/plugin 3liz/pymarkdown:latest docs/README.md docs/index.html
+	@docker run --rm -w /plugin -v $(shell pwd):/plugin 3liz/pymarkdown:latest docs/concepts/README.md docs/concepts/index.html
+	@docker run --rm -w /plugin -v $(shell pwd):/plugin 3liz/pymarkdown:latest docs/user_guide/README.md docs/user_guide/index.html
+	@docker run --rm -w /plugin -v $(shell pwd):/plugin 3liz/pymarkdown:latest docs/old_french_documentation/geopoppy-android/README.md docs/old_french_documentation/geopoppy-android/index.html
+	@docker run --rm -w /plugin -v $(shell pwd):/plugin 3liz/pymarkdown:latest docs/old_french_documentation/qgis-lizsync-plugin/README.md docs/old_french_documentation/qgis-lizsync-plugin/index.html
 
 processing-doc:
 	cd .docker && ./processing_doc.sh
