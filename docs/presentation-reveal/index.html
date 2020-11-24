@@ -50,7 +50,7 @@
 * **Open Source** forever
 * Development, server hosting, consulting, support, training
 
-## ![Logo](media/Logo_car_coul.png)
+## ![Logo](media/Logo_car_coul_small.png)
 
 </section>
 
@@ -89,7 +89,6 @@ Two-way synchronisation is done:
 * Whenever needed
     * **perform** a two-way synchronisation from the clone
 
-### ![Logo](media/icon-small.png)
 </section>
 
 <section data-markdown data-background="">
@@ -101,11 +100,11 @@ LizSync uses **2 dedicated schemas**:
     - in charge of recording every actions made on tables: **inserts, updates and deletes.**
     - It is a slightly modified version of the [audit trigger tool](https://github.com/Oslandia/audit_trigger/blob/master/audit.sql)
 * **lizsync**
-    - stores information on central and clones databases (uid),
-    - manages the sync actions,
-    - maintain an history of synchronisations
+    - stores information on central and clones databases
+    - manages the sync actions
+    - maintains an history of synchronisations
 
-### ![Logo](media/logo-postgresql.png)
+## ![Logo](media/logo-postgresql.png)
 </section>
 
 <section data-markdown data-background="">
@@ -132,12 +131,15 @@ The audit tool stores data in **two tables**:
 <section data-markdown data-background="">
 ## Key features
 
-* **Two-way sync**: clone 1 <-> central <-> clone B <-> central <-> clone C <-> central
-* **Field granularity**: SQL Queries replay only needed changes
-* **Manage conflicts**: last date of modification wins (last person in the field)
+* **Two-way sync**: clone A <-> central <-> clone B <-> central <-> clone C <-> central
+* **Field granularity**: replay only needed changes
+```sql
+UPDATE test.pluviometers SET name = 'New name' WHERE uid = 'XYZ';
+```
+* **Manage UPDATE conflicts**: last date of modification wins (last person in the field)
 * **SQL based**: run from any clone DB
 ```sql
-SELECT lizsync.synchronize()
+SELECT lizsync.synchronize();
 ```
 * **Processing algs**: can be run in CLI if needed
 * **Unit tests**: installation/upgrade/synchronisation
@@ -151,7 +153,8 @@ SELECT lizsync.synchronize()
 * Github repository: https://github.com/3liz/qgis-lizsync-plugin/
 * Documentation: https://docs.3liz.org/qgis-lizsync-plugin/
 * This presentation: https://docs.3liz.org/qgis-lizsync-plugin/presentation-reveal/
-* Twitter: https://twitter.com/kimaidou/
+* Temporary plugin repository: https://github.com/3liz/qgis-lizsync-plugin/releases/latest/download/plugins.xml
+* Twitter: https://twitter.com/3LIZ_news/
 
 </section>
 
