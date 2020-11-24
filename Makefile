@@ -1,4 +1,4 @@
-çstart_tests:
+start_tests:
 	@echo 'Start docker-compose'
 	@cd .docker && ./start.sh with-qgis
 
