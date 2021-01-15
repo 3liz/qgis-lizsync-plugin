@@ -1,4 +1,4 @@
-# Presentation
+## Presentation
 
 **LizSync** is a set of tools allowing to perform PostgreSQL **database synchronisation** between a **central** database and one or many **clone** databases.
 
@@ -53,6 +53,7 @@ We modified the trigger to fill in this new JSON column.
 ## Demo
 
 Read the [reference page](../references.md) for some videos.
+
 
 ## Key features
 
