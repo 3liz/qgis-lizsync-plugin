@@ -32,6 +32,7 @@ from .algorithms.synchronize_database import SynchronizeDatabase
 from .algorithms.get_projects_and_files_from_central_ftp import GetProjectsAndFilesFromCentralFtp
 from .algorithms.send_projects_and_files_to_clone_ftp import SendProjectsAndFilesToCloneFtp
 from .algorithms.synchronize_media_subfolder_to_ftp import SynchronizeMediaSubfolderToFtp
+from .algorithms.build_mobile_project import BuildMobileProject
 
 
 class LizsyncProvider(QgsProcessingProvider):
@@ -48,6 +49,8 @@ class LizsyncProvider(QgsProcessingProvider):
         self.addAlgorithm(UpgradeDatabaseStructure())
         self.addAlgorithm(InitializeCentralDatabase())
         self.addAlgorithm(SendProjectsAndFilesToCloneFtp())
+
+        self.addAlgorithm(BuildMobileProject())
 
     def id(self):
         return 'lizsync'
