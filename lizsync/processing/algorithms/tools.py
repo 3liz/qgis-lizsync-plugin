@@ -238,7 +238,7 @@ def run_command(cmd, myenv, feedback):
     feedback.pushInfo(" ".join(cmd))
     stop_words = ['warning']
     pattern = re.compile('|'.join(r'\b{}\b'.format(word) for word in stop_words), re.IGNORECASE)
-    error_pattern = re.compile('error:')
+    error_pattern = re.compile('error')
     rc = None
     status = True
     with subprocess.Popen(
@@ -255,12 +255,10 @@ def run_command(cmd, myenv, feedback):
                 output = "{}".format(line.rstrip())
             if not pattern.search(output):
                 feedback.pushInfo(output)
-            if output == '' and process.poll() is not None:
-                break
-            if output:
-                feedback.pushInfo(output)
             if output and error_pattern.search(output):
                 status = False
+            if output == '' and process.poll() is not None:
+                break
         rc = process.poll()
 
     return rc, status

@@ -433,7 +433,8 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         # Run SQL files
         for i in sql_files:
             try:
-                feedback.pushInfo(tr('Loading file') + ' {0} ....'.format(i))
+                short_file_name = i.replace(dir_path, '')
+                feedback.pushInfo(tr('Loading file') + ' {0} ...'.format(short_file_name))
                 cmd = [
                           pgbin
                       ] + cmdo + [
@@ -450,18 +451,15 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                     myenv = {**{'PGPASSWORD': uri.password()}, **os.environ}
 
                 run_command(cmd, myenv, feedback)
-                # subprocess.run(
-                # " ".join(cmd),
-                # shell=True,
-                # env=myenv
-                # )
-                msg += '* {0} -> OK'.format(i.replace(dir_path, ''))
+                msg += '* {0} -> OK'.format(short_file_name)
 
                 # Delete SQL scripts
-                os.remove(i)
+                if os.path.exists(i):
+                    os.remove(i)
 
-            except Exception:
-                m = tr('Error loading file') + ' {0}'.format(i)
+            except Exception as e:
+                m = tr('Error loading file') + ' {0}'.format(short_file_name)
+                m += ' - Details: ' + str(e)
                 raise QgsProcessingException(m)
 
             finally:
