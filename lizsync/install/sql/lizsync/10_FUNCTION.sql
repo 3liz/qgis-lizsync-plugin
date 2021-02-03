@@ -433,9 +433,9 @@ BEGIN
             ORDER BY sync_time DESC
             LIMIT 1
         ),
-        schemas AS (
-            SELECT sync_schemas
-            FROM lizsync.synchronized_schemas
+        tables AS (
+            SELECT sync_tables
+            FROM lizsync.synchronized_tables
             WHERE server_id = ''%1$s''::uuid
             LIMIT 1
         )
@@ -471,7 +471,7 @@ BEGIN
         FROM audit.logged_actions AS a
         -- Create as many lines as there are changed fields in UPDATE
         LEFT JOIN skeys(a.changed_fields) AS s ON TRUE,
-        last_sync, schemas
+        last_sync, tables
 
         WHERE True
 
@@ -485,12 +485,12 @@ BEGIN
         -- MAX_ACTION_TSTAMP_TX Par ex: 2019-04-20 12:00:00+02
         AND a.action_tstamp_tx > last_sync.max_action_tstamp_tx
 
-        -- et pour lesquelles l ID est supérieur
+        -- Event ID is bigger than last sync event id
         -- MAX_EVENT_ID
         AND a.event_id > last_sync.max_event_id
 
-        -- et pour les schémas listés
-        AND sync_schemas ? schema_name
+        -- only for tables synchronized by the clone server ID
+        AND sync_tables ? concat(''"'', a.schema_name, ''"."'', a.table_name, ''"'')
 
         ORDER BY a.event_id
         ;
@@ -520,7 +520,7 @@ $_$;
 
 
 -- FUNCTION get_central_audit_logs(p_uid_field text, p_excluded_columns text[])
-COMMENT ON FUNCTION lizsync.get_central_audit_logs(p_uid_field text, p_excluded_columns text[]) IS 'Get all the logs from the central database: modifications do not come from the clone, have not yet been replayed by the clone, are dated after the last synchronization, have an event id higher than the last sync maximum event id, and concern the synchronized schemas for this clone. Parameters: uid column name and excluded columns';
+COMMENT ON FUNCTION lizsync.get_central_audit_logs(p_uid_field text, p_excluded_columns text[]) IS 'Get all the logs from the central database: modifications do not come from the clone, have not yet been replayed by the clone, are dated after the last synchronization, have an event id higher than the last sync maximum event id, and concern the synchronized tables for this clone. Parameters: uid column name and excluded columns';
 
 
 -- get_clone_audit_logs(text, text[])
@@ -679,20 +679,36 @@ BEGIN
     LIMIT 1;
 
     -- Import foreign tables of given schema
+    -- We must first get the unique schemas
     FOR rec IN
-        SELECT jsonb_array_elements(sync_schemas)::text AS sync_schema
-        FROM central_lizsync.synchronized_schemas
-        WHERE server_id::text = p_clone_id
+        WITH
+        synchronized_tables AS (
+            SELECT sync_tables
+            FROM central_lizsync.synchronized_tables
+            WHERE server_id::text = p_clone_id
+        ),
+        a AS (
+            SELECT DISTINCT jsonb_array_elements_text(sync_tables) AS sync_table
+            FROM synchronized_tables
+        ),
+        b AS (
+            SELECT regexp_split_to_array(sync_table, E'\\.') AS sync_table_elements
+            FROM a
+        )
+        SELECT sync_table_elements[1] AS t_schema, string_agg(sync_table_elements[2], ',') AS t_tables
+        FROM b
+        GROUP BY t_schema
     LOOP
-        p_sync_schema = replace(rec.sync_schema, '"', '');
+        p_sync_schema = trim(replace(rec.t_schema, '"', ''));
         p_imported_schemas = p_imported_schemas || p_sync_schema;
         sqltemplate = concat(
             sqltemplate,
-            'DROP SCHEMA IF EXISTS central_', p_sync_schema, ' CASCADE;',
-            'CREATE SCHEMA central_', p_sync_schema, ';',
-            'IMPORT FOREIGN SCHEMA ', p_sync_schema, '
+            'DROP SCHEMA IF EXISTS "central_', p_sync_schema, '" CASCADE;',
+            'CREATE SCHEMA "central_', p_sync_schema, '";',
+            'IMPORT FOREIGN SCHEMA "', p_sync_schema, '"
+            LIMIT TO (', rec.t_tables ,')
             FROM SERVER central_server
-            INTO central_', p_sync_schema, ';'
+            INTO "central_', p_sync_schema, '";'
         );
     END LOOP;
 

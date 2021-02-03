@@ -262,7 +262,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             '03_after.sql',
             '04_lizsync.sql',
             'sync_id.txt',
-            'sync_schemas.txt'
+            'sync_tables.txt'
         ]
         for f in sql_file_list:
             if not os.path.exists(os.path.join(dir_path, f)):
@@ -372,14 +372,14 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                 ))
 
         # Get synchronized schemas from text file
-        feedback.pushInfo(tr('GET THE LIST OF SYNCHRONIZED SCHEMAS FROM THE FILE sync_schemas.txt'))
-        with open(os.path.join(dir_path, 'sync_schemas.txt')) as f:
-            sync_schemas = f.readline().strip()
-        if sync_schemas == '':
-            m = tr('No schema to syncronize')
+        feedback.pushInfo(tr('GET THE LIST OF SYNCHRONIZED TABLES FROM THE FILE sync_tables.txt'))
+        with open(os.path.join(dir_path, 'sync_tables.txt')) as f:
+            tables = f.readline().strip()
+        if tables == '':
+            m = tr('No table to syncronize')
             raise QgsProcessingException(m)
 
-        feedback.pushInfo(tr('Schema list found in sync_schemas.txt') + ': %s' % sync_schemas)
+        feedback.pushInfo(tr('List of tables found in sync_tables.txt') + ': %s' % tables)
 
         feedback.pushInfo('')
 
@@ -438,6 +438,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                 cmd = [
                           pgbin
                       ] + cmdo + [
+                          '-v "ON_ERROR_STOP=1"',
                           '--no-password',
                           '-f "{0}"'.format(i)
                       ]
@@ -450,8 +451,12 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                         uri.setPassword(password)
                     myenv = {**{'PGPASSWORD': uri.password()}, **os.environ}
 
-                run_command(cmd, myenv, feedback)
+                returncode, stdout = run_command(cmd, myenv, feedback)
+                if returncode != 0:
+                    m = tr('Error loading file') + ' {0}'.format(short_file_name)
+                    raise QgsProcessingException(m)
                 msg += '* {0} -> OK'.format(short_file_name)
+                feedback.pushInfo('* {0} has been loaded'.format(i.replace(dir_path, '')))
 
                 # Delete SQL scripts
                 if os.path.exists(i):
@@ -463,7 +468,6 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                 raise QgsProcessingException(m)
 
             finally:
-                feedback.pushInfo('* {0} has been loaded'.format(i.replace(dir_path, '')))
                 feedback.pushInfo('')
 
         feedback.pushInfo('')
@@ -510,20 +514,22 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         feedback.pushInfo('')
 
         # CENTRAL DATABASE
-        # Add an item in lizsync.synchronized_schemas
+        # Add an item in lizsync.synchronized_tables
         # to know afterward wich schemas to use when performing sync
-        feedback.pushInfo(tr('ADDING THE LIST OF SYNCHRONIZED SCHEMAS FOR THIS CLONE IN THE CENTRAL DATABASE '))
+        feedback.pushInfo(tr('ADDING THE LIST OF SYNCHRONIZED TABLES FOR THIS CLONE IN THE CENTRAL DATABASE '))
         sql = '''
-            DELETE FROM lizsync.synchronized_schemas
-            WHERE server_id = '{0}';
-            INSERT INTO lizsync.synchronized_schemas
-            (server_id, sync_schemas)
+            INSERT INTO lizsync.synchronized_tables AS s
+            (server_id, sync_tables)
             VALUES
-            ( '{0}', jsonb_build_array( '{1}' ) );
+            ( '{0}', jsonb_build_array( '{1}' ) )
+            ON CONFLICT ON CONSTRAINT synchronized_tables_pkey
+            DO UPDATE
+            SET sync_tables = EXCLUDED.sync_tables || s.sync_tables
+            ;
 
         '''.format(
             clone_id,
-            "', '".join([a.strip() for a in sync_schemas.split(',')])
+            "', '".join([a.strip() for a in tables.split(',')])
         )
         # feedback.pushInfo(sql)
         header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
@@ -531,10 +537,10 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             sql
         )
         if ok:
-            msg = tr('List of synchronized schemas added in central database for this clone')
+            msg = tr('List of synchronized tables added in central database for this clone')
             feedback.pushInfo(msg)
         else:
-            m = tr('Error while adding the synchronized schemas in the central database')
+            m = tr('Error while adding the synchronized tables in the central database')
             m+= ' ' + error_message
             raise QgsProcessingException(m)
 
@@ -556,7 +562,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             raise QgsProcessingException(msg)
 
         # Add foreign server in the clone database
-        feedback.pushInfo(tr('ADDING THE FOREING SERVER AND SCHEMAS ID IN THE CLONE DATABASE'))
+        feedback.pushInfo(tr('ADDING THE FOREIGN SERVER AND SCHEMAS ID IN THE CLONE DATABASE'))
         sql = '''
         SELECT lizsync.create_central_server_fdw('{0}','{1}','{2}','{3}', '{4}');
         SELECT lizsync.import_central_server_schemas();
@@ -610,6 +616,11 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                 raise QgsProcessingException(m)
 
         feedback.pushInfo('')
+
+        # Delete txt files
+        for i in sql_file_list[4:5]:
+            if os.path.exists(i):
+                os.remove(i)
 
         output = {
             self.OUTPUT_STATUS: 1,

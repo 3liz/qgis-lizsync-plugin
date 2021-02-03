@@ -24,7 +24,7 @@ class TestLoadStructureEmptyDatabase(DatabaseTestCase):
             "history",
             "server_metadata",
             "conflicts",
-            "synchronized_schemas",
+            "synchronized_tables",
             "sys_structure_metadonnee",
         ]
         self.assertCountEqual(expected, result)

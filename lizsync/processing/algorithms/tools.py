@@ -235,33 +235,30 @@ def run_command(cmd, myenv, feedback):
     """
     Run any command using subprocess
     """
-    feedback.pushInfo(" ".join(cmd))
-    stop_words = ['warning']
-    pattern = re.compile('|'.join(r'\b{}\b'.format(word) for word in stop_words), re.IGNORECASE)
-    error_pattern = re.compile('error')
-    rc = None
-    status = True
-    with subprocess.Popen(
-            " ".join(cmd),
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.STDOUT,
-            env=myenv
-    ) as process:
-        for line in process.stdout:
-            try:
-                output = "{}".format(line.rstrip().decode("utf-8"))
-            except Exception:
-                output = "{}".format(line.rstrip())
-            if not pattern.search(output):
-                feedback.pushInfo(output)
-            if output and error_pattern.search(output):
-                status = False
-            if output == '' and process.poll() is not None:
-                break
-        rc = process.poll()
+    # print(" ".join(cmd))
+    proc = subprocess.Popen(
+        " ".join(cmd),
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        env=myenv,
+        universal_newlines=True,
+        encoding='utf8',
+    )
+    stdout = []
+    while proc.poll() is None:
+        for line in proc.stdout:
+            if line != "":
+                try:
+                    out = "{}".format(line.strip().decode("utf-8"))
+                except Exception:
+                    out = "{}".format(line.strip())
+                stdout.append(out)
+                feedback.pushInfo(out)
+    proc.poll()
+    returncode = proc.returncode
 
-    return rc, status
+    return returncode, stdout
 
 
 def check_database_structure(connection_name):
@@ -335,12 +332,14 @@ def convert_textual_schema_list_to_sql(schemas):
     return schemas_sql
 
 
-def check_database_uid_columns(connection_name, schemas='test'):
+def check_database_uid_columns(connection_name, schemas=None, tables=None):
     """
     Check if tables contains uid columns
+    * schemas: text list of schemas separated by comma.
+      Ex: test, other, last_schema
+    * tables: list of full table identifiers with schema.
+      Ex: ['schema_one.table_one', 'other_schema.table_two']
     """
-    schemas_sql = convert_textual_schema_list_to_sql(schemas)
-
     status = True
     message = tr('No missing uid columns')
 
@@ -353,14 +352,18 @@ def check_database_uid_columns(connection_name, schemas='test'):
     sql += "     AND c.table_name = t.table_name"
     sql += "     AND c.column_name = 'uid'"
     sql += " WHERE TRUE"
-    sql += " AND t.table_schema IN ( {0} )"
+    if schemas:
+        schemas_sql = convert_textual_schema_list_to_sql(schemas)
+        sql += " AND t.table_schema IN ( {0} )".format(schemas_sql)
+    if tables:
+        sql += " AND concat('\"', t.table_schema, '\".\"', t.table_name, '\"') IN ( "
+        sql += ', '.join(["'{}'".format(table) for table in tables])
+        sql += ")"
     sql += " AND t.table_type = 'BASE TABLE'"
     sql += " AND c.column_name IS NULL"
     sql += " ORDER BY t.table_schema, t.table_name"
-    sqlc = sql.format(
-        schemas_sql
-    )
-    header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sqlc)
+
+    header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
     missing = []
     if ok:
         for a in data:
@@ -373,20 +376,28 @@ def check_database_uid_columns(connection_name, schemas='test'):
     return status, message
 
 
-def check_database_audit_triggers(connection_name, schemas='test'):
+def check_database_audit_triggers(connection_name, schemas=None, tables=None):
     """
     Checks if tables are audited with triggers
+    * schemas: text list of schemas separated by comma.
+      Ex: test, other, last_schema
+    * tables: list of full table identifiers with schema.
+      Ex: ['schema_one.table_one', 'other_schema.table_two']
     """
-    schemas_sql = convert_textual_schema_list_to_sql(schemas)
-
     status = True
     message = tr('No missing audit triggers')
 
     sql = ''
     sql += " SELECT table_schema, table_name"
-    sql += " FROM information_schema.tables"
+    sql += " FROM information_schema.tables AS t"
     sql += " WHERE True"
-    sql += " AND table_schema IN ( {0} )"
+    if schemas:
+        schemas_sql = convert_textual_schema_list_to_sql(schemas)
+        sql += " AND t.table_schema IN ( {0} )".format(schemas_sql)
+    if tables:
+        sql += " AND concat('\"', t.table_schema, '\".\"', t.table_name, '\"') IN ( "
+        sql += ', '.join(["'{}'".format(table) for table in tables])
+        sql += ")"
     sql += " AND table_type = 'BASE TABLE'"
     sql += " AND (quote_ident(table_schema) || '.' || quote_ident(table_name))::text NOT IN ("
     sql += "     SELECT (tgrelid::regclass)::text"
@@ -394,10 +405,8 @@ def check_database_audit_triggers(connection_name, schemas='test'):
     sql += "     WHERE TRUE"
     sql += "     AND tgname LIKE 'audit_trigger_%'"
     sql += " )"
-    sqlc = sql.format(
-        schemas_sql
-    )
-    header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sqlc)
+
+    header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
     missing = []
     if ok:
         if rowCount > 0:
@@ -414,17 +423,25 @@ def check_database_audit_triggers(connection_name, schemas='test'):
     return status, message
 
 
-def get_database_audit_triggers(connection_name, schemas='test'):
+def get_database_audit_triggers(connection_name, schemas=None, tables=None):
     """
     Get all the tables audited in synchronized schemas
+    * schemas: text list of schemas separated by comma.
+      Ex: test, other, last_schema
+    * tables: list of full table identifiers with schema.
+      Ex: ['schema_one.table_one', 'other_schema.table_two']
     """
-    schemas_sql = convert_textual_schema_list_to_sql(schemas)
-
     sql = ''
     sql += " SELECT table_schema, table_name"
-    sql += " FROM information_schema.tables"
+    sql += " FROM information_schema.tables AS t"
     sql += " WHERE True"
-    sql += " AND table_schema IN ( {0} )"
+    if schemas:
+        schemas_sql = convert_textual_schema_list_to_sql(schemas)
+        sql += " AND t.table_schema IN ( {0} )".format(schemas_sql)
+    if tables:
+        sql += " AND concat('\"', t.table_schema, '\".\"', t.table_name, '\"') IN ( "
+        sql += ', '.join(["'{}'".format(table) for table in tables])
+        sql += ")"
     sql += " AND table_type = 'BASE TABLE'"
     sql += " AND (quote_ident(table_schema) || '.' || quote_ident(table_name))::text IN ("
     sql += "     SELECT (tgrelid::regclass)::text"
@@ -432,10 +449,8 @@ def get_database_audit_triggers(connection_name, schemas='test'):
     sql += "     WHERE TRUE"
     sql += "     AND tgname LIKE 'audit_trigger_%'"
     sql += " )"
-    sqlc = sql.format(
-        schemas_sql
-    )
-    header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sqlc)
+
+    header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
     tables = []
     message = ''
     if ok:
@@ -536,7 +551,10 @@ def ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, ex
             feedback.pushInfo('LFTP = %s' % ' '.join(cmd))
 
             myenv = {**os.environ}
-            run_command(cmd, myenv, feedback)
+            returncode, stdout = run_command(cmd, myenv, feedback)
+            if returncode != 0:
+                m = tr('Error during FTP sync')
+                return False, m
 
         except Exception:
             m = tr('Error during FTP sync')
@@ -611,7 +629,10 @@ def ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, ex
             )
 
             myenv = {**os.environ}
-            run_command(cmd, myenv, feedback)
+            returncode, stdout = run_command(cmd, myenv, feedback)
+            if returncode != 0:
+                m = tr('Error during FTP sync')
+                return False, m
 
         except Exception:
             m = tr('Error during FTP sync')
@@ -622,7 +643,7 @@ def ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, ex
     return True, 'Success'
 
 
-def pg_dump(feedback, postgresql_binary_path, connection_name, output_file_name, schemas, additional_parameters=[]):
+def pg_dump(feedback, postgresql_binary_path, connection_name, output_file_name, schemas, tables=None, additional_parameters=[]):
     messages = []
     status = False
 
@@ -664,6 +685,7 @@ def pg_dump(feedback, postgresql_binary_path, connection_name, output_file_name,
     cmd = [
               pgbin
           ] + cmdo + [
+              '--verbose',
               '--no-acl',
               '--no-owner',
               '-Fp',
@@ -674,29 +696,30 @@ def pg_dump(feedback, postgresql_binary_path, connection_name, output_file_name,
     for s in schemas:
         cmd.append('-n {0}'.format(s))
 
+    # Add given tables
+    if tables:
+        for table in tables:
+            cmd.append("-t '{}'".format(table))
+
     # Add additional parameters
     if additional_parameters:
         cmd = cmd + additional_parameters
 
     # Run command
-    # print(" ".join(cmd))
     try:
         # messages.append('PG_DUMP = %s' % ' '.join(cmd) )
         # Add password if needed
         myenv = {**os.environ}
         if not uri.service():
             myenv = {**{'PGPASSWORD': uri.password()}, **os.environ}
-        rc, status = run_command(cmd, myenv, feedback)
+        returncode, stdout = run_command(cmd, myenv, feedback)
 
-        # subprocess.run(
-        # " ".join(cmd),
-        # shell=True,
-        # env=myenv
-        # )
-        if status:
+        if returncode == 0:
             messages.append(tr('Database has been successfull dumped') + ' into {0}'.format(output_file_name))
         else:
             messages.append(tr('Error dumping database') + ' into {0}'.format(output_file_name))
+            messages.append(stdout[-1])
+            status = False
     except Exception:
         status = False
         messages.append(tr('Error dumping database') + ' into {0}'.format(output_file_name))

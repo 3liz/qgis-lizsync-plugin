@@ -29,7 +29,7 @@ COMMENT ON FUNCTION lizsync.create_temporary_table(temporary_table text, table_t
 
 
 -- FUNCTION get_central_audit_logs(p_uid_field text, p_excluded_columns text[])
-COMMENT ON FUNCTION lizsync.get_central_audit_logs(p_uid_field text, p_excluded_columns text[]) IS 'Get all the logs from the central database: modifications do not come from the clone, have not yet been replayed by the clone, are dated after the last synchronization, have an event id higher than the last sync maximum event id, and concern the synchronized schemas for this clone. Parameters: uid column name and excluded columns';
+COMMENT ON FUNCTION lizsync.get_central_audit_logs(p_uid_field text, p_excluded_columns text[]) IS 'Get all the logs from the central database: modifications do not come from the clone, have not yet been replayed by the clone, are dated after the last synchronization, have an event id higher than the last sync maximum event id, and concern the synchronized tables for this clone. Parameters: uid column name and excluded columns';
 
 
 -- FUNCTION get_clone_audit_logs(p_uid_field text, p_excluded_columns text[])
@@ -114,8 +114,8 @@ COMMENT ON COLUMN lizsync.conflicts.rejected IS 'Rejected object. If "clone", it
 COMMENT ON COLUMN lizsync.conflicts.rule_applied IS 'Rule used when managing conflict';
 
 
--- synchronized_schemas
-COMMENT ON TABLE lizsync.synchronized_schemas IS 'List of schemas to synchronize per slave server id. This list works as a white list. Only listed schemas will be synchronized for each server ids.';
+-- synchronized_tables
+COMMENT ON TABLE lizsync.synchronized_tables IS 'List of tables to synchronize per clone server id. This list works as a white list. Only listed tables will be synchronized for each server ids.';
 
 
 -- sys_structure_metadonnee

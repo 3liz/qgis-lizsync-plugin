@@ -20,12 +20,14 @@ import zipfile
 from platform import system as psys
 
 from qgis.core import (
+    QgsProcessing,
     QgsProcessingException,
     QgsProcessingParameterString,
+    QgsProcessingParameterMultipleLayers,
     QgsProcessingParameterFile,
     QgsProcessingParameterFileDestination,
     QgsProcessingOutputString,
-    QgsProcessingOutputNumber
+    QgsProcessingOutputNumber,
 )
 
 from .tools import (
@@ -33,7 +35,6 @@ from .tools import (
     check_database_server_metadata_content,
     check_database_uid_columns,
     check_database_audit_triggers,
-    get_database_audit_triggers,
     lizsyncConfig,
     getUriFromConnectionName,
     fetchDataFromSqlQuery,
@@ -52,7 +53,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
     # used when calling the algorithm from another algorithm, or when
     # calling from the QGIS console.
     CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
-    SCHEMAS = 'SCHEMAS'
+    PG_LAYERS = 'PG_LAYERS'
     POSTGRESQL_BINARY_PATH = 'POSTGRESQL_BINARY_PATH'
     ZIP_FILE = 'ZIP_FILE'
     ADDITIONAL_SQL_FILE = 'ADDITIONAL_SQL_FILE'
@@ -76,7 +77,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             ' Package data from the central database, for future deployement on one or several clone(s).'
             '\n'
             '\n'
-            ' This script backups all data from the given list of schemas'
+            ' This script backups all data from the given list of tables'
             ' to a ZIP archive, named by default "central_database_package.zip".'
             '\n'
             '\n'
@@ -126,16 +127,13 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             )
         )
 
-        # List of schemas to package and synchronize afterwards
-        synchronized_schemas = ls.variable('postgresql:central/schemas')
-        if not synchronized_schemas:
-            synchronized_schemas = 'test'
+        # PostgreSQL layers
         self.addParameter(
-            QgsProcessingParameterString(
-                self.SCHEMAS,
-                tr('List of schemas to package, separated by commas. (schemas public, lizsync & audit are never processed)'),
-                defaultValue=synchronized_schemas,
-                optional=False
+            QgsProcessingParameterMultipleLayers(
+                self.PG_LAYERS,
+                tr('PostgreSQL Layers to edit in the field'),
+                QgsProcessing.TypeVector,
+                optional=False,
             )
         )
 
@@ -163,7 +161,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             QgsProcessingParameterFileDestination(
                 self.ZIP_FILE,
                 tr('Output archive file (ZIP)'),
-                fileFilter='zip',
+                fileFilter='*.zip',
                 optional=False,
                 defaultValue=database_archive_file
             )
@@ -184,13 +182,18 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             )
         )
 
-    def checkCentralDatabase(self, parameters, feedback):
+    def checkCentralDatabase(self, parameters, context, feedback):
         """
         Check if central database
         has been initialized
         """
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
-        schemas = parameters[self.SCHEMAS]
+        pg_layers = self.parameterAsLayerList(parameters, self.PG_LAYERS, context)
+        pg_layers = [layer for layer in pg_layers if layer.providerType() == 'postgres']
+        tables = []
+        for layer in pg_layers:
+            uri = layer.dataProvider().uri()
+            tables.append('"' + uri.schema() + '"."' + uri.table() + '"')
 
         # Check if needed schema and metadata has been created
         feedback.pushInfo(tr('CHECK IF LIZSYNC HAS BEEN INSTALLED AND DATABASE INITIALIZED'))
@@ -213,7 +216,8 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         # uid columns
         status, message = check_database_uid_columns(
             connection_name_central,
-            schemas
+            None,
+            tables
         )
         mandatory = True
         checks.append((tr('uid columns'), status, message, mandatory))
@@ -223,7 +227,8 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         # tables without trigger will not be synchronized
         status, message = check_database_audit_triggers(
             connection_name_central,
-            schemas
+            None,
+            tables
         )
         mandatory = False
         checks.append((tr('audit triggers'), status, message, mandatory))
@@ -269,6 +274,12 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         if not ok:
             return False, msg
 
+        # Check input layers
+        layers = self.parameterAsLayerList(parameters, self.PG_LAYERS, context)
+        layers = [layer for layer in layers if layer.providerType() == 'postgres']
+        if not layers:
+            return False, tr('At least one PostgreSQL layer is required')
+
         return super(PackageCentralDatabase, self).checkParameterValues(parameters, context)
 
     def processAlgorithm(self, parameters, context, feedback):
@@ -280,13 +291,23 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         # Parameters
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
-        synchronized_schemas = parameters[self.SCHEMAS]
         additional_sql_file = self.parameterAsString(
             parameters,
             self.ADDITIONAL_SQL_FILE,
             context
         )
         zip_file = parameters[self.ZIP_FILE]
+        pg_layers = self.parameterAsLayerList(parameters, self.PG_LAYERS, context)
+        pg_layers = [layer for layer in pg_layers if layer.providerType() == 'postgres']
+        tables = []
+        schemas = []
+        for layer in pg_layers:
+            uri = layer.dataProvider().uri()
+            schema = uri.schema()
+            tables.append('"' + schema + '"."' + uri.table() + '"')
+            if schema not in schemas:
+                schemas.append(schema)
+        synchronized_schemas = ','.join(schemas)
 
         # store parameters
         ls = lizsyncConfig()
@@ -298,7 +319,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         ls.save()
 
         # First run some test in database
-        test, m = self.checkCentralDatabase(parameters, feedback)
+        test, m = self.checkCentralDatabase(parameters, context, feedback)
         if not test:
             raise QgsProcessingException(m)
 
@@ -309,7 +330,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             '03_after.sql',
             '04_lizsync.sql',
             'sync_id.txt',
-            'sync_schemas.txt'
+            'sync_tables.txt'
         ]
         sql_files = {}
         tmpdir = tempfile.mkdtemp()
@@ -318,25 +339,33 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             sql_files[k] = path
         # feedback.pushInfo(str(sql_files))
 
-        # Get the list of input schemas
-        schemas = [
-            '"{0}"'.format(a.strip())
-            for a in synchronized_schemas.split(',')
-            if a.strip() not in ('public', 'lizsync', 'audit')
-        ]
-        schemas_sql = ', '.join(schemas)
-
         # 1/ 01_before.sql
         ####
         feedback.pushInfo(tr('CREATE SCRIPT 01_before.sql'))
         sql = 'BEGIN;'
 
-        # Drop existing schemas
-        sql += '''
-            DROP SCHEMA IF EXISTS {0} CASCADE;
-        '''.format(
-            schemas_sql
-        )
+        # Create needed schemas
+        # Get the list of input schemas
+        schemas_to_create = [
+            '"{0}"'.format(a.strip())
+            for a in synchronized_schemas.split(',')
+            if a.strip() not in ('public', 'lizsync', 'audit')
+        ]
+        for schema in schemas_to_create:
+            sql += '''
+                CREATE SCHEMA IF NOT EXISTS {0};
+            '''.format(
+                schema
+            )
+
+        # Drop existing tables
+        for table in tables:
+            sql += '''
+                DROP TABLE IF EXISTS {0} CASCADE;
+            '''.format(
+                table
+            )
+
         # Drop other sytem schemas
         sql += '''
             DROP SCHEMA IF EXISTS lizsync,audit CASCADE;
@@ -376,6 +405,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             connection_name_central,
             sql_files['02_data.sql'],
             schemas,
+            tables,
             []
         )
         for pmessage in pmessages:
@@ -389,41 +419,18 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         feedback.pushInfo(tr('CREATE SCRIPT 03_after.sql'))
         sql = ''
 
-        # Get audited tables in central database
-        status, message, tables = get_database_audit_triggers(
-            connection_name_central,
-            synchronized_schemas
-        )
-        if not status:
-            raise QgsProcessingException(message)
-
         # Add audit trigger for these tables in given schemas
-        # only for tables audited in central database
-        if tables:
-            schemas = [
-                "'{0}'".format(a.strip())
-                for a in synchronized_schemas.split(',')
-                if a.strip() not in ('public', 'lizsync', 'audit')
-            ]
-            schemas_sql = ', '.join(schemas)
-            synced_tables = [
-                "'{}@{}'".format(t[0], t[1])
-                for t in tables
-            ]
-            sql += '''
-                SELECT audit.audit_table((quote_ident(table_schema) || '.' || quote_ident(table_name))::text)
-                FROM information_schema.tables
-                WHERE table_schema IN ( {0} )
-                AND table_type = 'BASE TABLE'
-                AND concat(table_schema, '@', table_name) IN ({1})
-                ;
-            '''.format(
-                schemas_sql,
-                (', ').join(synced_tables)
-            )
-            feedback.pushInfo(sql)
-        else:
-            feedback.pushInfo(message)
+        # only for needed tables
+        sql += '''
+            SELECT audit.audit_table((quote_ident(table_schema) || '.' || quote_ident(table_name))::text)
+            FROM information_schema.tables AS t
+            WHERE True
+            AND table_type = 'BASE TABLE'
+        '''
+        sql += " AND concat('\"', t.table_schema, '\".\"', t.table_name, '\"') IN ( "
+        sql += ', '.join(["'{}'".format(table) for table in tables])
+        sql += ")"
+        # feedback.pushInfo(sql)
 
         # write content into temp file
         with open(sql_files['03_after.sql'], 'w') as f:
@@ -442,6 +449,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             connection_name_central,
             sql_files['04_lizsync.sql'],
             ['lizsync'],
+            None,
             ['--schema-only']
         )
         for pmessage in pmessages:
@@ -452,19 +460,14 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
 
         feedback.pushInfo('')
 
-        # 5/ sync_schemas.txt
-        # Add schemas into file
+        # 5/ sync_tables.txt
+        # Add tables into file
         ####
-        feedback.pushInfo(tr('ADD SCHEMAS TO FILE sync_schemas.txt'))
-        schemas = [
-            "{0}".format(a.strip())
-            for a in synchronized_schemas.split(',')
-            if a.strip() not in ('public', 'lizsync', 'audit')
-        ]
-        schema_list = ','.join(schemas)
-        with open(sql_files['sync_schemas.txt'], 'w') as f:
-            f.write(schema_list)
-            feedback.pushInfo(tr('File sync_schemas.txt created'))
+        # todo: write the list of tables instead
+        feedback.pushInfo(tr('ADD SYNCHRONIZED TABLES TO THE FILE sync_tables.txt'))
+        with open(sql_files['sync_tables.txt'], 'w') as f:
+            f.write(','.join(tables))
+            feedback.pushInfo(tr('File sync_tables.txt created'))
 
         feedback.pushInfo('')
 

@@ -38,9 +38,9 @@ ALTER TABLE ONLY lizsync.server_metadata
     ADD CONSTRAINT server_metadata_server_name_key UNIQUE (server_name);
 
 
--- synchronized_schemas synchronized_schemas_pkey
-ALTER TABLE ONLY lizsync.synchronized_schemas
-    ADD CONSTRAINT synchronized_schemas_pkey PRIMARY KEY (server_id);
+-- synchronized_tables synchronized_tables_pkey
+ALTER TABLE ONLY lizsync.synchronized_tables
+    ADD CONSTRAINT synchronized_tables_pkey PRIMARY KEY (server_id);
 
 
 -- sys_structure_metadonnee sys_structure_metadonnee_pkey
