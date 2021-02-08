@@ -128,7 +128,7 @@ class BuildMobileProject(BaseProcessingAlgorithm):
             msg = tr('QGIS project files with .qgz extension cannot yet be processed. Use .qgs instead')
             return False, msg
 
-        # Check input layers
+        # Check PostgreSQL layers
         layers = self.parameterAsLayerList(parameters, self.PG_LAYERS, context)
         layers = [layer for layer in layers if layer.providerType() == 'postgres']
         if not layers:
@@ -162,8 +162,8 @@ class BuildMobileProject(BaseProcessingAlgorithm):
                 uri_central.host(),
                 uri_central.port()
             )
-        # hard coded service name for the Android PostgreSQL device database
-        uris['clone'] = "service='geopoppy'"
+        # hard coded datasource for the Android PostgreSQL device database
+        uris['clone'] = "dbname='gis' host=localhost user='gis' password='gis'"
 
         # Replace with regex
         regex = re.compile(uris['central'], re.IGNORECASE)
@@ -179,7 +179,7 @@ class BuildMobileProject(BaseProcessingAlgorithm):
         Run the needed steps for bi-directionnal database synchronization
         """
         output = {
-            self.OUTPUT_STATUS: 1,
+            self.OUTPUT_STATUS: 0,
             self.OUTPUT_STRING: ''
         }
 
@@ -195,6 +195,7 @@ class BuildMobileProject(BaseProcessingAlgorithm):
         project = context.project()
         input_path = project.absoluteFilePath()
         output_path = input_path.replace('.qgs', '_mobile.qgs')
+        output_directory = project.baseName() + '_mobile/'
 
         # Save to new file
         feedback.pushInfo(
@@ -270,7 +271,10 @@ class BuildMobileProject(BaseProcessingAlgorithm):
             # GeoPackage
             if layerid in gpkg_ids:
                 # Replace datasource with the geopackage file path and layer name
-                new_source = './mobile/layers.gpkg|layername=%s' % layername
+                new_source = './{}/layers.gpkg|layername={}'.format(
+                    output_directory,
+                    layername
+                )
                 node.firstChildElement('datasource').firstChild().setNodeValue(new_source)
 
                 # We must also change the provider into ogr

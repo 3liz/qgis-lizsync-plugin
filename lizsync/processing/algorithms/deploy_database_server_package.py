@@ -256,15 +256,16 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
 
         # Check needed files
         feedback.pushInfo(tr('CHECK UNCOMPRESSED FILES'))
-        sql_file_list = [
+        archive_files = [
             '01_before.sql',
+            '02_predata.sql',
             '02_data.sql',
             '03_after.sql',
             '04_lizsync.sql',
             'sync_id.txt',
             'sync_tables.txt'
         ]
-        for f in sql_file_list:
+        for f in archive_files:
             if not os.path.exists(os.path.join(dir_path, f)):
                 m = tr('One mandatory file has not been found in the ZIP archive') + '  - %s' % f
                 raise QgsProcessingException(m)
@@ -386,14 +387,17 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         # CLONE DATABASE
         # Run SQL scripts from archive with PSQL command
         feedback.pushInfo(tr('RUN SQL SCRIPT FROM THE DECOMPRESSED ZIP FILE'))
-        a_sql = os.path.join(dir_path, '01_before.sql')
-        b_sql = os.path.join(dir_path, '02_data.sql')
-        c_sql = os.path.join(dir_path, '03_after.sql')
-        d_sql = os.path.join(dir_path, '04_lizsync.sql')
-        if not os.path.exists(a_sql) or not os.path.exists(b_sql) or not os.path.exists(c_sql):
-            m = tr('SQL files not found')
-            raise QgsProcessingException(m)
-        sql_files = [a_sql, b_sql, c_sql, d_sql]
+        sql_files = [
+            os.path.join(dir_path, '01_before.sql'),
+            os.path.join(dir_path, '02_predata.sql'),
+            os.path.join(dir_path, '02_data.sql'),
+            os.path.join(dir_path, '03_after.sql'),
+            os.path.join(dir_path, '04_lizsync.sql'),
+        ]
+        for f in sql_files:
+            if not os.path.exists(f):
+                m = tr('SQL files not found') + ': {}'.format(f)
+                raise QgsProcessingException(m)
 
         # Add additional SQL file if present
         last_sql = os.path.join(dir_path, '99_last.sql')
@@ -431,16 +435,16 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             pgbin = '"' + pgbin + '"'
 
         # Run SQL files
-        for i in sql_files:
+        for sql_file in sql_files:
             try:
-                short_file_name = i.replace(dir_path, '')
+                short_file_name = sql_file.replace(dir_path, '')
                 feedback.pushInfo(tr('Loading file') + ' {0} ...'.format(short_file_name))
                 cmd = [
                           pgbin
                       ] + cmdo + [
                           '-v "ON_ERROR_STOP=1"',
                           '--no-password',
-                          '-f "{0}"'.format(i)
+                          '-f "{0}"'.format(sql_file)
                       ]
                 # feedback.pushInfo('PSQL = %s' % ' '.join(cmd) )
                 # Add password if needed
@@ -456,11 +460,11 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                     m = tr('Error loading file') + ' {0}'.format(short_file_name)
                     raise QgsProcessingException(m)
                 msg += '* {0} -> OK'.format(short_file_name)
-                feedback.pushInfo('* {0} has been loaded'.format(i.replace(dir_path, '')))
+                feedback.pushInfo('* {0} has been loaded'.format(sql_file.replace(dir_path, '')))
 
                 # Delete SQL scripts
-                if os.path.exists(i):
-                    os.remove(i)
+                if os.path.exists(sql_file):
+                    os.remove(sql_file)
 
             except Exception as e:
                 m = tr('Error loading file') + ' {0}'.format(short_file_name)
@@ -618,9 +622,11 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         feedback.pushInfo('')
 
         # Delete txt files
-        for i in sql_file_list[4:5]:
-            if os.path.exists(i):
-                os.remove(i)
+        other_files = [o for o in archive_files if not o.endswith('.sql')]
+        for a in other_files:
+            f = os.path.join(dir_path, a)
+            if os.path.exists(f):
+                os.remove(f)
 
         output = {
             self.OUTPUT_STATUS: 1,

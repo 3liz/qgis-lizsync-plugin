@@ -682,6 +682,8 @@ def pg_dump(feedback, postgresql_binary_path, connection_name, output_file_name,
     # Escape pgbin for Windows
     if psys().lower().startswith('win'):
         pgbin = '"' + pgbin + '"'
+
+    # Build pg_dump command. Add needed options
     cmd = [
               pgbin
           ] + cmdo + [
@@ -707,7 +709,7 @@ def pg_dump(feedback, postgresql_binary_path, connection_name, output_file_name,
 
     # Run command
     try:
-        # messages.append('PG_DUMP = %s' % ' '.join(cmd) )
+        # print('PG_DUMP = %s' % ' '.join(cmd) )
         # Add password if needed
         myenv = {**os.environ}
         if not uri.service():

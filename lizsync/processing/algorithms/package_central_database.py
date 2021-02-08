@@ -326,6 +326,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         # Create temporary files
         sql_file_list = [
             '01_before.sql',
+            '02_predata.sql',
             '02_data.sql',
             '03_after.sql',
             '04_lizsync.sql',
@@ -341,6 +342,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
 
         # 1/ 01_before.sql
         ####
+        feedback.pushInfo('')
         feedback.pushInfo(tr('CREATE SCRIPT 01_before.sql'))
         sql = 'BEGIN;'
 
@@ -393,11 +395,55 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         with open(sql_files['01_before.sql'], 'w') as f:
             f.write(sql)
             feedback.pushInfo(tr('File 01_before.sql created'))
-
         feedback.pushInfo('')
 
-        # 2/ 02_data.sql
+        # 2/a) 02_predata.sql
         ####
+        # First we get functions from the needed schemas
+        feedback.pushInfo(tr('CREATE SCRIPT 02_predata.sql'))
+        # compute the tables options: we need to exclude all tables from schema
+        # even if no data is fetched to allow pg_dump to create the needed related functions
+        # for example functions used in triggers
+        # ex: pg_dump service='test' -Fp --schema-only -n my_schema --no-acl --no-owner -T '"my_schema".*'
+        excluded_tables_params = []
+        for schema in schemas:
+            excluded_tables_params.append(
+                '-T "{}".*'.format(schema)
+            )
+        pstatus, pmessages = pg_dump(
+            feedback,
+            postgresql_binary_path,
+            connection_name_central,
+            sql_files['02_predata.sql'] + '.tpl',
+            schemas,
+            None,
+            ['--schema-only'] + excluded_tables_params
+        )
+        for pmessage in pmessages:
+            feedback.pushInfo(pmessage)
+        if not pstatus:
+            m = ' '.join(pmessages)
+            raise QgsProcessingException(m)
+
+        # We need to remove unwanted SQL statements
+        with open(sql_files['02_predata.sql'] + '.tpl', 'r') as input_file:
+            filedata = input_file.read()
+        newdata = filedata
+        replacements = [
+            ['CREATE SCHEMA ', 'CREATE SCHEMA IF NOT EXISTS '],
+            ['CREATE FUNCTION ', 'CREATE OR REPLACE FUNCTION '],
+        ]
+        for item in replacements:
+            newdata = newdata.replace(item[0], item[1])
+        with open(sql_files['02_predata.sql'], 'w') as output_file:
+            output_file.write(newdata)
+        os.remove(sql_files['02_predata.sql'] + '.tpl')
+        feedback.pushInfo(tr('File 02_predata.sql created'))
+        feedback.pushInfo('')
+
+        # 2/b) 02_data.sql
+        ####
+        # Then we get the actual data for the needed tables of these schemas
         feedback.pushInfo(tr('CREATE SCRIPT 02_data.sql'))
         pstatus, pmessages = pg_dump(
             feedback,
@@ -413,6 +459,8 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         if not pstatus:
             m = ' '.join(pmessages)
             raise QgsProcessingException(m)
+        feedback.pushInfo(tr('File 02_data.sql created'))
+        feedback.pushInfo('')
 
         # 3/ 03_after.sql
         ####
@@ -542,6 +590,11 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
                 except Exception:
                     msg += tr("Error while zipping file") + ': ' + fname
                     raise QgsProcessingException(msg)
+
+        # Remove files
+        for fname, fsource in sql_files.items():
+            if os.path.exists(fsource):
+                os.remove(fsource)
 
         msg = tr('Package has been successfully created !')
         feedback.pushInfo(msg)
