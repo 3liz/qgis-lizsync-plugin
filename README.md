@@ -1,8 +1,5 @@
 # Lizsync
 
-[![Build Status](https://travis-ci.org/3liz/qgis-lizsync-plugin.svg?branch=master)](https://travis-ci.org/3liz/qgis-lizsync-plugin)
-
-
 ## Introduction
 
 **LizSync** is a set of tools allowing to perform PostgreSQL **database synchronization** between a central database and one or many clone databases.
