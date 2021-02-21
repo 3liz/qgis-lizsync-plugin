@@ -64,10 +64,10 @@ class SynchronizeMediaSubfolderToFtp(BaseProcessingAlgorithm):
         return tr('Synchronize the clone media subfolder to the central FTP server')
 
     def group(self):
-        return tr('03 GeoPoppy file synchronization')
+        return tr('03 File synchronization')
 
     def groupId(self):
-        return 'lizsync_geopoppy_sync'
+        return 'lizsync_file_sync'
 
     def shortHelpString(self):
         short_help = tr(

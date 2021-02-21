@@ -223,7 +223,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         checks.append((tr('uid columns'), status, message, mandatory))
 
         # audit triggers
-        # NOT MANDATORY (but a your own risks)
+        # NOT MANDATORY (but at your own risks)
         # tables without trigger will not be synchronized
         status, message = check_database_audit_triggers(
             connection_name_central,
@@ -270,8 +270,16 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
 
         # Check connection
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
-        ok, uri, msg = getUriFromConnectionName(connection_name_central, True)
+        ok, uri_central, msg = getUriFromConnectionName(connection_name_central, True)
         if not ok:
+            return False, msg
+
+        # Check we can retrieve host, port, user and password
+        # for central database
+        # since they are used inside the clone to connect to the central database with dblink
+        # service file are not possible yet
+        if uri_central.service():
+            msg = tr('Central database connection uses a service file. This is not supported yet')
             return False, msg
 
         # Check input layers

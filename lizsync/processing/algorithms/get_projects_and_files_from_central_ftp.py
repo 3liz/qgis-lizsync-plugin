@@ -69,10 +69,10 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
         return tr('Get projects and files from the central FTP server')
 
     def group(self):
-        return tr('03 GeoPoppy file synchronization')
+        return tr('03 File synchronization')
 
     def groupId(self):
-        return 'lizsync_geopoppy_sync'
+        return 'lizsync_file_sync'
 
     def shortHelpString(self):
         short_help = tr(
@@ -176,11 +176,11 @@ class GetProjectsAndFilesFromCentralFtp(BaseProcessingAlgorithm):
             )
         )
 
-        # Adapt project for Geopoppy
+        # Adapt project for clone database
         self.addParameter(
             QgsProcessingParameterBoolean(
                 self.REPLACE_DATASOURCE_IN_QGIS_PROJECT,
-                tr('Adapt PostgreSQL connection parameters for GeoPoppy database ?'),
+                tr('Adapt PostgreSQL connection parameters for clone database ?'),
                 defaultValue=True,
                 optional=False
             )

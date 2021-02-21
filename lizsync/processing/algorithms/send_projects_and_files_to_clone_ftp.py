@@ -17,6 +17,7 @@ import os
 
 from qgis.core import (
     QgsProcessingException,
+    QgsProcessingParameterEnum,
     QgsProcessingParameterString,
     QgsProcessingParameterNumber,
     QgsProcessingParameterFile,
@@ -24,10 +25,10 @@ from qgis.core import (
     QgsProcessingOutputNumber
 )
 
-from ftplib import FTP
 from .tools import (
     checkFtpBinary,
     check_ftp_connection,
+    check_ssh_connection,
     ftp_sync,
     get_ftp_password,
     lizsyncConfig,
@@ -41,14 +42,9 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
     Synchronize local data from remote FTP
     via LFTP
     """
-
-    # Constants used to refer to parameters and outputs. They will be
-    # used when calling the algorithm from another algorithm, or when
-    # calling from the QGIS console.
-
-    CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     LOCAL_QGIS_PROJECT_FOLDER = 'LOCAL_QGIS_PROJECT_FOLDER'
 
+    CLONE_FTP_PROTOCOL = 'CLONE_FTP_PROTOCOL'
     CLONE_FTP_HOST = 'CLONE_FTP_HOST'
     CLONE_FTP_PORT = 'CLONE_FTP_PORT'
     CLONE_FTP_LOGIN = 'CLONE_FTP_LOGIN'
@@ -68,10 +64,10 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
         return tr('Send local QGIS projects and files to the clone FTP server')
 
     def group(self):
-        return tr('03 GeoPoppy file synchronization')
+        return tr('03 File synchronization')
 
     def groupId(self):
-        return 'lizsync_geopoppy_sync'
+        return 'lizsync_file_sync'
 
     def shortHelpString(self):
         short_help = tr(
@@ -102,22 +98,6 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
         ls = lizsyncConfig()
 
         # INPUTS
-
-        # Central database connection name
-        connection_name_central = ls.variable('postgresql:central/name')
-        db_param_a = QgsProcessingParameterString(
-            self.CONNECTION_NAME_CENTRAL,
-            tr('PostgreSQL connection to the central database'),
-            defaultValue=connection_name_central,
-            optional=False
-        )
-        db_param_a.setMetadata({
-            'widget_wrapper': {
-                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
-            }
-        })
-        self.addParameter(db_param_a)
-
         # Local directory containing the files to send to the clone by FTP
         local_qgis_project_folder = ls.variable('local/qgis_project_folder')
         self.addParameter(
@@ -131,6 +111,17 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
         )
 
         # Clone FTP connection parameters
+        # method
+        self.CLONE_FTP_PROTOCOLS = ['SFTP', 'FTP']
+        self.addParameter(
+            QgsProcessingParameterEnum(
+                self.CLONE_FTP_PROTOCOL,
+                tr('Clone (S)FTP protocol'),
+                options=self.CLONE_FTP_PROTOCOLS,
+                defaultValue=0,
+                optional=False,
+            )
+        )
         # host
         clone_ftp_host = ls.variable('ftp:clone/host')
         self.addParameter(
@@ -227,6 +218,7 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
         }
 
         # Parameters
+        ftpprotocol = self.CLONE_FTP_PROTOCOLS[parameters[self.CLONE_FTP_PROTOCOL]]
         ftphost = parameters[self.CLONE_FTP_HOST]
         ftpport = parameters[self.CLONE_FTP_PORT]
         ftplogin = parameters[self.CLONE_FTP_LOGIN]
@@ -237,6 +229,7 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
 
         # store parameters
         ls = lizsyncConfig()
+        ls.setVariable('ftp:clone/protocol', ftpprotocol)
         ls.setVariable('ftp:clone/host', ftphost)
         ls.setVariable('ftp:clone/port', ftpport)
         ls.setVariable('ftp:clone/user', ftplogin)
@@ -255,44 +248,41 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
             m = tr('QGIS project local directory ok')
             feedback.pushInfo(m)
 
-        # Check ftp
+        # Check password is given or found in files
         if not ftppassword:
             ok, password, msg = get_ftp_password(ftphost, ftpport, ftplogin)
             if not ok:
                 raise QgsProcessingException(msg)
         else:
             password = ftppassword
-        ok, msg = check_ftp_connection(ftphost, ftpport, ftplogin, password)
+
+        # Check connection is possible
+        timeout = 5
+        if ftpprotocol == 'ftp':
+            ok, msg, ftpdir_exists = check_ftp_connection(
+                ftphost, ftpport, ftplogin, password, timeout, ftpdir
+            )
+        else:
+            ok, msg, ftpdir_exists = check_ssh_connection(
+                ftphost, ftpport, ftplogin, password, timeout, ftpdir
+            )
         if not ok:
             raise QgsProcessingException(msg)
 
         # Check if ftpdir exists
-        ok = True
         feedback.pushInfo(tr('CHECK REMOTE DIRECTORY') + ' %s' % ftpdir)
-        ftp = FTP()
-        ftp.connect(ftphost, ftpport)
-        ftp.login(ftplogin, password)
-        try:
-            ftp.cwd(ftpdir)
-            # do the code for successful cd
-            m = tr('Remote directory exists in the central server')
-            for file_name in ftp.nlst():
-                if file_name.endswith('.qgs') or file_name.endswith('.qgs.cfg'):
-                    feedback.pushInfo(tr('Delete file') + ' %s' % file_name)
-                    ftp.delete(file_name)
-        except Exception:
-            ok = False
-            m = tr('Remote directory does not exist')
-        finally:
-            ftp.close()
-        if not ok:
-            raise QgsProcessingException(m)
+        if not ftpdir_exists:
+            msg = tr('Remote directory does not exist')
+            raise QgsProcessingException(msg)
+        else:
+            feedback.pushInfo(tr('Remote directory exists in the server'))
 
         # Run FTP sync
         feedback.pushInfo(tr('Local directory') + ' %s' % localdir)
         feedback.pushInfo(tr('FTP directory') + ' %s' % ftpdir)
         direction = 'to'  # we send data TO FTP
         ok, msg = ftp_sync(
+            ftpprotocol.lower(),
             ftphost, ftpport, ftplogin, password,
             localdir, ftpdir, direction,
             excluded_directories, feedback

@@ -5,8 +5,6 @@ __revision__ = '$Format:%H$'
 
 import os
 
-import processing
-
 from qgis.core import (
     QgsProcessing,
     QgsProcessingParameterString,
@@ -16,15 +14,19 @@ from qgis.core import (
     QgsProcessingOutputNumber,
     QgsProcessingParameterMultipleLayers
 )
+
+import processing
+
 from .tools import (
     lizsyncConfig,
     getUriFromConnectionName,
 )
+
 from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
 
 
-class PrepareFieldWork(BaseProcessingAlgorithm):
+class PackageAll(BaseProcessingAlgorithm):
     CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     POSTGRESQL_BINARY_PATH = 'POSTGRESQL_BINARY_PATH'
     PG_LAYERS = 'PG_LAYERS'
@@ -36,16 +38,16 @@ class PrepareFieldWork(BaseProcessingAlgorithm):
     OUTPUT_STRING = 'OUTPUT_STRING'
 
     def name(self):
-        return 'prepare_field_work'
+        return 'package_all'
 
     def displayName(self):
-        return tr('Prepare field work')
+        return tr('Package project and data')
 
     def group(self):
-        return tr('03 GeoPoppy file synchronization')
+        return tr('04 Prepare field work')
 
     def groupId(self):
-        return 'lizsync_geopoppy_sync'
+        return 'lizsync_prepare_field_work'
 
     def shortHelpString(self):
         short_help = tr(
@@ -177,7 +179,7 @@ class PrepareFieldWork(BaseProcessingAlgorithm):
         if not ok:
             return False, msg
 
-        return super(PrepareFieldWork, self).checkParameterValues(parameters, context)
+        return super(PackageAll, self).checkParameterValues(parameters, context)
 
     def processAlgorithm(self, parameters, context, feedback):
         """
@@ -215,8 +217,13 @@ class PrepareFieldWork(BaseProcessingAlgorithm):
             'ZIP_FILE': zip_archive,
         }
         processing.run(
-            "lizsync:package_master_database", params, context=context, feedback=feedback
+            "lizsync:package_master_database",
+            params, context=context, feedback=feedback,
+            is_child_algorithm=True
         )
+        # Check for cancelation
+        if feedback.isCanceled():
+            return {}
 
         # Package other layers into GeoPackage
         gpkg_layers = self.parameterAsLayerList(parameters, self.GPKG_LAYERS, context)
@@ -229,8 +236,13 @@ class PrepareFieldWork(BaseProcessingAlgorithm):
                 'OUTPUT': gpkg_output,
             }
             processing.run(
-                "native:package", params, context=context, feedback=feedback
+                "native:package",
+                params, context=context, feedback=feedback,
+                is_child_algorithm=True
             )
+            # Check for cancelation
+            if feedback.isCanceled():
+                return {}
 
         # Create a mobile version of the project
         params = {
@@ -239,8 +251,13 @@ class PrepareFieldWork(BaseProcessingAlgorithm):
             'GPKG_LAYERS': parameters[self.GPKG_LAYERS],
         }
         processing.run(
-            "lizsync:build_mobile_project", params, context=context, feedback=feedback
+            "lizsync:build_mobile_project",
+            params, context=context, feedback=feedback,
+            is_child_algorithm=True
         )
+        # Check for cancelation
+        if feedback.isCanceled():
+            return {}
 
         # Log
         msg = tr(

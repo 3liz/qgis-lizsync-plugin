@@ -40,10 +40,10 @@ class BuildMobileProject(BaseProcessingAlgorithm):
         return tr('Build a mobile QGIS project')
 
     def group(self):
-        return tr('03 GeoPoppy file synchronization')
+        return tr('03 File synchronization')
 
     def groupId(self):
-        return 'lizsync_geopoppy_sync'
+        return 'lizsync_file_sync'
 
     def shortHelpString(self):
         short_help = tr(
@@ -152,6 +152,11 @@ class BuildMobileProject(BaseProcessingAlgorithm):
             m = error_message_central
             return False, m
 
+        # Check if layer datasource and connection datasource have common data
+        if not uri_central.connectionInfo() in datasource:
+            m = tr('Central database and layer connection parameters do not match')
+            return False, m
+
         # Build central and clone datasource components to search & replace
         uris = {'central': {}, 'clone': {}}
         if uri_central.service():
@@ -162,7 +167,9 @@ class BuildMobileProject(BaseProcessingAlgorithm):
                 uri_central.host(),
                 uri_central.port()
             )
+
         # hard coded datasource for the Android PostgreSQL device database
+        # we cannot use service, because QField cannot use a service defined inside Termux
         uris['clone'] = "dbname='gis' host=localhost user='gis' password='gis'"
 
         # Replace with regex
@@ -260,16 +267,17 @@ class BuildMobileProject(BaseProcessingAlgorithm):
                     datasource
                 )
                 if not new_source:
-                    feedback.reportError(msg)
                     raise QgsProcessingException(msg)
-                else:
+                if new_source != datasource:
                     node.firstChildElement('datasource').firstChild().setNodeValue(new_source)
 
-                # Add to the list
-                pg_changed.append(layername)
+                    # Add to the list
+                    pg_changed.append(layername)
 
             # GeoPackage
-            if layerid in gpkg_ids:
+            # We do not change the datasource for PostgreSQL layers chosen for editing
+            # To avoid misconfiguration
+            if layerid in gpkg_ids and layerid not in pg_ids:
                 # Replace datasource with the geopackage file path and layer name
                 new_source = './{}/layers.gpkg|layername={}'.format(
                     output_directory,
@@ -303,6 +311,10 @@ class BuildMobileProject(BaseProcessingAlgorithm):
             with open(output_path, 'w') as f:
                 f.write(content)
             feedback.pushInfo('')
+
+        if not pg_changed:
+            msg = tr('No PostgreSQL layers datasource could be changed to target the clone database')
+            raise QgsProcessingException(msg)
 
         # Log
         msg = tr('The current QGIS project mobile version has been successfully saved. Please send it to your field device.')

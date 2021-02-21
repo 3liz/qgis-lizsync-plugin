@@ -145,6 +145,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             )
         )
 
+        # Recreate clone server id
         self.addParameter(
             QgsProcessingParameterBoolean(
                 self.RECREATE_CLONE_SERVER_ID,
@@ -183,7 +184,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         if not has_bin_file:
             return False, tr('The needed PostgreSQL binaries cannot be found in the specified path')
 
-        # Check output zip path
+        # Check zip archive path
         database_archive_file = self.parameterAsString(parameters, self.ZIP_FILE, context)
         if not os.path.exists(database_archive_file):
             database_archive_file = os.path.join(
@@ -191,8 +192,6 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                 'central_database_package.zip'
             )
         ok = os.path.exists(database_archive_file)
-
-        # Check ZIP archive content
         if not ok:
             return False, tr("The ZIP archive does not exists in the specified path") + ": {0}".format(database_archive_file)
         parameters[self.ZIP_FILE] = database_archive_file
@@ -200,11 +199,29 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         # Check connections
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
-        ok, uri, msg = getUriFromConnectionName(connection_name_central, True)
+        ok, uri_central, msg = getUriFromConnectionName(connection_name_central, True)
         if not ok:
             return False, msg
         ok, uri, msg = getUriFromConnectionName(connection_name_clone, True)
         if not ok:
+            return False, msg
+
+        # Check we can retrieve host, port, user and password
+        # for central database
+        # since they are used inside the clone to connect to the central database with dblink
+        # service file are not possible yet
+        if uri_central.service():
+            msg = tr('Central database connection uses a service file. This is not supported yet')
+            return False, msg
+        if not uri_central.password():
+            password = get_connection_password_from_ini(uri_central)
+            uri_central.setPassword(password)
+        if not uri_central.password():
+            msg = tr('No password found for the central database connection !')
+            msg += tr(
+                'It is needed to let the clone connect to the central'
+                ' database during the synchronisation'
+            )
             return False, msg
 
         return super(DeployDatabaseServerPackage, self).checkParameterValues(parameters, context)

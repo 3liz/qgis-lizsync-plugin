@@ -14,6 +14,12 @@ __date__ = '2019-02-15'
 __copyright__ = '(C) 2019 by 3liz'
 
 import ftplib
+from paramiko import SSHClient
+from paramiko.ssh_exception import (
+    AuthenticationException,
+    SSHException,
+    BadHostKeyException
+)
 import os
 import netrc
 import psycopg2
@@ -59,32 +65,91 @@ def get_ftp_password(host, port, login):
     return True, password, ''
 
 
-def check_ftp_connection(host, port, login, password=None, timeout=5):
+def check_ftp_connection(host, port, login, password=None, timeout=5, ftpdir=None):
     """
     Check FTP connection with timeout
     """
+    ftpdir_exists = False
     if not password:
         ok, password, msg = get_ftp_password(host, port, login)
         if not ok:
-            return False, msg
+            return False, msg, ftpdir_exists
 
     try:
         ftp = ftplib.FTP()
         ftp.connect(host, port, timeout)
         try:
+            # Try to login
             ftp.login(login, password)
         except ftplib.all_errors as error:
             msg = tr('Error while connecting to FTP server')
             msg += ' ' + str(error)
-            return False, msg
+            return False, msg, ftpdir_exists
     except ftplib.all_errors as error:
         msg = tr('Error while connecting to FTP server')
         msg += ' ' + str(error)
-        return False, msg
+        return False, msg, ftpdir_exists
     finally:
+        # Check remote directory exists if ftpdir is given
+        ok = True
+        if ftpdir:
+            try:
+                ftp.cwd(ftpdir)
+                # do the code for successful cd
+                msg = tr('Remote directory exists in the central server')
+                ftpdir_exists = True
+            except Exception:
+                ok = False
+                msg = tr('Remote directory does not exist')
         ftp.close()
+        if not ok:
+            return False, msg, ftpdir_exists
+    return True, '', ftpdir_exists
 
-    return True, ''
+
+def check_ssh_connection(host, port, login, password=None, timeout=5, ftpdir=None):
+    """
+    Check SSH connection
+    """
+    client = SSHClient()
+    client.load_system_host_keys()
+    ok = False
+    ftpdir_exists = False
+    try:
+        client.connect(
+            host, username=login, port=port, password=password,
+            look_for_keys=False, allow_agent=False, timeout=timeout
+        )
+        ok = True
+    except (AuthenticationException, SSHException, BadHostKeyException) as e:
+        msg = tr('Error while connecting to SFTP server')
+        msg+= ': ' + str(e)
+        ok = False
+    except Exception as e:
+        msg = tr('Error while connecting to SFTP server')
+        msg+= ': ' + str(e)
+        ok = False
+    finally:
+        # Check ftpdir exists
+        if ftpdir:
+            ok = True
+            try:
+                stdin, stdout, stderr = client.exec_command('ls {}'.format(ftpdir))
+                returncode = stdout.channel.recv_exit_status()
+                if returncode != 0:
+                    msg = tr('Remote directory does not exist')
+                    ok = False
+                else:
+                    ftpdir_exists = True
+            except Exception as e:
+                msg = tr('Error while checking the remote directory')
+                msg+= ': ' + str(e)
+                ok = False
+        client.close()
+    if not ok:
+        return False, msg, ftpdir_exists
+
+    return True, '', ftpdir_exists
 
 
 def get_connection_password_from_ini(uri):
@@ -376,6 +441,46 @@ def check_database_uid_columns(connection_name, schemas=None, tables=None):
     return status, message
 
 
+def add_database_uid_columns(connection_name, schemas=None, tables=None):
+    """
+    Add an uid columns to given schemas and tables
+    """
+    status = False
+    sql = ""
+    sql += " SELECT t.table_schema, t.table_name,"
+    sql += " lizsync.add_uid_columns(t.table_schema, t.table_name)"
+    sql += " FROM information_schema.tables AS t"
+    sql += " WHERE True"
+    if schemas:
+        schemas_sql = convert_textual_schema_list_to_sql(schemas)
+        sql += " AND t.table_schema IN ( {0} )".format(schemas_sql)
+    if tables:
+        sql += " AND concat('\"', t.table_schema, '\".\"', t.table_name, '\"') IN ( "
+        sql += ', '.join(["'{}'".format(table) for table in tables])
+        sql += ")"
+    sql += " AND table_type = 'BASE TABLE'"
+    sql += " ORDER BY table_schema, table_name"
+
+    header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
+    tables = []
+    if ok:
+        status = True
+        for a in data:
+            print(a)
+            if a[2]:
+                tables.append('* "{0}"."{1}"'.format(a[0], a[1]))
+        if tables:
+            message = tr('UID columns have been successfully added in the following tables')
+            message += '\n{0}'.format(',\n '.join(tables))
+        else:
+            message = tr('No UID columns were missing.')
+    else:
+        status = False
+        message = error_message
+
+    return status, message
+
+
 def check_database_audit_triggers(connection_name, schemas=None, tables=None):
     """
     Checks if tables are audited with triggers
@@ -414,7 +519,6 @@ def check_database_audit_triggers(connection_name, schemas=None, tables=None):
                 missing.append('* "{0}"."{1}"'.format(a[0], a[1]))
             message = tr('Some tables are not monitored by the audit trigger tool')
             message += ':\n{0}'.format(',\n '.join(missing))
-            message += '\n' + tr('They will not be synchronized !')
             status = False
     else:
         status = False
@@ -470,6 +574,51 @@ def get_database_audit_triggers(connection_name, schemas=None, tables=None):
     return ok, message, tables
 
 
+def add_database_audit_triggers(connection_name, schemas=None, tables=None):
+    """
+    Add the audit triggers for given schemas and tables
+    """
+    status = False
+    sql = ""
+    sql += " SELECT t.table_schema, t.table_name,"
+    sql += " audit.audit_table((quote_ident(t.table_schema) || '.' || quote_ident(t.table_name))::text)"
+    sql += " FROM information_schema.tables AS t"
+    sql += " WHERE True"
+    if schemas:
+        schemas_sql = convert_textual_schema_list_to_sql(schemas)
+        sql += " AND t.table_schema IN ( {0} )".format(schemas_sql)
+    if tables:
+        sql += " AND concat('\"', t.table_schema, '\".\"', t.table_name, '\"') IN ( "
+        sql += ', '.join(["'{}'".format(table) for table in tables])
+        sql += ")"
+    sql += " AND table_type = 'BASE TABLE'"
+    sql += " AND (quote_ident(table_schema) || '.' || quote_ident(table_name))::text"
+    sql += "     NOT IN ("
+    sql += "         SELECT (tgrelid::regclass)::text"
+    sql += "         FROM pg_trigger"
+    sql += "         WHERE tgname LIKE 'audit_trigger_%'"
+    sql += "     )"
+
+    header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
+    tables = []
+    message = ''
+    if ok:
+        status = True
+        if rowCount > 0:
+            for a in data:
+                tables.append('* "{0}"."{1}"'.format(a[0], a[1]))
+            message = tr('Audit triggers have been successfully added in the following tables')
+            message += ':\n{0}'.format(',\n '.join(tables))
+        else:
+            message = tr(
+                'No audit triggers were missing'
+            )
+    else:
+        message = error_message
+
+    return status, message, tables
+
+
 def checkFtpBinary():
     # Check WinSCP path contains binary
     test = False
@@ -505,7 +654,7 @@ def checkFtpBinary():
     return True, tr('FTP Binary has been found in your system')
 
 
-def ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, excludedirs, feedback):
+def ftp_sync(ftpprotocol, ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, excludedirs, feedback):
     # LizSync config file from ini
     ls = lizsyncConfig()
 
@@ -517,21 +666,39 @@ def ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, ex
             pass_str = ''
             if ftppass:
                 pass_str = ':{}'.format(ftppass)
-            cmd.append('ftp://{ftpuser}{pass_str}@{ftphost}:{ftpport}'.format(
-                ftpuser=ftpuser,
-                pass_str=pass_str,
-                ftphost=ftphost,
-                ftpport=ftpport
-            )
-            )
+            if ftpprotocol == 'ftp':
+                cmd.append(
+                    'ftp://{ftpuser}{pass_str}@{ftphost}:{ftpport}'.format(
+                        ftpuser=ftpuser,
+                        pass_str=pass_str,
+                        ftphost=ftphost,
+                        ftpport=ftpport
+                    )
+                )
+            else:
+                cmd.append('-p {ftpport}'.format(ftpport=ftpport))
+                cmd.append(
+                    'sftp://{ftpuser}{pass_str}@{ftphost}'.format(
+                        ftpuser=ftpuser,
+                        pass_str=pass_str,
+                        ftphost=ftphost,
+                    )
+                )
             cmd.append('-e')
             cmd.append('"')
-            cmd.append('set ftp:ssl-allow no; set ssl:verify-certificate no; ')
+
+            # Add needed options
+            if ftpprotocol == 'ftp':
+                cmd.append('set ftp:ssl-allow no; ')
+            else:
+                cmd.append('set sftp:auto-confirm yes; ')
+            cmd.append('set ssl:verify-certificate no; ')
+
+            # Add mirror command
             cmd.append('mirror')
             if direction == 'to':
                 cmd.append('-R')
             cmd.append('--verbose')
-            cmd.append('--continue')
             cmd.append('--use-cache')
             # cmd.append('-e') # pour supprimer tout ce qui n'est pas sur le serveur
             for d in excludedirs.split(','):
@@ -539,6 +706,12 @@ def ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, ex
                 if ed != '/':
                     cmd.append('-x %s' % ed)
             cmd.append('--ignore-time')
+
+            # Force the deletion of old files before transfering new file
+            # Usefull to avoid a nasty bug with Android: the old files would be partially overwritten !
+            cmd.append('--delete-first')
+
+            # Add direction
             # LFTP NEEDS TO PUT
             # * from -> ftpdir (remote FTP server) BEFORE
             # * to (-R) -> localdir (computer) BEFORE ftpdir (remote FTP server)
@@ -547,7 +720,9 @@ def ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, ex
             else:
                 cmd.append('{} {}'.format(ftpdir, localdir))
 
-            cmd.append('; quit"')
+            # Quit
+            cmd.append('; quit')
+            cmd.append('"')
             feedback.pushInfo('LFTP = %s' % ' '.join(cmd))
 
             myenv = {**os.environ}
@@ -580,13 +755,26 @@ def ftp_sync(ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, direction, ex
             pass_str = ''
             if ftppass:
                 pass_str = ':{}'.format(ftppass)
-            cmd.append('"open ftp://{ftpuser}{pass_str}@{ftphost}:{ftpport}"'.format(
-                ftpuser=ftpuser,
-                pass_str=pass_str,
-                ftphost=ftphost,
-                ftpport=ftpport
-            )
-            )
+
+            if ftpprotocol == 'ftp':
+                cmd.append(
+                    '"open ftp://{ftpuser}{pass_str}@{ftphost}:{ftpport}"'.format(
+                        ftpuser=ftpuser,
+                        pass_str=pass_str,
+                        ftphost=ftphost,
+                        ftpport=ftpport
+                    )
+                )
+            else:
+                cmd.append(
+                    '"open sftp://{ftpuser}{pass_str}@{ftphost}:{ftpport}"'.format(
+                        ftpuser=ftpuser,
+                        pass_str=pass_str,
+                        ftphost=ftphost,
+                        ftpport=ftpport
+                    )
+                )
+
             cmd.append('"')
             cmd.append('synchronize')
             way = 'local'
