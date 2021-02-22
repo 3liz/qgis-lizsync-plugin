@@ -14,12 +14,17 @@ __date__ = '2019-02-15'
 __copyright__ = '(C) 2019 by 3liz'
 
 import ftplib
-from paramiko import SSHClient
-from paramiko.ssh_exception import (
-    AuthenticationException,
-    SSHException,
-    BadHostKeyException
-)
+try:
+    from paramiko import SSHClient
+    from paramiko.ssh_exception import (
+        AuthenticationException,
+        SSHException,
+        BadHostKeyException
+    )
+except ImportError:
+    # Quick and dirty workaround
+    print('Module paramiko must be installed')
+
 import os
 import netrc
 import psycopg2
