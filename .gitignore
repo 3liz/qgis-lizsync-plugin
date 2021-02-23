@@ -13,6 +13,7 @@ __pycache__/*
 
 lizmap.cfg
 
+# IDE
 .idea/
 
 *.egg-info
@@ -21,6 +22,12 @@ build/
 # dist/ # needed for shemaspy
 
 TODO
+
+# QGIS-Plugin-CI
 lizsync*zip
 lizsync/i18n/*.ts
 # lizsync/i18n/*.qm
+
+# MkDocs
+docs/CHANGELOG.md
+docs/CONTRIBUTING.md
