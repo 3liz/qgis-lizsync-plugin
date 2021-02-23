@@ -1,12 +1,4 @@
----
-Title: LizSync plugin - Presentation and concepts
-Favicon: ../icon.png
-Index: yes
-...
-
-[TOC]
-
-## Presentation
+# Presentation
 
 **LizSync** is a set of tools allowing to perform PostgreSQL **database synchronisation** between a **central** database and one or many **clone** databases.
 
@@ -60,11 +52,7 @@ We modified the trigger to fill in this new JSON column.
 
 ## Demo
 
-Videos on youtube:
-
-* Database structure, preparation, create and deploy ZIP archive: https://youtu.be/l8a1Pn7CpN0
-* Data editing and 2-way synchronisation: https://youtu.be/tnWVBJGqD0M
-
+Read the [reference page](../references.md) for some videos.
 
 ## Key features
 

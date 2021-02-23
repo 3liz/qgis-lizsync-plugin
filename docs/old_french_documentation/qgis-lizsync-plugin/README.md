@@ -1,10 +1,3 @@
----
-Title: Extension QGIS
-Favicon: ../icon.png
-...
-
-[TOC]
-
 # Installation et utilisation de LizSync sur QGIS
 
 ## Introduction

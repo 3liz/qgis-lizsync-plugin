@@ -1,10 +1,3 @@
----
-Title: GeoPoppy
-Favicon: ../icon.png
-...
-
-[TOC]
-
 # Installation et lancement du GeoPoppy sur tablette Android
 
 ## Introduction
