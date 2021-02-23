@@ -1,0 +1,1148 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<database name="gis" schema="lizsync" type="PostgreSQL - 10.14 (Debian 10.14-1.pgdg100+1)">
+   <sequences>
+      <sequence increment="1" name="conflicts_id_seq" startValue="1"/>
+      <sequence increment="1" name="sys_structure_metadonnee_id_seq" startValue="1"/>
+   </sequences>
+   <tables>
+      <table name="conflicts" numRows="0" remarks="Store conflicts resolution made during bidirectionnal database synchronizations." schema="lizsync" type="TABLE">
+         <column autoUpdated="true" defaultValue="nextval('lizsync.conflicts_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="Automatic ID" size="19" type="bigserial" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="now()" digits="6" id="1" name="conflict_time" nullable="false" remarks="Timestamp of the conflict resolution. Not related to timestamp of logged actions" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="object_table" nullable="true" remarks="Schema and table name of the conflicted object." size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="object_uid" nullable="true" remarks="UID of the conflicted object." size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="clone_id" nullable="true" remarks="UID of the source clone database." size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="central_event_id" nullable="true" remarks="Event id of the conflicted central audit log" size="19" type="int8" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="6" name="central_event_timestamp" nullable="true" remarks="Event action_tstamp_tx of the conflicted central audit log" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="central_sql" nullable="true" remarks="Central SQL action in conflict" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="clone_sql" nullable="true" remarks="Clone SQL action in conflict" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="rejected" nullable="true" remarks="Rejected object. If &quot;clone&quot;, it means the central data has been kept instead" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="rule_applied" nullable="true" remarks="Rule used when managing conflict" size="2147483647" type="text" typeCode="12"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="conflicts_pkey" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+      </table>
+      <table name="history" numRows="0" remarks="" schema="lizsync" type="TABLE">
+         <column autoUpdated="false" defaultValue="(md5(((random())::text || (clock_timestamp())::text)))::uuid" digits="0" id="0" name="sync_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="now()" digits="6" id="1" name="sync_time" nullable="false" remarks="" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="server_from" nullable="false" remarks="" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="server_to" nullable="true" remarks="" size="2147483647" type="_text" typeCode="2003"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="min_event_id" nullable="true" remarks="" size="10" type="int4" typeCode="4">
+            <parent column="id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="lizsync" table="sys_structure_metadonnee"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="5" name="max_event_id" nullable="true" remarks="" size="10" type="int4" typeCode="4">
+            <parent column="id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="lizsync" table="sys_structure_metadonnee"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="6" name="max_action_tstamp_tx" nullable="true" remarks="" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="7" name="sync_type" nullable="false" remarks="" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="'pending'::text" digits="0" id="8" name="sync_status" nullable="false" remarks="" size="2147483647" type="text" typeCode="12"/>
+         <primaryKey column="sync_id" sequenceNumberInPK="1"/>
+         <index name="history_pkey" unique="true">
+            <column ascending="true" name="sync_id"/>
+         </index>
+      </table>
+      <table name="server_metadata" numRows="0" remarks="" schema="lizsync" type="TABLE">
+         <column autoUpdated="false" defaultValue="(md5(((random())::text || (clock_timestamp())::text)))::uuid" digits="0" id="0" name="server_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="(md5(((random())::text || (clock_timestamp())::text)))::uuid" digits="0" id="1" name="server_name" nullable="false" remarks="" size="2147483647" type="text" typeCode="12"/>
+         <primaryKey column="server_id" sequenceNumberInPK="1"/>
+         <index name="server_metadata_pkey" unique="true">
+            <column ascending="true" name="server_id"/>
+         </index>
+         <index name="server_metadata_server_name_key" unique="true">
+            <column ascending="true" name="server_name"/>
+         </index>
+      </table>
+      <table name="synchronized_schemas" numRows="0" remarks="List of schemas to synchronize per slave server id. This list works as a white list. Only listed schemas will be synchronized for each server ids." schema="lizsync" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="server_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="sync_schemas" nullable="false" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <primaryKey column="server_id" sequenceNumberInPK="1"/>
+         <index name="synchronized_schemas_pkey" unique="true">
+            <column ascending="true" name="server_id"/>
+         </index>
+      </table>
+      <table name="sys_structure_metadonnee" numRows="0" remarks="Database structure metadata used for migration by QGIS plugin" schema="lizsync" type="TABLE">
+         <column autoUpdated="true" defaultValue="nextval('lizsync.sys_structure_metadonnee_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="Unique ID" size="10" type="serial" typeCode="4">
+            <child column="max_event_id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="lizsync" table="history"/>
+            <child column="min_event_id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="lizsync" table="history"/>
+         </column>
+         <column autoUpdated="false" defaultValue="(now())::date" digits="0" id="1" name="date_ajout" nullable="false" remarks="Version addition date" size="13" type="date" typeCode="91"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="version" nullable="false" remarks="Lizsync schema version number. Ex: 0.1.0" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="description" nullable="true" remarks="Description of the version if needed" size="2147483647" type="text" typeCode="12"/>
+         <primaryKey column="id" sequenceNumberInPK="1"/>
+         <index name="sys_structure_metadonnee_pkey" unique="true">
+            <column ascending="true" name="id"/>
+         </index>
+      </table>
+   </tables>
+   <routines>
+      <routine dataAccess="MODIFIES" deterministic="false" name="add_uid_columns" returnType="boolean" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="PLPGSQL"><![CDATA[
+DECLARE
+  query text;
+BEGIN
+
+    BEGIN
+        SELECT INTO query
+        concat(
+            ' ALTER TABLE ' || quote_ident(p_schema_name) || '.' || quote_ident(p_table_name) ||
+            ' ADD COLUMN uid uuid DEFAULT md5(random()::text || clock_timestamp()::text)::uuid ' ||
+            ' UNIQUE NOT NULL'
+        );
+        execute query;
+        RAISE NOTICE 'uid column created for % %', quote_ident(p_schema_name), quote_ident(p_table_name);
+        RETURN True;
+    EXCEPTION WHEN OTHERS THEN
+        RAISE NOTICE 'ERROR - uid column already exists';
+        RETURN False;
+    END;
+
+END;
+]]></definition>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="analyse_audit_logs" returnType="SETOF record" securityType="INVOKER" type="FUNCTION">
+         <comment><![CDATA[Get audit logs from the central database and the clone since the last synchronization. Compare the logs to find and resolved UPDATE conflicts (same table, feature, column): last modified object wins. This function store the resolved conflicts into the table lizsync.conflicts in the central database. Returns central server event ids, minimum event id, maximum event id, maximum action timestamp.]]></comment>
+         <definition language="PLPGSQL"><![CDATA[
+DECLARE
+    sqltemplate text;
+    central_count integer;
+    p_ids bigint[];
+    p_min_event_id bigint;
+    p_max_event_id bigint;
+    p_max_action_tstamp_tx timestamp with time zone;
+    central_ids_to_keep integer[];
+    clone_ids_to_keep integer[];
+BEGIN
+
+    -- Store all central ids before the analyse and removal of rejected logs
+    -- Also store min and max event id
+    -- Not needed if there is nothing in the central log
+    -- If so, we return NULL to let the function replay_central_logs_to_clone return (do nothing)
+    SELECT INTO central_count
+    count(*) FROM temp_central_audit
+    ;
+    RAISE NOTICE 'Central modifications count since last sync: %', central_count;
+    IF central_count > 0 THEN
+        SELECT INTO p_ids, p_min_event_id, p_max_event_id, p_max_action_tstamp_tx
+        array_agg(DISTINCT event_id), min(event_id), max(event_id), max(action_tstamp_tx)
+        FROM temp_central_audit
+        ;
+    ELSE
+        SELECT INTO p_ids, p_min_event_id, p_max_event_id, p_max_action_tstamp_tx
+        NULL, NULL, NULL, NULL
+        FROM temp_central_audit
+        ;
+    END IF;
+
+    -- Get the list of ids to keep from each log
+    -- We use DISTINCT ON to remove consecutive UPDATE on the same ident, uid and field for each source.
+    -- Last is kept
+    -- central
+    IF central_count > 0 THEN
+        WITH
+        ce AS (
+            SELECT
+            DISTINCT ON (ident, action_type, updated_field, uid)
+            tid
+            FROM temp_central_audit
+            ORDER BY ident, action_type, updated_field, uid, event_id DESC
+        )
+        SELECT array_agg(tid)
+        FROM ce
+        INTO central_ids_to_keep
+        ;
+    END IF;
+    -- clone
+    WITH
+    cl AS (
+        SELECT
+        DISTINCT ON (ident, action_type, updated_field, uid)
+        tid
+        FROM temp_clone_audit
+        ORDER BY ident, action_type, updated_field, uid, event_id DESC
+    )
+    SELECT array_agg(tid)
+    FROM cl
+    INTO clone_ids_to_keep
+    ;
+
+    -- DELETE removed lines from temp audit tables
+    IF central_count > 0 THEN
+        DELETE FROM temp_central_audit
+        WHERE tid != ALL (central_ids_to_keep)
+        ;
+    END IF;
+
+    DELETE FROM temp_clone_audit
+    WHERE tid != ALL (clone_ids_to_keep)
+    ;
+
+    -- Compare logs
+    -- And get conflicts
+    -- Last modified is kept, older is rejected
+    INSERT INTO temp_conflicts
+    (
+        conflict_time,
+        object_table, object_uid,
+        central_tid, clone_tid,
+        central_event_id, central_event_timestamp,
+        central_sql, clone_sql,
+        rejected,
+        rule_applied
+    )
+    SELECT
+        now(),
+        ce.ident, ce.uid::uuid,
+        ce.tid AS cetid, cl.tid AS cltid,
+        ce.event_id, ce.action_tstamp_tx,
+        ce.action AS ceaction, cl.action AS claction,
+        -- last modified wins
+        CASE
+            WHEN cl.original_action_tstamp_tx < ce.original_action_tstamp_tx THEN 'clone'
+            ELSE 'central'
+        END AS rejected,
+        'last_modified' AS rule_applied
+    FROM temp_central_audit AS ce
+    INNER JOIN temp_clone_audit AS cl
+        ON ce.ident = cl.ident
+        AND ce.uid = cl.uid
+        AND ce.action_type = 'U'
+        AND cl.action_type = 'U'
+        AND ce.updated_field = cl.updated_field
+    ORDER BY ce.event_id
+    ;
+
+    -- DELETE rejected tid from audit temp tables
+    -- central
+    DELETE FROM temp_central_audit
+    WHERE tid IN (
+        SELECT central_tid
+        FROM temp_conflicts
+        WHERE rejected = 'central'
+    )
+    ;
+    -- clone
+    DELETE FROM temp_clone_audit
+    WHERE tid IN (
+        SELECT clone_tid
+        FROM temp_conflicts
+        WHERE rejected = 'clone'
+    )
+    ;
+
+    -- Return data
+    RETURN QUERY
+    SELECT p_ids, p_min_event_id, p_max_event_id, p_max_action_tstamp_tx;
+END;
+]]></definition>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="compare_tables" returnType="SETOF record" securityType="INVOKER" type="FUNCTION">
+         <comment/>
+         <definition language="PLPGSQL"><![CDATA[
+DECLARE
+    pkeys text[];
+    sqltemplate text;
+BEGIN
+
+    -- Get array of primary key field(s)
+    SELECT array_agg(uid_column) as pkey_fields
+    INTO pkeys
+    FROM audit.logged_relations r
+    WHERE relation_name = (quote_ident(p_schema_name) || '.' || quote_ident(p_table_name))
+    ;
+
+    -- Compare data
+    sqltemplate = '
+    SELECT
+        coalesce(t1.uid, t2.uid) AS uid,
+        CASE
+            WHEN t1.uid IS NULL THEN ''not in table 1''
+            WHEN t2.uid IS NULL THEN ''not in table 2''
+            ELSE ''table 1 != table 2''
+        END AS status,
+        (hstore(t1.*) - ''%1$s''::text[]) - (hstore(t2) - ''%1$s''::text[]) AS values_in_table_1,
+        (hstore(t2.*) - ''%1$s''::text[]) - (hstore(t1) - ''%1$s''::text[]) AS values_in_table_2
+    FROM "%2$s"."%3$s" AS t1
+    FULL JOIN "central_%2$s"."%3$s" AS t2
+        ON t1.uid = t2.uid
+    WHERE
+        ((hstore(t1.*) - ''%1$s''::text[]) != (hstore(t2.*) - ''%1$s''::text[]))
+        OR (t1.uid IS NULL)
+        OR (t2.uid IS NULL)
+    ';
+
+    RETURN QUERY
+    EXECUTE format(sqltemplate,
+        pkeys,
+        p_schema_name,
+        p_table_name
+    );
+
+END;
+]]></definition>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="create_central_server_fdw" returnType="boolean" securityType="INVOKER" type="FUNCTION">
+         <comment><![CDATA[Create foreign server, needed central_audit and central_lizsync schemas, and import all central database tables as foreign tables. This will allow the clone to connect to the central databse]]></comment>
+         <definition language="PLPGSQL"><![CDATA[
+DECLARE
+    sqltemplate text;
+BEGIN
+    -- Create extension
+    CREATE EXTENSION IF NOT EXISTS postgres_fdw;
+
+    -- Create server
+    DROP SERVER IF EXISTS central_server CASCADE;
+    sqltemplate = '
+    CREATE SERVER central_server
+    FOREIGN DATA WRAPPER postgres_fdw
+    OPTIONS (
+        host ''%1$s'',
+        port ''%2$s'',
+        dbname ''%3$s'',
+        connect_timeout ''5''
+    );
+    ';
+    EXECUTE format(sqltemplate,
+        p_central_host,
+        p_central_port,
+        p_central_database
+    );
+
+    -- User mapping
+    sqltemplate = '
+    CREATE USER MAPPING FOR CURRENT_USER
+    SERVER central_server
+    OPTIONS (
+        user ''%1$s'',
+        password ''%2$s''
+    )
+    ';
+    EXECUTE format(sqltemplate,
+        p_central_username,
+        p_central_password
+    );
+
+    -- Create local schemas
+    CREATE SCHEMA IF NOT EXISTS central_audit;
+    CREATE SCHEMA IF NOT EXISTS central_lizsync;
+
+    -- Import foreign tables
+    -- audit
+    IMPORT FOREIGN SCHEMA audit
+    FROM SERVER central_server
+    INTO central_audit;
+
+    -- lizsync
+    IMPORT FOREIGN SCHEMA lizsync
+    FROM SERVER central_server
+    INTO central_lizsync;
+
+    -- Manually create modified conflicts table
+    -- with no id column to avoid issues
+    -- https://stackoverflow.com/a/53361066/13220524
+    CREATE FOREIGN TABLE central_lizsync.conflicts_bis(
+        object_table text,
+        object_uid uuid,
+        clone_id uuid,
+        central_event_id bigint,
+        central_event_timestamp timestamp with time zone,
+        central_sql text,
+        clone_sql text,
+        rejected text,
+        rule_applied text
+     )
+    SERVER central_server
+    OPTIONS (
+        schema_name 'lizsync',
+        table_name 'conflicts'
+    );
+
+    RETURN True;
+END;
+]]></definition>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="create_temporary_table" returnType="boolean" securityType="INVOKER" type="FUNCTION">
+         <comment><![CDATA[Create temporary table used during database bidirectionnal synchronization. Parameters: temporary table name, and table type (audit or conflit)]]></comment>
+         <definition language="PLPGSQL"><![CDATA[
+DECLARE
+    sqltemplate text;
+BEGIN
+    -- Drop table if exists
+    EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(temporary_table);
+    -- Create temporary table
+    IF table_type = 'audit' THEN
+        EXECUTE 'CREATE TEMP TABLE ' || quote_ident(temporary_table) || ' (
+            tid                       serial,
+            event_id                  bigint,
+            action_tstamp_tx          timestamp with time zone,
+            action_tstamp_epoch       integer,
+            ident                     text,
+            action_type               text,
+            origine                   text,
+            action                    text,
+            updated_field             text,
+            uid                       uuid,
+            original_action_tstamp_tx integer
+        )
+        --ON COMMIT DROP
+        ';
+    END IF;
+    IF table_type = 'conflict' THEN
+        EXECUTE 'CREATE TEMP TABLE ' || quote_ident(temporary_table) || ' (
+            tid                     serial                   ,
+            conflict_time           timestamp with time zone ,
+            object_table            text                     ,
+            object_uid              uuid                     ,
+            central_tid             integer                  ,
+            clone_tid               integer                  ,
+            central_event_id        integer                  ,
+            central_event_timestamp timestamp with time zone ,
+            central_sql             text                     ,
+            clone_sql               text                     ,
+            rejected                text                     ,
+            rule_applied            text
+        )
+        --ON COMMIT DROP
+        ';
+    END IF;
+
+    RETURN True;
+END;
+]]></definition>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="get_central_audit_logs" returnType="SETOF record" securityType="INVOKER" type="FUNCTION">
+         <comment><![CDATA[Get all the logs from the central database: modifications do not come from the clone, have not yet been replayed by the clone, are dated after the last synchronization, have an event id higher than the last sync maximum event id, and concern the synchronized schemas for this clone. Parameters: uid column name and excluded columns]]></comment>
+         <definition language="PLPGSQL"><![CDATA[
+DECLARE
+    p_clone_id text;
+    p_excluded_columns_text text;
+    sqltemplate text;
+    sqltext text;
+    dblink_connection_name text;
+    dblink_msg text;
+BEGIN
+
+    IF p_excluded_columns IS NULL THEN
+        p_excluded_columns_text = '';
+    ELSE
+        p_excluded_columns_text = array_to_string(p_excluded_columns, '@');
+    END IF;
+
+    -- Get clone server id
+    SELECT server_id::text INTO p_clone_id
+    FROM lizsync.server_metadata
+    LIMIT 1;
+
+    IF p_clone_id IS NULL THEN
+        RETURN QUERY
+        SELECT
+            NULL, NULL, NULL, NULL,
+            NULL, NULL, NULL, NULL, NULL, NULL
+        LIMIT 0;
+    END IF;
+
+    -- Create dblink connection
+    dblink_connection_name = (md5(((random())::text || (clock_timestamp())::text)))::text;
+    SELECT dblink_connect(
+        dblink_connection_name,
+        'central_server'
+    )
+    INTO dblink_msg;
+
+    sqltemplate = '
+
+        WITH
+        cid AS (
+            SELECT server_id::text AS p_central_id
+            FROM lizsync.server_metadata
+            LIMIT 1
+        ),
+        last_sync AS (
+            SELECT
+                max_action_tstamp_tx,
+                max_event_id
+            FROM lizsync.history
+            WHERE True
+            AND server_from = (SELECT p_central_id FROM cid)
+            AND ''%1$s'' = ANY (server_to)
+            AND sync_status = ''done''
+            ORDER BY sync_time DESC
+            LIMIT 1
+        ),
+        schemas AS (
+            SELECT sync_schemas
+            FROM lizsync.synchronized_schemas
+            WHERE server_id = ''%1$s''::uuid
+            LIMIT 1
+        )
+        SELECT
+            a.event_id,
+            a.action_tstamp_tx AS action_tstamp_tx,
+            extract(epoch from a.action_tstamp_tx)::integer AS action_tstamp_epoch,
+            concat(a.schema_name, ''.'', a.table_name) AS ident,
+            a.action AS action_type,
+            CASE
+                WHEN a.sync_data->>''origin'' IS NULL THEN ''central''
+                ELSE ''clone''
+            END AS origine,
+            Coalesce(
+                lizsync.get_event_sql(
+                    a.event_id,
+                    ''%2$s''::text,
+                    array_cat(
+                        string_to_array(''%3$s'',''@''),
+                        array_remove(akeys(a.changed_fields), s)
+                    )
+                ),
+                ''''
+            ) AS action,
+            s AS updated_field,
+            (a.row_data->''%2$s'')::uuid AS uid,
+            CASE
+                WHEN a.sync_data->>''action_tstamp_tx'' IS NOT NULL
+                AND a.sync_data->>''origin'' IS NOT NULL
+                    THEN extract(epoch from Cast(a.sync_data->>''action_tstamp_tx'' AS TIMESTAMP WITH TIME ZONE))::integer
+                ELSE extract(epoch from a.action_tstamp_tx)::integer
+            END AS original_action_tstamp_tx
+        FROM audit.logged_actions AS a
+        -- Create as many lines as there are changed fields in UPDATE
+        LEFT JOIN skeys(a.changed_fields) AS s ON TRUE,
+        last_sync, schemas
+
+        WHERE True
+
+        -- modifications do not come from clone database
+        AND (a.sync_data->>''origin'' != ''%1$s'' OR a.sync_data->>''origin'' IS NULL)
+
+        -- modifications have not yet been replayed in the clone database
+        AND (NOT (a.sync_data->''replayed_by'' ? ''%1$s'') OR a.sync_data->''replayed_by'' = jsonb_build_object() )
+
+        -- modifications after the last synchronization
+        -- MAX_ACTION_TSTAMP_TX Par ex: 2019-04-20 12:00:00+02
+        AND a.action_tstamp_tx > last_sync.max_action_tstamp_tx
+
+        -- et pour lesquelles l ID est supérieur
+        -- MAX_EVENT_ID
+        AND a.event_id > last_sync.max_event_id
+
+        -- et pour les schémas listés
+        AND sync_schemas ? schema_name
+
+        ORDER BY a.event_id
+        ;
+    ';
+
+    sqltext = format(sqltemplate,
+        p_clone_id,
+        p_uid_field,
+        p_excluded_columns_text
+    );
+    --RAISE NOTICE '%', sqltext;
+
+    RETURN QUERY
+    SELECT *
+    FROM dblink(
+        dblink_connection_name,
+        sqltext
+    ) AS t(
+        event_id bigint, action_tstamp_tx timestamp with time zone, action_tstamp_epoch integer,
+        ident text, action_type text, origine text, action text, updated_field text,
+        uid uuid, original_action_tstamp_tx integer
+    )
+    ;
+
+END;
+]]></definition>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="get_clone_audit_logs" returnType="SETOF record" securityType="INVOKER" type="FUNCTION">
+         <comment><![CDATA[Get all the modifications made in the clone. Parameters: uid column name and excluded columns]]></comment>
+         <definition language="PLPGSQL"><![CDATA[
+DECLARE
+    sqltemplate text;
+BEGIN
+    RETURN QUERY
+    SELECT
+        a.event_id,
+        a.action_tstamp_tx AS action_tstamp_tx,
+        extract(epoch from a.action_tstamp_tx)::integer AS action_tstamp_epoch,
+        concat(a.schema_name, '.', a.table_name) AS ident,
+        a.action AS action_type,
+        'clone'::text AS origine,
+        Coalesce(
+            lizsync.get_event_sql(
+                a.event_id,
+                p_uid_field::text,
+                array_cat(
+                    p_excluded_columns,
+                    array_remove(akeys(a.changed_fields), s)
+                )
+            ),
+            ''
+        ) AS action,
+        s AS updated_field,
+        (a.row_data->p_uid_field)::uuid AS uid
+    FROM audit.logged_actions AS a
+    -- Create as many lines as there are changed fields in UPDATE
+    LEFT JOIN skeys(a.changed_fields) AS s ON TRUE
+    WHERE True
+    ORDER BY a.event_id
+    ;
+END;
+]]></definition>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="get_event_sql" returnType="text" securityType="INVOKER" type="FUNCTION">
+         <comment><![CDATA[
+Get the SQL to use for replay from a audit log event
+
+Arguments:
+   pevent_id:  The event_id of the event in audit.logged_actions to replay
+   puid_column: The name of the column with unique uuid values
+]]></comment>
+         <definition language="PLPGSQL"><![CDATA[
+DECLARE
+  sql text;
+BEGIN
+    IF excluded_columns IS NULL THEN
+        excluded_columns:= '{}'::text[];
+    END IF;
+
+    WITH
+    event AS (
+        SELECT * FROM audit.logged_actions WHERE event_id = pevent_id
+    )
+    -- get primary key names
+    , where_pks AS (
+        SELECT array_agg(uid_column) as pkey_fields
+        FROM audit.logged_relations r
+        JOIN event ON relation_name = (quote_ident(schema_name) || '.' || quote_ident(table_name))
+    )
+    -- create where clause with uid column
+    -- not with primary keys, to manage multi-way sync
+    , where_uid AS (
+        SELECT '"' || puid_column || '" = ' || quote_literal(row_data->puid_column) AS where_clause
+        FROM event
+    )
+    SELECT INTO sql
+        CASE
+            WHEN action = 'I' THEN
+                'INSERT INTO "' || schema_name || '"."' || table_name || '"' ||
+                ' (' || (
+                    SELECT string_agg(
+                        '"' || key || '"',
+                        ','
+                    )
+                    FROM each(row_data)
+                    WHERE True
+                    AND key != ALL(pkey_fields)
+                    AND key != ALL(excluded_columns)
+                )
+                || ') VALUES ( ' ||
+                (
+                    SELECT string_agg(
+                        CASE WHEN value IS NULL THEN 'NULL' ELSE quote_literal(value) END,
+                        ','
+                    )
+                    FROM EACH(row_data)
+                    WHERE True
+                    AND key != ALL(pkey_fields)
+                    AND key != ALL(excluded_columns)
+                )
+                || ')'
+
+            WHEN action = 'D' THEN
+                'DELETE FROM "' || schema_name || '"."' || table_name || '"' ||
+                ' WHERE ' || where_clause
+
+            WHEN action = 'U' THEN
+                'UPDATE "' || schema_name || '"."' || table_name || '"' ||
+                ' SET ' || (
+                    SELECT string_agg(
+                        '"' || key || '"' || ' = ' ||
+                        CASE
+                            WHEN value IS NULL
+                                THEN 'NULL'
+                            ELSE quote_literal(value)
+                        END,
+                        ','
+                    ) FROM each(changed_fields)
+                    WHERE True
+                    AND key != ALL(pkey_fields)
+                    AND key != ALL(excluded_columns)
+                ) ||
+                ' WHERE ' || where_clause
+        END
+    FROM
+        event, where_pks, where_uid
+    ;
+    RETURN sql;
+END;
+]]></definition>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="import_central_server_schemas" returnType="SETOF ARRAY" securityType="INVOKER" type="FUNCTION">
+         <comment><![CDATA[Import synchronized schemas from the central database foreign server into central_XXX local schemas to the clone database. This allow to edit data of the central database from the clone.]]></comment>
+         <definition language="PLPGSQL"><![CDATA[
+DECLARE
+    p_clone_id text;
+    p_sync_schema text;
+    sqltemplate text;
+    rec record;
+    p_imported_schemas text[];
+BEGIN
+    sqltemplate = '';
+    p_imported_schemas = ARRAY[]::text[];
+
+    -- Get clone id
+    SELECT server_id::text INTO p_clone_id
+    FROM lizsync.server_metadata
+    LIMIT 1;
+
+    -- Import foreign tables of given schema
+    FOR rec IN
+        SELECT jsonb_array_elements(sync_schemas)::text AS sync_schema
+        FROM central_lizsync.synchronized_schemas
+        WHERE server_id::text = p_clone_id
+    LOOP
+        p_sync_schema = replace(rec.sync_schema, '"', '');
+        p_imported_schemas = p_imported_schemas || p_sync_schema;
+        sqltemplate = concat(
+            sqltemplate,
+            'DROP SCHEMA IF EXISTS central_', p_sync_schema, ' CASCADE;',
+            'CREATE SCHEMA central_', p_sync_schema, ';',
+            'IMPORT FOREIGN SCHEMA ', p_sync_schema, '
+            FROM SERVER central_server
+            INTO central_', p_sync_schema, ';'
+        );
+    END LOOP;
+
+    EXECUTE sqltemplate;
+
+    RETURN QUERY
+    SELECT p_imported_schemas;
+END;
+]]></definition>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="replay_central_logs_to_clone" returnType="SETOF integer" securityType="INVOKER" type="FUNCTION">
+         <comment><![CDATA[Replay the central logs in the clone database, then modifiy the corresponding audit logs in the central server to update the sync_data column. A new item is also created in the central server lizsync.history table. When running the log queries, we disable triggers in the clone to avoid adding more rows to the local audit logged_actions table]]></comment>
+         <definition language="PLPGSQL"><![CDATA[
+DECLARE
+    sqltemplate text;
+    p_central_id text;
+    p_clone_id text;
+    p_sync_id uuid;
+    rec record;
+    p_counter integer;
+BEGIN
+    -- Do the replay ONLY if there are ids to replay
+    -- We do NOT want to insert a new lizsync.history item if p_ids IS NULL
+    -- This means there were no changes in the central since last sync
+    -- the next sync will still use the last central->clone sync history item data
+    RAISE NOTICE 'Check if there are some central logs since last sync: %', p_ids;
+    IF p_ids IS NOT NULL THEN
+
+        -- Get central server id
+        SELECT server_id::text INTO p_central_id
+        FROM central_lizsync.server_metadata
+        LIMIT 1;
+        -- RAISE NOTICE 'Central server id = %', p_central_id;
+
+        -- Get clone server id
+        SELECT server_id::text INTO p_clone_id
+        FROM lizsync.server_metadata
+        LIMIT 1;
+        -- RAISE NOTICE 'Clone server id = %', p_clone_id;
+
+        -- Add item in CENTRAL history table
+        INSERT INTO central_lizsync.history (
+            sync_id, sync_time,
+            server_from, server_to,
+            min_event_id, max_event_id, max_action_tstamp_tx,
+            sync_type, sync_status
+        )
+        VALUES (
+            md5(random()::text || clock_timestamp()::text)::uuid, now(),
+            p_central_id, ARRAY[p_clone_id],
+            p_min_event_id, p_max_event_id, p_max_action_tstamp_tx,
+            'partial', 'pending'
+        )
+        RETURNING sync_id
+        INTO p_sync_id
+        ;
+        -- RAISE NOTICE 'SYNC ID = %', p_sync_id;
+
+        -- Replay SQL queries in clone db
+        -- We disable triggers to avoid adding more rows to the local audit logged_actions table
+        sqltemplate = '';
+        p_counter = 0;
+        sqltemplate = concat(sqltemplate, ' SET session_replication_role = replica;');
+        FOR rec IN
+            SELECT event_id, action
+            FROM temp_central_audit
+            ORDER BY tid
+        LOOP
+            p_counter = p_counter + 1;
+            -- RAISE NOTICE '%', rec.event_id;
+            sqltemplate = concat(sqltemplate, rec.action || ';');
+        END LOOP;
+        sqltemplate = concat(sqltemplate, ' SET session_replication_role = DEFAULT;');
+        -- RAISE NOTICE 'SQL TEMPLATE %', sqltemplate;
+        -- RAISE NOTICE 'p_counter %', p_counter;
+
+        --RAISE NOTICE '%', sqltemplate;
+        IF p_counter > 0 THEN
+            EXECUTE sqltemplate
+            ;
+        END IF;
+
+        -- Update central audit logged actions
+        -- To tell these actions have been replayed by this clone
+        UPDATE central_audit.logged_actions
+        SET sync_data = jsonb_set(
+            sync_data,
+            '{"replayed_by"}',
+            sync_data->'replayed_by' || jsonb_build_object(p_clone_id, p_sync_id),
+            true
+        )
+        WHERE event_id = ANY (p_ids)
+        ;
+
+        -- Modify central server synchronization item central->clone
+        -- to mark it as 'done'
+        UPDATE central_lizsync.history
+        SET sync_status = 'done'
+        WHERE True
+        AND sync_id = p_sync_id
+        ;
+
+    ELSE
+        p_counter = 0;
+        RAISE NOTICE 'No central logs since last sync';
+    END IF;
+
+
+
+    -- Sync done !
+    RETURN QUERY
+    SELECT p_counter;
+END;
+]]></definition>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="replay_clone_logs_to_central" returnType="SETOF integer" securityType="INVOKER" type="FUNCTION">
+         <comment><![CDATA[Replay all logs from the clone to the central database. It returns the number of actions replayed. After this, the clone audit logs are truncated.]]></comment>
+         <definition language="PLPGSQL"><![CDATA[
+DECLARE
+    sqltemplate text;
+    sqlsession text;
+    sqlupdatelogs text;
+    p_central_id text;
+    p_clone_id text;
+    p_sync_id uuid;
+    rec record;
+    p_counter integer;
+    dblink_connection_name text;
+    dblink_msg text;
+BEGIN
+    -- Get the total number of logs to replay
+    SELECT count(*) AS nb
+    FROM temp_clone_audit
+    INTO p_counter;
+    -- RAISE NOTICE 'p_counter %', p_counter;
+
+    -- If there are some logs, process them
+    IF p_counter > 0 THEN
+
+        -- Get central server id
+        SELECT server_id::text INTO p_central_id
+        FROM central_lizsync.server_metadata
+        LIMIT 1;
+        -- RAISE NOTICE 'central id %', p_central_id;
+
+        -- Get clone server id
+        SELECT server_id::text INTO p_clone_id
+        FROM lizsync.server_metadata
+        LIMIT 1;
+        -- RAISE NOTICE 'clone id %', p_clone_id;
+
+        -- Add a new item in the central history table
+        INSERT INTO central_lizsync.history (
+            sync_id, sync_time,
+            server_from, server_to,
+            min_event_id, max_event_id, max_action_tstamp_tx,
+            sync_type, sync_status
+        )
+        VALUES (
+            md5(random()::text || clock_timestamp()::text)::uuid, now(),
+            p_clone_id, ARRAY[p_central_id],
+            NULL, NULL, NULL,
+            'partial', 'pending'
+        )
+        RETURNING sync_id
+        INTO p_sync_id
+        ;
+        -- RAISE NOTICE 'sync id %', p_sync_id;
+
+        -- Replay SQL queries in central db
+        -- The session variables are used by the central server audit function
+        -- to fill the sync_data field
+        -- do not break line in sqlsession to avoid bugs
+        sqlsession = format('SET SESSION "lizsync.server_from" = ''%1$s''; SET SESSION "lizsync.server_to" = ''%2$s''; SET SESSION "lizsync.sync_id" = ''%3$s'';',
+            p_clone_id,
+            p_central_id,
+            p_sync_id
+        );
+
+        -- Store SQL query to update central logs afterward with original log timestamp
+        sqlupdatelogs = '';
+
+        -- Create dblink connection
+        dblink_connection_name = (md5(((random())::text || (clock_timestamp())::text)))::text;
+        -- RAISE NOTICE 'dblink_connection_name %', dblink_connection_name;
+        SELECT dblink_connect(
+            dblink_connection_name,
+            'central_server'
+        )
+        INTO dblink_msg;
+
+        -- Loop through logs and replay action
+        -- We need to query one by one to be able
+        -- to update the sync_data->action_tstamp_tx afterwards
+        -- by searching action = sqltemplate
+        FOR rec IN
+            SELECT *
+            FROM temp_clone_audit
+            ORDER BY tid
+        LOOP
+            -- Run the query in the central database via dblink
+            sqltemplate = sqlsession || trim(rec.action) || ';';
+            SELECT dblink_exec(
+                dblink_connection_name,
+                sqltemplate
+            )
+            INTO dblink_msg;
+
+            -- Concatenate action in sqlupdatelogs
+            sqltemplate = trim(quote_literal(sqltemplate), '''');
+            sqlupdatelogs = concat(
+                sqlupdatelogs,
+                format('
+                    UPDATE audit.logged_actions
+                    SET sync_data = sync_data || jsonb_build_object(
+                        ''action_tstamp_tx'',
+                        Cast(''%1$s'' AS TIMESTAMP WITH TIME ZONE)
+                    )
+                    WHERE True
+                    AND sync_data->''replayed_by''->>''%2$s'' = ''%3$s''
+                    AND client_query = ''%4$s''
+                    AND action = ''%5$s''
+                    AND concat(schema_name, ''.'', table_name) = ''%6$s''
+                    ;',
+                    rec.action_tstamp_tx,
+                    p_central_id,
+                    p_sync_id,
+                    sqltemplate,
+                    rec.action_type,
+                    rec.ident
+                )
+            );
+
+        END LOOP;
+
+        -- Update central audit.logged_actions
+        SELECT dblink_exec(
+            dblink_connection_name,
+            sqlupdatelogs
+        )
+        INTO dblink_msg;
+
+        -- Disconnect dblink
+        SELECT dblink_disconnect(dblink_connection_name)
+        INTO dblink_msg;
+
+        -- Update central history table item
+        UPDATE central_lizsync.history
+        SET sync_status = 'done'
+        WHERE True
+        AND sync_id = p_sync_id
+        ;
+
+    END IF;
+
+
+    -- Remove logs from clone audit table
+    TRUNCATE audit.logged_actions
+    RESTART IDENTITY;
+
+    -- Return
+    RETURN QUERY
+    SELECT p_counter;
+END;
+]]></definition>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="store_conflicts" returnType="SETOF integer" securityType="INVOKER" type="FUNCTION">
+         <comment><![CDATA[Store resolved conflicts in the central database lizsync.conflicts table.]]></comment>
+         <definition language="PLPGSQL"><![CDATA[
+DECLARE
+    sqltemplate text;
+    dblink_connection_name text;
+    dblink_msg text;
+    p_clone_id text;
+    p_number_conflicts integer;
+BEGIN
+    -- Count conflicts to store
+    SELECT count(tid) FROM temp_conflicts
+    INTO p_number_conflicts
+    ;
+
+    -- Get clone server id
+    SELECT server_id::text INTO p_clone_id
+    FROM lizsync.server_metadata
+    LIMIT 1;
+
+    -- Insert into foreign table central_lizsync.conflicts_bis
+    -- To let the foreign server use default values
+    -- for id and conflict time
+    INSERT INTO central_lizsync.conflicts_bis
+    ( "object_table", "object_uid",
+    "clone_id",
+    "central_event_id", "central_event_timestamp",
+    "central_sql", "clone_sql",
+    "rejected", "rule_applied"
+    )
+    SELECT
+        c.object_table, c.object_uid,
+        p_clone_id::uuid,
+        c.central_event_id, c.central_event_timestamp,
+        c.central_sql, c.clone_sql,
+        c.rejected, c.rule_applied
+    FROM temp_conflicts AS c
+    ORDER BY tid
+    ;
+
+    -- Return
+    RETURN QUERY
+    SELECT p_number_conflicts;
+END;
+]]></definition>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="synchronize" returnType="SETOF record" securityType="INVOKER" type="FUNCTION">
+         <comment><![CDATA[Run the bi-directionnal database synchronization between the clone and the central server]]></comment>
+         <definition language="PLPGSQL"><![CDATA[
+DECLARE
+    sqltemplate text;
+    p_clone_id text;
+    temp_central_audit_table text;
+    temp_clone_audit_table text;
+    temp_conflicts_table text;
+    p_ids bigint[];
+    p_min_event_id bigint;
+    p_max_event_id bigint;
+    p_max_action_tstamp_tx timestamp with time zone;
+    p_number_replayed_to_central integer;
+    p_number_replayed_to_clone integer;
+    p_number_conflicts integer;
+    status_bool boolean;
+    status_msg text;
+    t timestamptz := clock_timestamp();
+BEGIN
+
+    temp_central_audit_table = 'temp_central_audit';
+    temp_clone_audit_table = 'temp_clone_audit';
+    temp_conflicts_table = 'temp_conflicts';
+
+    -- Create temporary tables
+    RAISE NOTICE 'Create temporary tables...';
+    SELECT lizsync.create_temporary_table(temp_central_audit_table, 'audit')
+    INTO status_bool;
+    SELECT lizsync.create_temporary_table(temp_clone_audit_table, 'audit')
+    INTO status_bool;
+    SELECT lizsync.create_temporary_table(temp_conflicts_table, 'conflict')
+    INTO status_bool;
+    RAISE NOTICE 'Create temporary tables: %', clock_timestamp() - t;
+
+    -- Get audit logs and store them in temporary tables
+    -- central
+    RAISE NOTICE 'Get modifications from central audit table...';
+    EXECUTE '
+    INSERT INTO ' || quote_ident(temp_central_audit_table) || '
+    (
+        event_id, action_tstamp_tx, action_tstamp_epoch,
+        ident, action_type, origine, action, updated_field,
+        uid, original_action_tstamp_tx
+    )
+    SELECT
+        *
+    FROM lizsync.get_central_audit_logs(''uid'', NULL)
+    '
+    ;
+    RAISE NOTICE 'Get modifications from central audit table: %', clock_timestamp() - t;
+
+    -- clone
+    RAISE NOTICE 'Get modifications from clone audit table...';
+    EXECUTE '
+    INSERT INTO ' || quote_ident(temp_clone_audit_table) || '
+    (
+        event_id, action_tstamp_tx, action_tstamp_epoch,
+        ident, action_type, origine, action, updated_field,
+        uid, original_action_tstamp_tx
+    )
+    SELECT
+        *,
+        action_tstamp_epoch
+    FROM lizsync.get_clone_audit_logs(''uid'', NULL)
+    '
+    ;
+    RAISE NOTICE 'Get modifications from clone audit table: %', clock_timestamp() - t;
+
+    -- Analyse logs
+    -- find conflicts, useless logs, and remove them from temp tables
+    RAISE NOTICE 'Analyse modifications and manage conflicts...';
+    SELECT ids, min_event_id, max_event_id, max_action_tstamp_tx
+    FROM lizsync.analyse_audit_logs()
+    INTO p_ids, p_min_event_id, p_max_event_id, p_max_action_tstamp_tx
+    ;
+    RAISE NOTICE 'Analyse modifications and manage conflicts: %', clock_timestamp() - t;
+
+    -- Replay logs
+    -- central -> clone
+    RAISE NOTICE 'Replay modification from central server to clone...';
+    SELECT lizsync.replay_central_logs_to_clone(
+        p_ids,
+        p_min_event_id,
+        p_max_event_id,
+        p_max_action_tstamp_tx
+    )
+    INTO p_number_replayed_to_central
+    ;
+    RAISE NOTICE 'Replay modification from central server to clone: %', clock_timestamp() - t;
+
+    -- clone -> central
+    RAISE NOTICE 'Replay modification from clone to central server...';
+    SELECT lizsync.replay_clone_logs_to_central()
+    INTO p_number_replayed_to_clone
+    ;
+    RAISE NOTICE 'Replay modification from clone to central server: %', clock_timestamp() - t;
+
+    -- Store conflicts
+    RAISE NOTICE 'Store conflicts in the central server...';
+    SELECT lizsync.store_conflicts()
+    INTO p_number_conflicts;
+    RAISE NOTICE 'Store conflicts in the central server: %', clock_timestamp() - t;
+
+    -- Drop temporary tables
+    RAISE NOTICE 'Drop temporary tables...';
+    EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(temp_central_audit_table);
+    EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(temp_clone_audit_table)  ;
+    EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(temp_conflicts_table)    ;
+    RAISE NOTICE 'Drop temporary tables: %', clock_timestamp() - t;
+
+    -- Return
+    RETURN QUERY
+    SELECT
+        p_number_replayed_to_central,
+        p_number_replayed_to_clone,
+        p_number_conflicts
+    ;
+END;
+]]></definition>
+      </routine>
+   </routines>
+</database>

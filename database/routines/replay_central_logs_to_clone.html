@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>gis Database</title>
+        <!-- Tell the browser to be responsive to screen width -->
+        <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+        <link rel="icon" type="image/png" sizes="16x16" href="../favicon.png">
+        <!-- Bootstrap 3.3.5 -->
+        <link rel="stylesheet" href="../bower/admin-lte/bootstrap/css/bootstrap.min.css">
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="../bower/font-awesome/css/font-awesome.min.css">
+        <!-- Ionicons -->
+        <link rel="stylesheet" href="../bower/ionicons/css/ionicons.min.css">
+        <!-- DataTables -->
+        <link rel="stylesheet" href="../bower/datatables.net-bs/css/dataTables.bootstrap.min.css">
+        <link rel="stylesheet" href="../bower/datatables.net-buttons-bs/css/buttons.bootstrap.min.css">
+        <!-- Code Mirror -->
+        <link rel="stylesheet" href="../bower/codemirror/codemirror.css">
+        <!-- Fonts -->
+        <link href='../fonts/indieflower/indie-flower.css' rel='stylesheet' type='text/css'>
+        <link href='../fonts/source-sans-pro/source-sans-pro.css' rel='stylesheet' type='text/css'>
+
+        <!-- Theme style -->
+        <link rel="stylesheet" href="../bower/admin-lte/dist/css/AdminLTE.min.css">
+        <!-- Salvattore -->
+        <link rel="stylesheet" href="../bower/salvattore/salvattore.css">
+        <!-- AdminLTE Skins. Choose a skin from the css/skins
+           folder instead of downloading all of them to reduce the load. -->
+        <link rel="stylesheet" href="../bower/admin-lte/dist/css/skins/_all-skins.min.css">
+        <!-- SchemaSpy -->
+        <link rel="stylesheet" href="../schemaSpy.css">
+
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+        <script src="../bower/html5shiv/html5shiv.min.js"></script>
+        <script src="../bower/respond/respond.min.js"></script>
+        <![endif]-->
+    </head>
+    <!-- ADD THE CLASS layout-top-nav TO REMOVE THE SIDEBAR. -->
+    <body class="hold-transition skin-blue layout-top-nav">
+        <div class="wrapper">
+            <header class="main-header">
+                <nav class="navbar navbar-static-top">
+                    <div class="container">
+                        <div class="navbar-header">
+                            <a href="../index.html" class="navbar-brand"><b>gis</b> Database</a>
+                            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse"><i class="fa fa-bars"></i></button>
+                        </div>
+
+                        <!-- Collect the nav links, forms, and other content for toggling -->
+                        <div class="collapse navbar-collapse pull-left" id="navbar-collapse">
+                            <ul class="nav navbar-nav">
+                                <li><a href="../index.html">Tables <span class="sr-only">(current)</span></a></li>
+                                <li><a href="../columns.html" title="All of the columns in the schema">Columns</a></li>
+                                <li><a href="../constraints.html" title="Useful for diagnosing error messages that just give constraint name or number">Constraints</a></li>
+                                <li><a href="../relationships.html" title="Diagram of table relationships">Relationships</a></li>
+                                <li><a href="../orphans.html" title="View of tables with neither parents nor children">Orphan&nbsp;Tables</a></li>
+                                <li><a href="../anomalies.html" title="Things that might not be quite right">Anomalies</a></li>
+                                <li><a href="../routines.html" title="Procedures and functions">Routines</a></li>
+                            </ul>
+                        </div>
+                        <!-- /.navbar-collapse -->
+                        <!-- Navbar Right Menu -->
+                    </div>
+                    <!-- /.container-fluid -->
+                </nav>
+            </header>
+            <!-- Main content -->
+            <!-- Full Width Column -->
+            <div class="content-wrapper">
+                <!-- Content Header (Page header) -->
+                <section class="content-header">
+                    <h1>replay_central_logs_to_clone</h1><br />
+                    <div class="box box-primary">
+                        <div class="box-header with-border">
+                            <i class="fa fa-file-text-o"></i>
+                            <h3 id="Description" class="box-title">Description</h3>
+                            <div class="box-tools pull-right">
+                                <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                                <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+                            </div>
+                        </div>
+                        <!-- /.box-header -->
+                        <div class="box-body clearfix">
+                            <p><p>Replay the central logs in the clone database, then modifiy the corresponding audit logs in the central server to update the sync_data column. A new item is also created in the central server lizsync.history table. When running the log queries, we disable triggers in the clone to avoid adding more rows to the local audit logged_actions table</p></p>
+                        </div>
+                        <!-- /.box-body -->
+                    </div>
+                </section>
+                <!-- Main content -->
+                <section class="content">
+                    <div class="box box-primary">
+                        <div class="box-header with-border">
+                            <span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span>
+                            <h3 id="Columns" class="box-title">Parameters</h3>
+                            <div class="box-tools pull-right">
+                                <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                                <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+                            </div>
+                        </div>
+                        <div class="box-body">
+                            <table id="standard_table" class="table table-bordered table-striped dataTable" role="grid">
+                                <thead align='left'>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Mode</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td>p_ids</td>
+                                    <td>ARRAY</td>
+                                    <td>IN</td>
+                                </tr>
+                                <tr>
+                                    <td>p_min_event_id</td>
+                                    <td>bigint</td>
+                                    <td>IN</td>
+                                </tr>
+                                <tr>
+                                    <td>p_max_event_id</td>
+                                    <td>bigint</td>
+                                    <td>IN</td>
+                                </tr>
+                                <tr>
+                                    <td>p_max_action_tstamp_tx</td>
+                                    <td>timestamp with time zone</td>
+                                    <td>IN</td>
+                                </tr>
+                                <tr>
+                                    <td>replay_count</td>
+                                    <td>integer</td>
+                                    <td>OUT</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="box box-primary">
+                        <div class="box-header with-border">
+                            <i class="fa fa-file-code-o"></i>
+                            <h3 id="RoutineDefinition" class="box-title">Definition</h3>
+                            <div class="box-tools pull-right">
+                                <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                                <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+                            </div>
+                        </div>
+                        <div class="box-body">
+                            <textarea id="sql-script-codemirror" name="sql-script-codemirror" rows="" style="display: none;">&#10;DECLARE&#10;    sqltemplate text;&#10;    p_central_id text;&#10;    p_clone_id text;&#10;    p_sync_id uuid;&#10;    rec record;&#10;    p_counter integer;&#10;BEGIN&#10;    -- Do the replay ONLY if there are ids to replay&#10;    -- We do NOT want to insert a new lizsync.history item if p_ids IS NULL&#10;    -- This means there were no changes in the central since last sync&#10;    -- the next sync will still use the last central-&gt;clone sync history item data&#10;    RAISE NOTICE &#39;Check if there are some central logs since last sync: %&#39;, p_ids;&#10;    IF p_ids IS NOT NULL THEN&#10;&#10;        -- Get central server id&#10;        SELECT server_id::text INTO p_central_id&#10;        FROM central_lizsync.server_metadata&#10;        LIMIT 1;&#10;        -- RAISE NOTICE &#39;Central server id = %&#39;, p_central_id;&#10;&#10;        -- Get clone server id&#10;        SELECT server_id::text INTO p_clone_id&#10;        FROM lizsync.server_metadata&#10;        LIMIT 1;&#10;        -- RAISE NOTICE &#39;Clone server id = %&#39;, p_clone_id;&#10;&#10;        -- Add item in CENTRAL history table&#10;        INSERT INTO central_lizsync.history (&#10;            sync_id, sync_time,&#10;            server_from, server_to,&#10;            min_event_id, max_event_id, max_action_tstamp_tx,&#10;            sync_type, sync_status&#10;        )&#10;        VALUES (&#10;            md5(random()::text || clock_timestamp()::text)::uuid, now(),&#10;            p_central_id, ARRAY[p_clone_id],&#10;            p_min_event_id, p_max_event_id, p_max_action_tstamp_tx,&#10;            &#39;partial&#39;, &#39;pending&#39;&#10;        )&#10;        RETURNING sync_id&#10;        INTO p_sync_id&#10;        ;&#10;        -- RAISE NOTICE &#39;SYNC ID = %&#39;, p_sync_id;&#10;&#10;        -- Replay SQL queries in clone db&#10;        -- We disable triggers to avoid adding more rows to the local audit logged_actions table&#10;        sqltemplate = &#39;&#39;;&#10;        p_counter = 0;&#10;        sqltemplate = concat(sqltemplate, &#39; SET session_replication_role = replica;&#39;);&#10;        FOR rec IN&#10;            SELECT event_id, action&#10;            FROM temp_central_audit&#10;            ORDER BY tid&#10;        LOOP&#10;            p_counter = p_counter + 1;&#10;            -- RAISE NOTICE &#39;%&#39;, rec.event_id;&#10;            sqltemplate = concat(sqltemplate, rec.action || &#39;;&#39;);&#10;        END LOOP;&#10;        sqltemplate = concat(sqltemplate, &#39; SET session_replication_role = DEFAULT;&#39;);&#10;        -- RAISE NOTICE &#39;SQL TEMPLATE %&#39;, sqltemplate;&#10;        -- RAISE NOTICE &#39;p_counter %&#39;, p_counter;&#10;&#10;        --RAISE NOTICE &#39;%&#39;, sqltemplate;&#10;        IF p_counter &gt; 0 THEN&#10;            EXECUTE sqltemplate&#10;            ;&#10;        END IF;&#10;&#10;        -- Update central audit logged actions&#10;        -- To tell these actions have been replayed by this clone&#10;        UPDATE central_audit.logged_actions&#10;        SET sync_data = jsonb_set(&#10;            sync_data,&#10;            &#39;{&quot;replayed_by&quot;}&#39;,&#10;            sync_data-&gt;&#39;replayed_by&#39; || jsonb_build_object(p_clone_id, p_sync_id),&#10;            true&#10;        )&#10;        WHERE event_id = ANY (p_ids)&#10;        ;&#10;&#10;        -- Modify central server synchronization item central-&gt;clone&#10;        -- to mark it as &#39;done&#39;&#10;        UPDATE central_lizsync.history&#10;        SET sync_status = &#39;done&#39;&#10;        WHERE True&#10;        AND sync_id = p_sync_id&#10;        ;&#10;&#10;    ELSE&#10;        p_counter = 0;&#10;        RAISE NOTICE &#39;No central logs since last sync&#39;;&#10;    END IF;&#10;&#10;&#10;&#10;    -- Sync done !&#10;    RETURN QUERY&#10;    SELECT p_counter;&#10;END;&#10;</textarea>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <!-- /.content-wrapper -->
+            <footer class="main-footer">
+                <div>
+                    <div class="pull-right hidden-xs">
+                        <a href="https://github.com/schemaspy/schemaspy" title="GitHub for SchemaSpy"><i class="fa fa-github-square fa-2x"></i></a>
+                        <a href="http://stackoverflow.com/questions/tagged/schemaspy" title="StackOverflow for SchemaSpy"><i class="fa fa-stack-overflow fa-2x"></i></a>
+                    </div>
+                    <strong>Generated by <a href="http://schemaspy.org/" class="logo-text"><i class="fa fa-database"></i> SchemaSpy 6.1.0</a></strong>
+                </div>
+                <!-- /.container -->
+            </footer>
+        </div>
+        <!-- ./wrapper -->
+
+        <!-- jQuery 2.2.3 -->
+        <script src="../bower/admin-lte/plugins/jQuery/jquery-2.2.3.min.js"></script>
+        <script src="../bower/admin-lte/plugins/jQueryUI/jquery-ui.min.js"></script>
+        <!-- Bootstrap 3.3.5 -->
+        <script src="../bower/admin-lte/bootstrap/js/bootstrap.min.js"></script>
+        <!-- DataTables -->
+        <script src="../bower/datatables.net/jquery.dataTables.min.js"></script>
+        <script src="../bower/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
+        <script src="../bower/datatables.net-buttons/dataTables.buttons.min.js"></script>
+        <script src="../bower/datatables.net-buttons-bs/js/buttons.bootstrap.min.js"></script>
+        <script src="../bower/datatables.net-buttons/buttons.html5.min.js"></script>
+        <script src="../bower/datatables.net-buttons/buttons.print.min.js"></script>
+        <script src="../bower/datatables.net-buttons/buttons.colVis.min.js"></script>
+        <!-- SheetJS -->
+        <script src="../bower/js-xlsx/xlsx.full.min.js"></script>
+        <!-- pdfmake -->
+        <script src="../bower/pdfmake/pdfmake.min.js"></script>
+        <script src="../bower/pdfmake/vfs_fonts.js"></script>
+        <!-- SlimScroll -->
+        <script src="../bower/admin-lte/plugins/slimScroll/jquery.slimscroll.min.js"></script>
+        <!-- FastClick -->
+        <script src="../bower/admin-lte/plugins/fastclick/fastclick.js"></script>
+        <!-- Salvattore -->
+        <script src="../bower/salvattore/salvattore.min.js"></script>
+        <!-- AnchorJS -->
+        <script src="../bower/anchor-js/anchor.min.js"></script>
+        <!-- CodeMirror -->
+        <script src="../bower/codemirror/codemirror.js"></script>
+        <script src="../bower/codemirror/sql.js"></script>
+        <!-- AdminLTE App -->
+        <script src="../bower/admin-lte/dist/js/app.min.js"></script>
+        <script src="routine.js"></script>
+        <script src="../schemaSpy.js"></script>
+    </body>
+</html>

@@ -1,0 +1,968 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Synchronization between PostgreSQL">
+      
+      
+      
+        <meta name="author" content="3Liz">
+      
+      
+        <link rel="canonical" href="https://docs.3liz.org/qgis-lizsync-plugin/old_french_documentation/qgis-lizsync-plugin/">
+      
+      <link rel="shortcut icon" href="../../media/icon.png">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.0.0">
+    
+    
+      
+        <title>Installation et utilisation de LizSync sur QGIS - LizSync</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.a3f8f96a.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.7fa14f5b.min.css">
+        
+          
+          
+          <meta name="theme-color" content="#4cae4f">
+        
+      
+    
+    
+    
+      
+    
+    
+    
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/styles/default.min.css">
+    
+    
+      
+    
+    
+  </head>
+  
+  
+    
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="preference" data-md-color-primary="green" data-md-color-accent="deep-orange">
+      
+        <script>matchMedia("(prefers-color-scheme: dark)").matches&&document.body.setAttribute("data-md-color-scheme","slate")</script>
+      
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#installation-et-utilisation-de-lizsync-sur-qgis" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="https://docs.3liz.org/qgis-lizsync-plugin/" title="LizSync" class="md-header__button md-logo" aria-label="LizSync">
+      
+  <img src="../../media/icon.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3V6m0 5h18v2H3v-2m0 5h18v2H3v-2z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LizSync
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Installation et utilisation de LizSync sur QGIS
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="md-header__options">
+      
+    </div>
+    
+      <label class="md-header__button md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+      </label>
+      
+<div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" data-md-state="active" required>
+      <label class="md-search__icon md-icon" for="__search">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.516 6.516 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11h12z"/></svg>
+      </label>
+      <button type="reset" class="md-search__icon md-icon" aria-label="Clear" tabindex="-1">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+      </button>
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
+    
+      <div class="md-header__source">
+        
+<a href="https://github.com/3liz/qgis-lizsync-plugin/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512"><path d="M186.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1zM480 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2zm-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3zm-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-tabs__inner md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../../" class="md-tabs__link">
+      docs.3liz.org
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../.." class="md-tabs__link">
+      Home
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../concepts/" class="md-tabs__link">
+      Concepts
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../" class="md-tabs__link">
+      French doc
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../processing/" class="md-tabs__link">
+      Processing
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../references/" class="md-tabs__link">
+      References
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../changelog/" class="md-tabs__link">
+      Changelog
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../contributing/" class="md-tabs__link">
+      Contributing
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../../database/" class="md-tabs__link">
+      Database
+    </a>
+  </li>
+
+      
+    </ul>
+  </div>
+</nav>
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="https://docs.3liz.org/qgis-lizsync-plugin/" title="LizSync" class="md-nav__button md-logo" aria-label="LizSync">
+      
+  <img src="../../media/icon.png" alt="logo">
+
+    </a>
+    LizSync
+  </label>
+  
+    <div class="md-nav__source">
+      
+<a href="https://github.com/3liz/qgis-lizsync-plugin/" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 512"><path d="M186.1 328.7c0 20.9-10.9 55.1-36.7 55.1s-36.7-34.2-36.7-55.1 10.9-55.1 36.7-55.1 36.7 34.2 36.7 55.1zM480 278.2c0 31.9-3.2 65.7-17.5 95-37.9 76.6-142.1 74.8-216.7 74.8-75.8 0-186.2 2.7-225.6-74.8-14.6-29-20.2-63.1-20.2-95 0-41.9 13.9-81.5 41.5-113.6-5.2-15.8-7.7-32.4-7.7-48.8 0-21.5 4.9-32.3 14.6-51.8 45.3 0 74.3 9 108.8 36 29-6.9 58.8-10 88.7-10 27 0 54.2 2.9 80.4 9.2 34-26.7 63-35.2 107.8-35.2 9.8 19.5 14.6 30.3 14.6 51.8 0 16.4-2.6 32.7-7.7 48.2 27.5 32.4 39 72.3 39 114.2zm-64.3 50.5c0-43.9-26.7-82.6-73.5-82.6-18.9 0-37 3.4-56 6-14.9 2.3-29.8 3.2-45.1 3.2-15.2 0-30.1-.9-45.1-3.2-18.7-2.6-37-6-56-6-46.8 0-73.5 38.7-73.5 82.6 0 87.8 80.4 101.3 150.4 101.3h48.2c70.3 0 150.6-13.4 150.6-101.3zm-82.6-55.1c-25.8 0-36.7 34.2-36.7 55.1s10.9 55.1 36.7 55.1 36.7-34.2 36.7-55.1-10.9-55.1-36.7-55.1z"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../../" class="md-nav__link">
+        docs.3liz.org
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        Home
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../concepts/" class="md-nav__link">
+        Concepts
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../" class="md-nav__link">
+        French doc
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../processing/" class="md-nav__link">
+        Processing
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../references/" class="md-nav__link">
+        References
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../changelog/" class="md-nav__link">
+        Changelog
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        Contributing
+      </a>
+    </li>
+  
+
+    
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../database/" class="md-nav__link">
+        Database
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    Introduction
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scenario-et-concepts" class="md-nav__link">
+    Scénario et concepts
+  </a>
+  
+    <nav class="md-nav" aria-label="Scénario et concepts">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#donnees-en-base-postgresql" class="md-nav__link">
+    Données en base PostgreSQL
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#cartes-lizmap-dans-le-contexte-geopoppy" class="md-nav__link">
+    Cartes Lizmap dans le contexte GeoPoppy
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#installation-et-configuration-dans-qgis" class="md-nav__link">
+    Installation et configuration dans QGIS
+  </a>
+  
+    <nav class="md-nav" aria-label="Installation et configuration dans QGIS">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installation-de-lextension-lizsync-pour-qgis" class="md-nav__link">
+    Installation de l'extension LizSync pour QGIS
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#les-algorithmes-du-plugin-lizsync" class="md-nav__link">
+    Les algorithmes du plugin LizSync
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#configurer-les-acces-postgresql-dans-qgis" class="md-nav__link">
+    Configurer les accès PostgreSQL dans QGIS
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#base-clone-sur-le-geopoppy" class="md-nav__link">
+    Base clone sur le GeoPoppy
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#synchronisation-des-donnees-postgresql" class="md-nav__link">
+    Synchronisation des données PostgreSQL
+  </a>
+  
+    <nav class="md-nav" aria-label="Synchronisation des données PostgreSQL">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#rappel-des-etapes-cles-de-mise-en-oeuvre" class="md-nav__link">
+    Rappel des étapes clés de mise-en-oeuvre
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#choix-techniques-de-lizsync" class="md-nav__link">
+    Choix techniques de LizSync
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#utilisation-de-lextension-lizsync-pour-la-synchronisation-postgresql" class="md-nav__link">
+    Utilisation de l'extension LizSync pour la synchronisation PostgreSQL
+  </a>
+  
+    <nav class="md-nav" aria-label="Utilisation de l'extension LizSync pour la synchronisation PostgreSQL">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#installer-les-outils-lizsync-sur-la-base-centrale" class="md-nav__link">
+    Installer les outils LizSync sur la base centrale
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#preparer-la-base-centrale" class="md-nav__link">
+    Préparer la base centrale
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#creer-une-archive-de-donnees-depuis-la-base-centrale" class="md-nav__link">
+    Créer une archive de données depuis la base centrale
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#charger-larchive-vers-le-clone" class="md-nav__link">
+    Charger l'archive vers le clone
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#synchronisation-bi-directionnelle" class="md-nav__link">
+    Synchronisation bi-directionnelle
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#synchronisation-des-projets-qgis-et-des-fichiers" class="md-nav__link">
+    Synchronisation des projets QGIS et des fichiers
+  </a>
+  
+    <nav class="md-nav" aria-label="Synchronisation des projets QGIS et des fichiers">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#recuperer-les-projets-qgis-et-les-fichiers-depuis-le-serveur-central" class="md-nav__link">
+    Récupérer les projets QGIS et les fichiers depuis le serveur central
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#envoyer-les-projets-qgis-locaux-et-les-fichiers-sur-le-clone" class="md-nav__link">
+    Envoyer les projets QGIS locaux et les fichiers sur le clone
+  </a>
+  
+    <nav class="md-nav" aria-label="Envoyer les projets QGIS locaux et les fichiers sur le clone">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#transfert-par-cable-usb" class="md-nav__link">
+    Transfert par cable USB
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#avec-lalgorithme-envoyer-les-projets-qgis-locaux-et-les-fichiers-sur-le-clone-via-ftp" class="md-nav__link">
+    Avec l'algorithme "Envoyer les projets QGIS locaux et les fichiers sur le clone via FTP"
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          <div class="md-content" data-md-component="content">
+            <article class="md-content__inner md-typeset">
+              
+                
+                  <a href="https://github.com/3liz/qgis-lizsync-plugin/edit/master/docs/old_french_documentation/qgis-lizsync-plugin/README.md" title="Edit this page" class="md-content__button md-icon">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.71 7.04c.39-.39.39-1.04 0-1.41l-2.34-2.34c-.37-.39-1.02-.39-1.41 0l-1.84 1.83 3.75 3.75M3 17.25V21h3.75L17.81 9.93l-3.75-3.75L3 17.25z"/></svg>
+                  </a>
+                
+                
+                <h1 id="installation-et-utilisation-de-lizsync-sur-qgis">Installation et utilisation de LizSync sur QGIS<a class="headerlink" href="#installation-et-utilisation-de-lizsync-sur-qgis" title="Permanent link">#</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">#</a></h2>
+<p>Ce document présente l'outil LizSync qui permet de mettre en oeuvre la synchronisation entre une base de données PostgreSQL centrale et une ou plusieurs bases de données clone.</p>
+<p>LizSync permet le <strong>déploiement et la synchronisation des données</strong> entre une unique base de données centrale et un ou plusieurs clones:</p>
+<ul>
+<li>base de données <strong>centrale</strong>: c'est la base de production qui contient l'ensemble des données.</li>
+<li>base de données <strong>clone</strong>: c'est une base installée sur un ordinateur, une tablette ou un autre serveur. Elle contient un sous-ensemble des schémas de la base centrale</li>
+</ul>
+<p>Une <strong>extension LizSync pour QGIS</strong> permet de lancer les différentes actions nécessaires pour faire fonctionner cet outil: installation, préparation de la base centrale, création et déploiement d'archive, synchronisation.</p>
+<h2 id="scenario-et-concepts">Scénario et concepts<a class="headerlink" href="#scenario-et-concepts" title="Permanent link">#</a></h2>
+<h3 id="donnees-en-base-postgresql">Données en base PostgreSQL<a class="headerlink" href="#donnees-en-base-postgresql" title="Permanent link">#</a></h3>
+<p>Une base <strong>PostgreSQL</strong> appelée centrale contient un ensemble complet de données, organisées dans des <strong>schémas</strong>. Aucune donnée n'est stockée dans le schéma <strong>public</strong>.</p>
+<p>Avant de pouvoir utiliser <strong>LizSync</strong>, on doit d'abord l'<strong>installer sur la base centrale</strong>, afin d'ajouter les schémas, tables et fonctions qui permettent de gérer la synchronisation. Toutes les données relatives aux synchronisations seront stockées dans le schéma <code>lizsync</code>. Les tables du schéma <code>audit</code> enregistreront les modifications réalisées sur les données des autres schémas.</p>
+<p>Ensuite, il faut <strong>préparer cette base centrale</strong>, c'est-à-dire s'assurer que les tables à synchroniser comportent les champs requis, notamment un <strong>identifiant unique</strong> (UUID), et que les modifications sur ces tables sont bien enregistrées au fil de l'eau via l'outil d'audit de LizSync.</p>
+<p>Lorsque la base centrale est prête, il est alors possible de <strong>créer une archive de données</strong> pour un ou plusieurs schémas. Cette archive contient les données des schémas, mais aussi les métadonnées utiles de la base centrale (identifiant unique). La création de l'archive est vue pour LizSync comme une action de <strong>synchronisation</strong>, dite complète.</p>
+<p>Cette archive est ensuite <strong>chargée vers la base clone</strong> (vers un ou plusieurs clones), ce qui supprime l'ensemble des données du clone pour les schémas de l'archive, puis réinstalle les outils LizSync sur le clone et enfin charge les données. A l'issu de cette phase, les données du clone pour les schémas choisis sont équivalentes aux données qui étaient présentes lors de la création de l'archive.</p>
+<p>Les données des bases centrales et clone peuvent alors <strong>évoluer librement</strong> en parallèle, tant que la <strong>structure n'est pas modifiée</strong> (pas d'ajout de tables ou de champs). Par exemple via une saisie de données terrain avec des tablettes sur les bases clones.</p>
+<p>Une <strong>synchronisation bidirectionnelle</strong> peut alors être effectuée pour récupérer sur le clone les changements apparus sur la base centrale, puis envoyer sur la base centrale les modifications des données du clone.</p>
+<h3 id="cartes-lizmap-dans-le-contexte-geopoppy">Cartes Lizmap dans le contexte GeoPoppy<a class="headerlink" href="#cartes-lizmap-dans-le-contexte-geopoppy" title="Permanent link">#</a></h3>
+<p>Pour pouvoir <strong>éditer les données</strong> dans les bases PostgreSQL, il est possible d'utiliser n'importe quel logiciel: QGIS, QField, PgAdmin, des scripts SQL lancés manuellement, etc.</p>
+<p>L'outil <strong>Lizmap Web Client</strong> peut aussi être utilisé pour réaliser ces éditions:</p>
+<ul>
+<li>sur la <strong>base centrale</strong>, avec l'application Lizmap accessible en ligne</li>
+<li>sur les <strong>bases clone</strong> embarquées sur des tablettes, via l'outil <strong>GeoPoppy pour Android</strong>, qui permet d'embarquer l'application <strong>Lizmap en mode déconnecté</strong>.</li>
+</ul>
+<p>Dans ce contexte <strong>GeoPoppy</strong>, il faut donc que les projets QGIS <code>*.qgs</code> et les configurations Lizmap <code>*.qgs.cfg</code> soient:</p>
+<ul>
+<li><strong>récupérés</strong> depuis le serveur central, par exemple via FTP</li>
+<li><strong>adaptés</strong> pour utiliser les données de la base PostgreSQL <strong>clone</strong> de la tablette, en modifiant les informations de connexion</li>
+<li><strong>chargés sur le clone (tablette)</strong> pour être consultés via Lizmap</li>
+</ul>
+<p>L'extension <strong>LizSync</strong> pour QGIS propose des algorithmes qui facilient le transfert des projets QGIS depuis le serveur FTP central vers les clones.</p>
+<h2 id="installation-et-configuration-dans-qgis">Installation et configuration dans QGIS<a class="headerlink" href="#installation-et-configuration-dans-qgis" title="Permanent link">#</a></h2>
+<p>Dans QGIS, il faut:</p>
+<ul>
+<li>installer le plugin LizSync</li>
+<li>configurer les connexions PostgreSQL vers la <strong>base centrale</strong> et les <strong>bases clone</strong></li>
+</ul>
+<h3 id="installation-de-lextension-lizsync-pour-qgis">Installation de l'extension LizSync pour QGIS<a class="headerlink" href="#installation-de-lextension-lizsync-pour-qgis" title="Permanent link">#</a></h3>
+<p>L'extension <strong>LizSync</strong> peut être installé dans QGIS avec le <strong>gestionnaire d'extension</strong>. Tant que l'extension n'est pas incluse dans les dépôts officiels de QGIS, elle peut être récupérée en ajoutant manuellement le dépôt d'extension:</p>
+<ul>
+<li>ouvrir le <strong>Gestionnaire d'extension</strong> via le menu <strong>Extension</strong> de QGIS.</li>
+<li>dans l'onglet <strong>Paramètres</strong>, dans le groupe <strong>Dépôts d'extensions</strong>, cliquer sur le bouton <strong>Ajouter</strong>, puis renseigner les champs suivants<ul>
+<li><strong>Nom</strong>: 3liz extension LizSync Github</li>
+<li><strong>URL</strong>: <a href="https://github.com/3liz/qgis-lizsync-plugin/releases/latest/download/plugins.xml">https://github.com/3liz/qgis-lizsync-plugin/releases/latest/download/plugins.xml</a></li>
+<li><strong>Authentification</strong>: laisser vide</li>
+<li><strong>Compatible</strong>: laissé coché</li>
+</ul>
+</li>
+<li><strong>Valider</strong>, puis cliquer sur le bouton <strong>Recharger tous les dépôts</strong></li>
+</ul>
+<p>Ensuite, chercher l'extension dans la liste via l'onglet <strong>Tout</strong> en tapant <code>lizsync</code> dans le champ <strong>Rechercher</strong>, puis l'installer.</p>
+<h3 id="les-algorithmes-du-plugin-lizsync">Les algorithmes du plugin LizSync<a class="headerlink" href="#les-algorithmes-du-plugin-lizsync" title="Permanent link">#</a></h3>
+<p>L'extension <strong>LizSync</strong> a ajouté des <strong>algorithmes</strong> dans le <strong>menu Traitement</strong> de QGIS, qui permettent de suivre les différentes étapes précisées dans le scénario d'utilisation. Pour voir la liste des algorithmes disponibles, il faut ouvrir le panneau <strong>Boîte à outils de traitements</strong> à partir du menu <strong>Traitement</strong> de QGIS, puis chercher <strong>LizSync</strong></p>
+<p><img alt="Les algorithmes LizSync du menu Traitement Android" src="media/qgis_menu_traitement_boite_a_outils_lizsync.jpeg" /></p>
+<p>Chaque algorithme joue un rôle dans le scénario classique d'utilisation.</p>
+<h3 id="configurer-les-acces-postgresql-dans-qgis">Configurer les accès PostgreSQL dans QGIS<a class="headerlink" href="#configurer-les-acces-postgresql-dans-qgis" title="Permanent link">#</a></h3>
+<p>Avant de pouvoir utiliser l'extension <strong>LizSync</strong>, vous devez configurer les connexions PostgreSQL à la base de données centrale, et à la base de données clone.</p>
+<p>Pour cela, utiliser le menu <strong>Couches / Ajouter une couche vecteur / Ajouter une couche PostGIS</strong> et cliquer sur le bouton <strong>Nouveau</strong> situé sous la liste déroulante. Renseignez-bien:</p>
+<ul>
+<li>le <strong>nom</strong> est libre. Veillez bien à utiliser un nom qui caractérise de manière unique la base de données. Par exemple <strong>Base centrale</strong>, <strong>Clone A</strong> ou <strong>Tablette XYZ</strong></li>
+<li>le <strong>service</strong> : il doit être laissé vide si vous souhaitez renseigner les champs suivants (hôte, port, etc.). Si vous indiquez un nom, il doit correspondre à un service valide. Voir la documentation de QGIS: <a href="https://docs.qgis.org/3.10/fr/docs/user_manual/managing_data_source/opening_data.html#postgresql-service-connection-file">https://docs.qgis.org/3.10/fr/docs/user_manual/managing_data_source/opening_data.html#postgresql-service-connection-file</a></li>
+<li>l'<strong>hôte</strong>: renseigner l'adresse IP du serveur</li>
+<li>le <strong>port</strong>: donner le port, par défaut 5432</li>
+<li>la <strong>base de données</strong>: préciser le nom de la base de données</li>
+<li>Authentification de base<ul>
+<li><strong>Nom d'utilisateur</strong>: l'utilisateur qui peut se connecter. Cocher la case <strong>Stocker</strong></li>
+<li><strong>Mot de passe</strong>: son mot de passe. Cocher la case <strong>Stocker</strong></li>
+</ul>
+</li>
+<li>Cliquer sur le bouton <strong>Tester la connexion</strong></li>
+<li>Cocher la case <strong>Utiliser la table de métadonnées estimées</strong></li>
+</ul>
+<p>Dans la suite de ce document, nous appellerons <strong>centrale</strong> et <strong>clone a</strong> les deux bases de données configurées.</p>
+<h3 id="base-clone-sur-le-geopoppy">Base clone sur le GeoPoppy<a class="headerlink" href="#base-clone-sur-le-geopoppy" title="Permanent link">#</a></h3>
+<p>Lorsque le clone est une <strong>tablette Android</strong> sur laquelle est installé l'outil <strong>GeoPoppy</strong> (via le logiciel UserLand), vous devez au préalable:</p>
+<ul>
+<li><strong>connecter la tablette en WIFI</strong> sur le même réseau que votre ordinateur</li>
+<li>lancer la <strong>session GeoPoppy</strong> via le logiciel UserLand</li>
+<li>Renseigner le <strong>mot de passe</strong> <code>geopoppy</code></li>
+<li>Les services sont lancés, et à la fin un message fourni l'<strong>adresse IP de la tablette</strong>.</li>
+</ul>
+<p>Dans votre logiciel QGIS, vous pouvez maintenant créer une connexion PostgreSQL, avec les informations suivantes:</p>
+<ul>
+<li><strong>Nom</strong>: libre, par exemple <strong>Tablette GeoPoppy</strong></li>
+<li><strong>hôte</strong>: l'IP de la tablette sur le réseau WIFI, affichée dans la session. Par example <code>192.168.1.7</code></li>
+<li><strong>base de données</strong>: <code>geopoppy</code></li>
+<li><strong>utilisateur</strong>: <code>geopoppy</code></li>
+<li><strong>mot de passe</strong>: <code>geopoppy</code></li>
+</ul>
+<p><img alt="Connexion GeoPoppy Android" src="media/qgis_creer_connexion_geopoppy_android.jpeg" /></p>
+<p>Vous pouvez <strong>tester</strong> que la connexion fonctionne bien, par exemple avec le <strong>gestionnaire de bases de données</strong> de QGIS: menu <code>Base de données / Gestionnaire de base de données</code>.</p>
+<h2 id="synchronisation-des-donnees-postgresql">Synchronisation des données PostgreSQL<a class="headerlink" href="#synchronisation-des-donnees-postgresql" title="Permanent link">#</a></h2>
+<h3 id="rappel-des-etapes-cles-de-mise-en-oeuvre">Rappel des étapes clés de mise-en-oeuvre<a class="headerlink" href="#rappel-des-etapes-cles-de-mise-en-oeuvre" title="Permanent link">#</a></h3>
+<p>Une <strong>base de données centrale</strong> contient les données. On souhaite exporter certaines de ces données dans des <strong>bases clone</strong>, modifier les données, puis synchroniser les modifications entre les bases. Les étapes sont les suivantes:</p>
+<ul>
+<li>les <strong>outils LizSync sont isntallés</strong> sur la base de données centrale</li>
+<li><strong>la base centrale est préparée</strong>: ajout des métadonnées lizsync, des champs uid sur les tables, des triggers d'audits, etc.</li>
+<li>une <strong>archive ZIP est créée</strong> à partir des données de la base centrale</li>
+<li><strong>l'archive est chargée</strong> sur un ou plusieurs <strong>clones</strong>, ce qui est considéré comme une <strong>synchronisation complète</strong>.</li>
+<li><strong>les données sont modifiées</strong> sur la base centrale et les clones: ajout, suppression, modification</li>
+<li><strong>une synchronisation bidirectionnelle</strong> est lancée depuis chaque clone lorsque les clones sont connectés à internet</li>
+</ul>
+<h3 id="choix-techniques-de-lizsync">Choix techniques de LizSync<a class="headerlink" href="#choix-techniques-de-lizsync" title="Permanent link">#</a></h3>
+<p>Certains choix <strong>méthodologiques et techniques</strong> ont été faits pour assurer la synchronisation bidirectionnelle.</p>
+<ul>
+<li>la base centrale stocke dans les schéma <code>lizsync</code> et <code>audit</code> les données nécessaires aux synchronisations.</li>
+<li>les données du schéma <code>public</code> ne sont <strong>jamais synchronisées</strong></li>
+<li>les tables doivent avoir une <strong>clé primaire de type entier, autoincrémentée</strong>. Cet identifiant pourrait diverger entre la base centrale et les clones. Il n'est utile que localement pour certaines applications (QGIS préfère qu'il y ait une clé primaire entière)</li>
+<li>les tables doivent toutes posséder un champ <strong>uid</strong> de type <strong>uuid</strong> (valeur exemple: <code>5d3d503c-6d97-f11e-a2a4-5db030060f6d</code>) avec une valeur par défaut automatique. Ce champ est le pivot de la synchronisation. Il permet de reconnaître de manière unique un objet entre toutes les bases de données.</li>
+<li>les références de <strong>clés étrangères</strong> doivent se baser sur le champ <strong>uid</strong> de la table parente, et non sur la clé primaire, car les clés primaires peuvent diverger entre bases.</li>
+<li>lors de la synchronisation bidirectionnelle, les modifications de la base centrale sont récupérées, puis comparées à celles du clone pour gérer les conflits d'édition. Elles sont ensuite rejouées sur le clone et la base centrale.</li>
+<li>les modifications de données sont rejouées seulement pour les champs modifiés.</li>
+</ul>
+<h3 id="utilisation-de-lextension-lizsync-pour-la-synchronisation-postgresql">Utilisation de l'extension LizSync pour la synchronisation PostgreSQL<a class="headerlink" href="#utilisation-de-lextension-lizsync-pour-la-synchronisation-postgresql" title="Permanent link">#</a></h3>
+<h4 id="installer-les-outils-lizsync-sur-la-base-centrale">Installer les outils LizSync sur la base centrale<a class="headerlink" href="#installer-les-outils-lizsync-sur-la-base-centrale" title="Permanent link">#</a></h4>
+<p>Cet algorithme va créer <strong>2 nouveaux schémas</strong> <code>lizsync</code> et <code>audit</code> sur la base de données centrale:</p>
+<ul>
+<li>Un schéma <strong>audit</strong> avec les fonctions et tables d'audit, c'est-à-dire de suivi des modifications dans les tables (ajout, modification et suppression de données)</li>
+<li>Un schéma <strong>lizsync</strong> avec les tables et fonctions nécessaires pour faire fonctionner la synchronisation.</li>
+</ul>
+<p>Attention ! Si vous cochez la case <strong>écraser</strong>, vous perdrez toutes les données existantes dans le schéma audit et/ou le schéma lizsync !</p>
+<p><img alt="Installer les outils LizSync" src="media/qgis_installer_outils_sur_base_centrale.jpeg" /></p>
+<h4 id="preparer-la-base-centrale">Préparer la base centrale<a class="headerlink" href="#preparer-la-base-centrale" title="Permanent link">#</a></h4>
+<p>Prépare la base de données PostgreSQL du serveur central avec les informations nécessaires pour l'outil LizSync.</p>
+<p>LizSync a besoin :</p>
+<ul>
+<li>d'un <strong>ID de serveur</strong> stocké dans la table <code>lizsync.server_metadata</code></li>
+<li>Toutes les tables des schémas choisis doivent avoir une <strong>colonne d'identifiant unique</strong> (uid) contenant un UUID</li>
+<li>Toutes les tables des schémas choisis doivent être <strong>suivies par les triggers d'audit</strong></li>
+</ul>
+<p>Vous pouvez fournir une <strong>liste de schémas</strong> PostgreSQL de la base centrale, cet algorithme ajoutera les éléments nécessaires si besoin.</p>
+<p><img alt="Préparer la base centrale" src="media/qgis_preparer_la_base_centrale.jpeg" /></p>
+<h4 id="creer-une-archive-de-donnees-depuis-la-base-centrale">Créer une archive de données depuis la base centrale<a class="headerlink" href="#creer-une-archive-de-donnees-depuis-la-base-centrale" title="Permanent link">#</a></h4>
+<p>Récupère des données depuis la base de données centrale, pour un futur chargement sur un ou plusieurs clone(s).</p>
+<p>Ce script sauvegarde <strong>toutes les données de la liste de schémas</strong> spécifiée vers une <strong>archive ZIP</strong>, nommée par défaut <code>central_database_package.zip</code>.</p>
+<p>Vous pouvez ajouter un <strong>fichier SQL optionnel</strong> qui sera lancé sur le clone après chargement des données de l'archive. Ce fichier doit contenir des <strong>requêtes PostgreSQL valides</strong>, et peut être utilisé pour:</p>
+<ul>
+<li>ajouter des fonctions PostgreSQL utiles</li>
+<li>supprimer certains triggers</li>
+<li>enlever certaines contraintes sur les champs</li>
+</ul>
+<p>L'idée est d'adapter le contenu de la base à l'usage local sur le clone.</p>
+<p>Une <strong>connexion internet vers la base centrale est nécessaire</strong> pour pouvoir créer un item d'historique de synchronisation sur la base centrale dans la table <code>lizsync.history</code>, et naturellement pour pouvoir télécharger les données de la base de données centrale.</p>
+<p><img alt="Creer une archive depuis la base centrale" src="media/qgis_creer_une_archive.jpeg" /></p>
+<h4 id="charger-larchive-vers-le-clone">Charger l'archive vers le clone<a class="headerlink" href="#charger-larchive-vers-le-clone" title="Permanent link">#</a></h4>
+<p>Charger une <strong>archive ZIP</strong>, générée précédemment via l'algorithme <code>Créer une archive de données depuis la base centrale</code>, vers le clone choisi. Cette archive ZIP, nommée par défaut <code>central_database_package.zip</code>, contient les données sauvegardées depuis la base <strong>PostgreSQL centrale</strong>.</p>
+<p><img alt="Charger une archive vers le clone" src="media/qgis_charger_archive_vers_le_clone.jpeg" /></p>
+<p><strong>A la fin de cette étape, les données sont prêtes à être modifiées sur le clone et sur la base centrale.</strong></p>
+<h4 id="synchronisation-bi-directionnelle">Synchronisation bi-directionnelle<a class="headerlink" href="#synchronisation-bi-directionnelle" title="Permanent link">#</a></h4>
+<p>Ce script lance une <strong>synchronisation bi-directionnelle</strong> entre la base de données centrale et le clone.</p>
+<p>Les données à synchroniser sont récupérées en lisant le contenu de la table <code>audit.logged_actions</code> de chaque base de données, depuis la <strong>dernière synchronisation</strong> ou le <strong>dernier chargement d'une archive ZIP</strong> (synchronisation complète).</p>
+<p>Les logs de modification des données sont transformés en commandes SQL <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code> qui sont jouées sur les bases de données dans cet ordre:</p>
+<ul>
+<li>Depuis le serveur central vers le clone</li>
+<li>Depuis le clone vers le serveur central</li>
+</ul>
+<p>Pour les <code>UPDATE</code>, les logs sont comparés pour gérer les conflits, c'est-à-dire les modifications effectuées sur une <strong>même table, un même objet et sur un même champ</strong>. La modification réalisée la dernière (date de modification sur la base) est conservée, la plus ancienne est rejetée.</p>
+<p>La base de données centrale stocke quels sont les clones qui ont rejoués les logs de modification, et garde un <strong>historique des synchronisations</strong>. Les conflits sont listés dans la table <code>lizsync.conflicts</code> de la <strong>base centrale</strong>.</p>
+<p><img alt="Synchronisation bidirectionnelle" src="media/qgis_synchronisation_bidirectionnelle.jpeg" /></p>
+<h2 id="synchronisation-des-projets-qgis-et-des-fichiers">Synchronisation des projets QGIS et des fichiers<a class="headerlink" href="#synchronisation-des-projets-qgis-et-des-fichiers" title="Permanent link">#</a></h2>
+<p>L'application Lizmap du GeoPoppy a besoin de <strong>projets QGIS</strong> configurés avec le plugin <strong>Lizmap</strong>. Ces projets QGIS peuvent être des projets existants, mais doivent être <strong>adaptés au contexte du GeoPoppy</strong>, notamment les informations de connexion PostgreSQL, pour que les données utilisées soient les <strong>données locales du GeoPoppy</strong> (base clone) et non les données sur la base centrale.</p>
+<p>Cela permet ainsi de partir avec la tablette en mode déconnecté (sans connection internet). Les données visualisées et modifiées sont stockées <strong>dans la base de données PostgreSQL de la tablette</strong> (clone), et pourront être synchronisées une fois la connexion internet retrouvée.</p>
+<h3 id="recuperer-les-projets-qgis-et-les-fichiers-depuis-le-serveur-central">Récupérer les projets QGIS et les fichiers depuis le serveur central<a class="headerlink" href="#recuperer-les-projets-qgis-et-les-fichiers-depuis-le-serveur-central" title="Permanent link">#</a></h3>
+<p>Cet algorithme permet de réaliser la <strong>récupération des projets QGIS, des configurations Lizmap et des fichiers</strong> depuis un <strong>serveur FTP central</strong>. Ce serveur FTP est souvent déjà utilisé pour publier des projets QGIS sur l'application Lizmap du serveur central.</p>
+<p>Tous les fichiers non présents dans le répertoire de destination sont automatiquement récupérés. Les fichiers qui n'ont pas été modifiés ne sont pas téléchargés, pour éviter un temps trop long de téléchargement.</p>
+<p>Si la dernière case est cochée, les informations de connexion à la base de données centrale seront <strong>remplacées par celles du Geopoppy</strong>: hôte, port, base de données, utilisateur et mot de passe.</p>
+<p>Les projets pourront donc ensuite être <strong>envoyés sur le clone</strong> pour être consultés en mode déconnecté, puisqu'ils appellent les données locale du clone, et non de la base centrale.</p>
+<p><img alt="Récupérer les projets QGIS" src="media/qgis_recuperer_projets_qgis_depuis_serveur_central.jpeg" /></p>
+<h3 id="envoyer-les-projets-qgis-locaux-et-les-fichiers-sur-le-clone">Envoyer les projets QGIS locaux et les fichiers sur le clone<a class="headerlink" href="#envoyer-les-projets-qgis-locaux-et-les-fichiers-sur-le-clone" title="Permanent link">#</a></h3>
+<p>Une fois les projets récupérés depuis le serveur FTP central, et adaptés pour le GeoPoppy, il faut les <strong>envoyer sur le clone</strong> (la tablette). Pour cela, vous pouvez utiliser <strong>2 méthodes</strong>:</p>
+<ul>
+<li>Par transfert via cable USB</li>
+<li>Avec l'algorithme <code>Envoyer les projets QGIS locaux et les fichiers sur le clone via FTP</code></li>
+</ul>
+<h4 id="transfert-par-cable-usb">Transfert par cable USB<a class="headerlink" href="#transfert-par-cable-usb" title="Permanent link">#</a></h4>
+<p>Une fois la tablette branchée par <strong>cable USB</strong> à votre ordinateur, le message suivant doit s'afficher: <strong>Autoriser accès aux données de la tablette ?</strong> <em>L'appareil connecté va pouvoir accéder aux données se trouvant sur cette tablette</em>:</p>
+<ul>
+<li>Cliquer sur le bouton <strong>Autoriser</strong>,</li>
+<li>Ouvrir votre explorateur de fichiers sur votre ordinateur</li>
+<li>Trouver le point de montage correspondant à la tablette, et naviguer dans le répertoire <code>Android/data/tech.ula/files/storage/geopoppy/qgis/</code></li>
+</ul>
+<p>Vous pouvez ensuite copier/colller les projets QGIS et les fichiers récupérés auparavant dans le répertoire <code>Android/data/tech.ula/files/storage/geopoppy/qgis/</code>.</p>
+<p>Veillez à bien avoir auparavant supprimé les fichiers inutiles pour votre session terrain, et <strong>adapté les projets QGIS</strong> à la connexion locale de la base clone de la tablette.</p>
+<p>La méthode par <strong>connexion USB</strong> sera probablement la plus rapide, notamment si vous devez envoyer des <strong>fichiers volumineux</strong> (orthophotos par exemple).</p>
+<h4 id="avec-lalgorithme-envoyer-les-projets-qgis-locaux-et-les-fichiers-sur-le-clone-via-ftp">Avec l'algorithme "Envoyer les projets QGIS locaux et les fichiers sur le clone via FTP"<a class="headerlink" href="#avec-lalgorithme-envoyer-les-projets-qgis-locaux-et-les-fichiers-sur-le-clone-via-ftp" title="Permanent link">#</a></h4>
+<p>Cet algorithme supprimera les projets QGIS et les configurations Lizmap présentes sur la tablette, puis lancera la synchronisation des données.</p>
+<p><img alt="Envoyer les projets QGIS sur le clone" src="media/qgis_envoyer_projets_qgis_sur_le_clone.jpeg" /></p>
+<p><strong>Une fois les projets QGIS et les configurations Lizmap envoyés, vous pouvez utiliser l'application Lizmap installée sur la tablette pour ouvrir la carte et utiliser les fonctionnalités de visualisation et d'édition de données.</strong></p>
+                
+              
+              
+                
+
+
+              
+            </article>
+          </div>
+        </div>
+      </main>
+      
+        
+<footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-footer-copyright">
+        
+          <div class="md-footer-copyright__highlight">
+            <span class="copyleft">&copy;</span> 3Liz
+          </div>
+        
+        Made with
+        <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+          Material for MkDocs
+        </a>
+      </div>
+      
+  <div class="md-footer-social">
+    
+      
+      
+        
+        
+      
+      <a href="https://twitter.com/3LIZ_news" target="_blank" rel="noopener" title="twitter.com" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path d="M459.37 151.716c.325 4.548.325 9.097.325 13.645 0 138.72-105.583 298.558-298.558 298.558-59.452 0-114.68-17.219-161.137-47.106 8.447.974 16.568 1.299 25.34 1.299 49.055 0 94.213-16.568 130.274-44.832-46.132-.975-84.792-31.188-98.112-72.772 6.498.974 12.995 1.624 19.818 1.624 9.421 0 18.843-1.3 27.614-3.573-48.081-9.747-84.143-51.98-84.143-102.985v-1.299c13.969 7.797 30.214 12.67 47.431 13.319-28.264-18.843-46.781-51.005-46.781-87.391 0-19.492 5.197-37.36 14.294-52.954 51.655 63.675 129.3 105.258 216.365 109.807-1.624-7.797-2.599-15.918-2.599-24.04 0-57.828 46.782-104.934 104.934-104.934 30.213 0 57.502 12.67 76.67 33.137 23.715-4.548 46.456-13.32 66.599-25.34-7.798 24.366-24.366 44.833-46.132 57.827 21.117-2.273 41.584-8.122 60.426-16.243-14.292 20.791-32.161 39.308-52.628 54.253z"/></svg>
+      </a>
+    
+      
+      
+        
+        
+      
+      <a href="https://www.linkedin.com/company/3liz" target="_blank" rel="noopener" title="www.linkedin.com" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M416 32H31.9C14.3 32 0 46.5 0 64.3v383.4C0 465.5 14.3 480 31.9 480H416c17.6 0 32-14.5 32-32.3V64.3c0-17.8-14.4-32.3-32-32.3zM135.4 416H69V202.2h66.5V416zm-33.2-243c-21.3 0-38.5-17.3-38.5-38.5S80.9 96 102.2 96c21.2 0 38.5 17.3 38.5 38.5 0 21.3-17.2 38.5-38.5 38.5zm282.1 243h-66.4V312c0-24.8-.5-56.7-34.5-56.7-34.6 0-39.9 27-39.9 54.9V416h-66.4V202.2h63.7v29.2h.9c8.9-16.8 30.6-34.5 62.9-34.5 67.2 0 79.7 44.3 79.7 101.9V416z"/></svg>
+      </a>
+    
+      
+      
+        
+        
+      
+      <a href="https://github.com/3liz/" target="_blank" rel="noopener" title="github.com" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 496 512"><path d="M165.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6zm-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3zm44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9zM244.8 8C106.1 8 0 113.3 0 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C428.2 457.8 496 362.9 496 252 496 113.3 383.5 8 244.8 8zM97.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1zm-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7zm32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1zm-11.4-14.7c-1.6 1-1.6 3.6 0 5.9 1.6 2.3 4.3 3.3 5.6 2.3 1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2z"/></svg>
+      </a>
+    
+      
+      
+        
+        
+      
+      <a href="https://hub.docker.com/u/3liz" target="_blank" rel="noopener" title="hub.docker.com" class="md-footer-social__link">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><path d="M349.9 236.3h-66.1v-59.4h66.1v59.4zm0-204.3h-66.1v60.7h66.1V32zm78.2 144.8H362v59.4h66.1v-59.4zm-156.3-72.1h-66.1v60.1h66.1v-60.1zm78.1 0h-66.1v60.1h66.1v-60.1zm276.8 100c-14.4-9.7-47.6-13.2-73.1-8.4-3.3-24-16.7-44.9-41.1-63.7l-14-9.3-9.3 14c-18.4 27.8-23.4 73.6-3.7 103.8-8.7 4.7-25.8 11.1-48.4 10.7H2.4c-8.7 50.8 5.8 116.8 44 162.1 37.1 43.9 92.7 66.2 165.4 66.2 157.4 0 273.9-72.5 328.4-204.2 21.4.4 67.6.1 91.3-45.2 1.5-2.5 6.6-13.2 8.5-17.1l-13.3-8.9zm-511.1-27.9h-66v59.4h66.1v-59.4zm78.1 0h-66.1v59.4h66.1v-59.4zm78.1 0h-66.1v59.4h66.1v-59.4zm-78.1-72.1h-66.1v60.1h66.1v-60.1z"/></svg>
+      </a>
+    
+  </div>
+
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.tabs.sticky"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../../assets/javascripts/workers/search.217ffd95.min.js", "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.926459b3.min.js"></script>
+      
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js"></script>
+      
+    
+  </body>
+</html>

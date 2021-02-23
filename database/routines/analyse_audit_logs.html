@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>gis Database</title>
+        <!-- Tell the browser to be responsive to screen width -->
+        <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
+        <link rel="icon" type="image/png" sizes="16x16" href="../favicon.png">
+        <!-- Bootstrap 3.3.5 -->
+        <link rel="stylesheet" href="../bower/admin-lte/bootstrap/css/bootstrap.min.css">
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="../bower/font-awesome/css/font-awesome.min.css">
+        <!-- Ionicons -->
+        <link rel="stylesheet" href="../bower/ionicons/css/ionicons.min.css">
+        <!-- DataTables -->
+        <link rel="stylesheet" href="../bower/datatables.net-bs/css/dataTables.bootstrap.min.css">
+        <link rel="stylesheet" href="../bower/datatables.net-buttons-bs/css/buttons.bootstrap.min.css">
+        <!-- Code Mirror -->
+        <link rel="stylesheet" href="../bower/codemirror/codemirror.css">
+        <!-- Fonts -->
+        <link href='../fonts/indieflower/indie-flower.css' rel='stylesheet' type='text/css'>
+        <link href='../fonts/source-sans-pro/source-sans-pro.css' rel='stylesheet' type='text/css'>
+
+        <!-- Theme style -->
+        <link rel="stylesheet" href="../bower/admin-lte/dist/css/AdminLTE.min.css">
+        <!-- Salvattore -->
+        <link rel="stylesheet" href="../bower/salvattore/salvattore.css">
+        <!-- AdminLTE Skins. Choose a skin from the css/skins
+           folder instead of downloading all of them to reduce the load. -->
+        <link rel="stylesheet" href="../bower/admin-lte/dist/css/skins/_all-skins.min.css">
+        <!-- SchemaSpy -->
+        <link rel="stylesheet" href="../schemaSpy.css">
+
+        <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+        <!--[if lt IE 9]>
+        <script src="../bower/html5shiv/html5shiv.min.js"></script>
+        <script src="../bower/respond/respond.min.js"></script>
+        <![endif]-->
+    </head>
+    <!-- ADD THE CLASS layout-top-nav TO REMOVE THE SIDEBAR. -->
+    <body class="hold-transition skin-blue layout-top-nav">
+        <div class="wrapper">
+            <header class="main-header">
+                <nav class="navbar navbar-static-top">
+                    <div class="container">
+                        <div class="navbar-header">
+                            <a href="../index.html" class="navbar-brand"><b>gis</b> Database</a>
+                            <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar-collapse"><i class="fa fa-bars"></i></button>
+                        </div>
+
+                        <!-- Collect the nav links, forms, and other content for toggling -->
+                        <div class="collapse navbar-collapse pull-left" id="navbar-collapse">
+                            <ul class="nav navbar-nav">
+                                <li><a href="../index.html">Tables <span class="sr-only">(current)</span></a></li>
+                                <li><a href="../columns.html" title="All of the columns in the schema">Columns</a></li>
+                                <li><a href="../constraints.html" title="Useful for diagnosing error messages that just give constraint name or number">Constraints</a></li>
+                                <li><a href="../relationships.html" title="Diagram of table relationships">Relationships</a></li>
+                                <li><a href="../orphans.html" title="View of tables with neither parents nor children">Orphan&nbsp;Tables</a></li>
+                                <li><a href="../anomalies.html" title="Things that might not be quite right">Anomalies</a></li>
+                                <li><a href="../routines.html" title="Procedures and functions">Routines</a></li>
+                            </ul>
+                        </div>
+                        <!-- /.navbar-collapse -->
+                        <!-- Navbar Right Menu -->
+                    </div>
+                    <!-- /.container-fluid -->
+                </nav>
+            </header>
+            <!-- Main content -->
+            <!-- Full Width Column -->
+            <div class="content-wrapper">
+                <!-- Content Header (Page header) -->
+                <section class="content-header">
+                    <h1>analyse_audit_logs</h1><br />
+                    <div class="box box-primary">
+                        <div class="box-header with-border">
+                            <i class="fa fa-file-text-o"></i>
+                            <h3 id="Description" class="box-title">Description</h3>
+                            <div class="box-tools pull-right">
+                                <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                                <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+                            </div>
+                        </div>
+                        <!-- /.box-header -->
+                        <div class="box-body clearfix">
+                            <p><p>Get audit logs from the central database and the clone since the last synchronization. Compare the logs to find and resolved UPDATE conflicts (same table, feature, column): last modified object wins. This function store the resolved conflicts into the table lizsync.conflicts in the central database. Returns central server event ids, minimum event id, maximum event id, maximum action timestamp.</p></p>
+                        </div>
+                        <!-- /.box-body -->
+                    </div>
+                </section>
+                <!-- Main content -->
+                <section class="content">
+                    <div class="box box-primary">
+                        <div class="box-header with-border">
+                            <span class="glyphicon glyphicon-list-alt" aria-hidden="true"></span>
+                            <h3 id="Columns" class="box-title">Parameters</h3>
+                            <div class="box-tools pull-right">
+                                <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                                <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+                            </div>
+                        </div>
+                        <div class="box-body">
+                            <table id="standard_table" class="table table-bordered table-striped dataTable" role="grid">
+                                <thead align='left'>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Type</th>
+                                    <th>Mode</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td>ids</td>
+                                    <td>ARRAY</td>
+                                    <td>OUT</td>
+                                </tr>
+                                <tr>
+                                    <td>min_event_id</td>
+                                    <td>bigint</td>
+                                    <td>OUT</td>
+                                </tr>
+                                <tr>
+                                    <td>max_event_id</td>
+                                    <td>bigint</td>
+                                    <td>OUT</td>
+                                </tr>
+                                <tr>
+                                    <td>max_action_tstamp_tx</td>
+                                    <td>timestamp with time zone</td>
+                                    <td>OUT</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="box box-primary">
+                        <div class="box-header with-border">
+                            <i class="fa fa-file-code-o"></i>
+                            <h3 id="RoutineDefinition" class="box-title">Definition</h3>
+                            <div class="box-tools pull-right">
+                                <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                                <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+                            </div>
+                        </div>
+                        <div class="box-body">
+                            <textarea id="sql-script-codemirror" name="sql-script-codemirror" rows="" style="display: none;">&#10;DECLARE&#10;    sqltemplate text;&#10;    central_count integer;&#10;    p_ids bigint[];&#10;    p_min_event_id bigint;&#10;    p_max_event_id bigint;&#10;    p_max_action_tstamp_tx timestamp with time zone;&#10;    central_ids_to_keep integer[];&#10;    clone_ids_to_keep integer[];&#10;BEGIN&#10;&#10;    -- Store all central ids before the analyse and removal of rejected logs&#10;    -- Also store min and max event id&#10;    -- Not needed if there is nothing in the central log&#10;    -- If so, we return NULL to let the function replay_central_logs_to_clone return (do nothing)&#10;    SELECT INTO central_count&#10;    count(*) FROM temp_central_audit&#10;    ;&#10;    RAISE NOTICE &#39;Central modifications count since last sync: %&#39;, central_count;&#10;    IF central_count &gt; 0 THEN&#10;        SELECT INTO p_ids, p_min_event_id, p_max_event_id, p_max_action_tstamp_tx&#10;        array_agg(DISTINCT event_id), min(event_id), max(event_id), max(action_tstamp_tx)&#10;        FROM temp_central_audit&#10;        ;&#10;    ELSE&#10;        SELECT INTO p_ids, p_min_event_id, p_max_event_id, p_max_action_tstamp_tx&#10;        NULL, NULL, NULL, NULL&#10;        FROM temp_central_audit&#10;        ;&#10;    END IF;&#10;&#10;    -- Get the list of ids to keep from each log&#10;    -- We use DISTINCT ON to remove consecutive UPDATE on the same ident, uid and field for each source.&#10;    -- Last is kept&#10;    -- central&#10;    IF central_count &gt; 0 THEN&#10;        WITH&#10;        ce AS (&#10;            SELECT&#10;            DISTINCT ON (ident, action_type, updated_field, uid)&#10;            tid&#10;            FROM temp_central_audit&#10;            ORDER BY ident, action_type, updated_field, uid, event_id DESC&#10;        )&#10;        SELECT array_agg(tid)&#10;        FROM ce&#10;        INTO central_ids_to_keep&#10;        ;&#10;    END IF;&#10;    -- clone&#10;    WITH&#10;    cl AS (&#10;        SELECT&#10;        DISTINCT ON (ident, action_type, updated_field, uid)&#10;        tid&#10;        FROM temp_clone_audit&#10;        ORDER BY ident, action_type, updated_field, uid, event_id DESC&#10;    )&#10;    SELECT array_agg(tid)&#10;    FROM cl&#10;    INTO clone_ids_to_keep&#10;    ;&#10;&#10;    -- DELETE removed lines from temp audit tables&#10;    IF central_count &gt; 0 THEN&#10;        DELETE FROM temp_central_audit&#10;        WHERE tid != ALL (central_ids_to_keep)&#10;        ;&#10;    END IF;&#10;&#10;    DELETE FROM temp_clone_audit&#10;    WHERE tid != ALL (clone_ids_to_keep)&#10;    ;&#10;&#10;    -- Compare logs&#10;    -- And get conflicts&#10;    -- Last modified is kept, older is rejected&#10;    INSERT INTO temp_conflicts&#10;    (&#10;        conflict_time,&#10;        object_table, object_uid,&#10;        central_tid, clone_tid,&#10;        central_event_id, central_event_timestamp,&#10;        central_sql, clone_sql,&#10;        rejected,&#10;        rule_applied&#10;    )&#10;    SELECT&#10;        now(),&#10;        ce.ident, ce.uid::uuid,&#10;        ce.tid AS cetid, cl.tid AS cltid,&#10;        ce.event_id, ce.action_tstamp_tx,&#10;        ce.action AS ceaction, cl.action AS claction,&#10;        -- last modified wins&#10;        CASE&#10;            WHEN cl.original_action_tstamp_tx &lt; ce.original_action_tstamp_tx THEN &#39;clone&#39;&#10;            ELSE &#39;central&#39;&#10;        END AS rejected,&#10;        &#39;last_modified&#39; AS rule_applied&#10;    FROM temp_central_audit AS ce&#10;    INNER JOIN temp_clone_audit AS cl&#10;        ON ce.ident = cl.ident&#10;        AND ce.uid = cl.uid&#10;        AND ce.action_type = &#39;U&#39;&#10;        AND cl.action_type = &#39;U&#39;&#10;        AND ce.updated_field = cl.updated_field&#10;    ORDER BY ce.event_id&#10;    ;&#10;&#10;    -- DELETE rejected tid from audit temp tables&#10;    -- central&#10;    DELETE FROM temp_central_audit&#10;    WHERE tid IN (&#10;        SELECT central_tid&#10;        FROM temp_conflicts&#10;        WHERE rejected = &#39;central&#39;&#10;    )&#10;    ;&#10;    -- clone&#10;    DELETE FROM temp_clone_audit&#10;    WHERE tid IN (&#10;        SELECT clone_tid&#10;        FROM temp_conflicts&#10;        WHERE rejected = &#39;clone&#39;&#10;    )&#10;    ;&#10;&#10;    -- Return data&#10;    RETURN QUERY&#10;    SELECT p_ids, p_min_event_id, p_max_event_id, p_max_action_tstamp_tx;&#10;END;&#10;</textarea>
+                        </div>
+                    </div>
+                </section>
+            </div>
+            <!-- /.content-wrapper -->
+            <footer class="main-footer">
+                <div>
+                    <div class="pull-right hidden-xs">
+                        <a href="https://github.com/schemaspy/schemaspy" title="GitHub for SchemaSpy"><i class="fa fa-github-square fa-2x"></i></a>
+                        <a href="http://stackoverflow.com/questions/tagged/schemaspy" title="StackOverflow for SchemaSpy"><i class="fa fa-stack-overflow fa-2x"></i></a>
+                    </div>
+                    <strong>Generated by <a href="http://schemaspy.org/" class="logo-text"><i class="fa fa-database"></i> SchemaSpy 6.1.0</a></strong>
+                </div>
+                <!-- /.container -->
+            </footer>
+        </div>
+        <!-- ./wrapper -->
+
+        <!-- jQuery 2.2.3 -->
+        <script src="../bower/admin-lte/plugins/jQuery/jquery-2.2.3.min.js"></script>
+        <script src="../bower/admin-lte/plugins/jQueryUI/jquery-ui.min.js"></script>
+        <!-- Bootstrap 3.3.5 -->
+        <script src="../bower/admin-lte/bootstrap/js/bootstrap.min.js"></script>
+        <!-- DataTables -->
+        <script src="../bower/datatables.net/jquery.dataTables.min.js"></script>
+        <script src="../bower/datatables.net-bs/js/dataTables.bootstrap.min.js"></script>
+        <script src="../bower/datatables.net-buttons/dataTables.buttons.min.js"></script>
+        <script src="../bower/datatables.net-buttons-bs/js/buttons.bootstrap.min.js"></script>
+        <script src="../bower/datatables.net-buttons/buttons.html5.min.js"></script>
+        <script src="../bower/datatables.net-buttons/buttons.print.min.js"></script>
+        <script src="../bower/datatables.net-buttons/buttons.colVis.min.js"></script>
+        <!-- SheetJS -->
+        <script src="../bower/js-xlsx/xlsx.full.min.js"></script>
+        <!-- pdfmake -->
+        <script src="../bower/pdfmake/pdfmake.min.js"></script>
+        <script src="../bower/pdfmake/vfs_fonts.js"></script>
+        <!-- SlimScroll -->
+        <script src="../bower/admin-lte/plugins/slimScroll/jquery.slimscroll.min.js"></script>
+        <!-- FastClick -->
+        <script src="../bower/admin-lte/plugins/fastclick/fastclick.js"></script>
+        <!-- Salvattore -->
+        <script src="../bower/salvattore/salvattore.min.js"></script>
+        <!-- AnchorJS -->
+        <script src="../bower/anchor-js/anchor.min.js"></script>
+        <!-- CodeMirror -->
+        <script src="../bower/codemirror/codemirror.js"></script>
+        <script src="../bower/codemirror/sql.js"></script>
+        <!-- AdminLTE App -->
+        <script src="../bower/admin-lte/dist/js/app.min.js"></script>
+        <script src="routine.js"></script>
+        <script src="../schemaSpy.js"></script>
+    </body>
+</html>
