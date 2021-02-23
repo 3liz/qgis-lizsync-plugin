@@ -1,11 +1,9 @@
 ---
-Title: Lizsync
-Favicon: ../icon.png
-...
+hide:
+  - navigation
+---
 
-[TOC]
-
-# Lizsync
+# Processing
 
 ## 01 Installation
 
@@ -24,11 +22,11 @@ Beware ! If the schema lizsync or audit already exists in the database, not inst
 
 #### Parameters
 
-| ID | Description | Type | Info | Required | Advanced |
-|:-:|:-:|:-:|:-:|:-:|:-:|
-CONNECTION_NAME|PostgreSQL connection to the central database|String||✓||
-OVERRIDE_AUDIT|Drop audit schema and all data ?|Boolean||✓||
-OVERRIDE_LIZSYNC|Drop lizsync schema and all data ?|Boolean||✓||
+| ID | Description | Type | Info | Required | Advanced | Option |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+CONNECTION_NAME|PostgreSQL connection to the central database|String||✓|||
+OVERRIDE_AUDIT|Drop audit schema and all data ?|Boolean||✓|||
+OVERRIDE_LIZSYNC|Drop lizsync schema and all data ?|Boolean||✓|||
 
 
 #### Outputs
@@ -57,13 +55,13 @@ OUTPUT_STRING|Output message|String||
 
 #### Parameters
 
-| ID | Description | Type | Info | Required | Advanced |
-|:-:|:-:|:-:|:-:|:-:|:-:|
-CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String||✓||
-ADD_SERVER_ID|Add server id in metadata table|Boolean||✓||
-ADD_UID_COLUMNS|Add unique identifiers in all tables|Boolean||✓||
-ADD_AUDIT_TRIGGERS|Add audit triggers in all tables|Boolean||✓||
-SCHEMAS|Restrict to comma separated schema names. NB: schemas public, lizsync & audit are never processed|String||||
+| ID | Description | Type | Info | Required | Advanced | Option |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String||✓|||
+ADD_SERVER_ID|Add server id in metadata table|Boolean||✓||Default: True <br> |
+ADD_UID_COLUMNS|Add unique identifiers in all tables|Boolean||✓||Default: True <br> |
+ADD_AUDIT_TRIGGERS|Add audit triggers in all tables|Boolean||✓||Default: True <br> |
+SCHEMAS|Restrict to comma separated schema names. NB: schemas public, lizsync & audit are never processed|String||||Default: test <br> |
 
 
 #### Outputs
@@ -87,10 +85,10 @@ OUTPUT_STRING|Output message|String||
 
 #### Parameters
 
-| ID | Description | Type | Info | Required | Advanced |
-|:-:|:-:|:-:|:-:|:-:|:-:|
-CONNECTION_NAME|PostgreSQL connection to the central database|String||✓||
-RUNIT|Check this box to upgrade. No action will be done otherwise|Boolean||✓||
+| ID | Description | Type | Info | Required | Advanced | Option |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+CONNECTION_NAME|PostgreSQL connection to the central database|String||✓|||
+RUNIT|Check this box to upgrade. No action will be done otherwise|Boolean||✓|||
 
 
 #### Outputs
@@ -115,12 +113,13 @@ OUTPUT_STRING|Output message|String||
 
 #### Parameters
 
-| ID | Description | Type | Info | Required | Advanced |
-|:-:|:-:|:-:|:-:|:-:|:-:|
-CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String||✓||
-CONNECTION_NAME_CLONE|PostgreSQL connection to the clone database|String||✓||
-POSTGRESQL_BINARY_PATH|PostgreSQL binary path|File||✓||
-ZIP_FILE|Database ZIP archive path|File||||
+| ID | Description | Type | Info | Required | Advanced | Option |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String||✓|||
+CONNECTION_NAME_CLONE|PostgreSQL connection to the clone database|String||✓|||
+POSTGRESQL_BINARY_PATH|PostgreSQL binary path|File||✓||Default: /usr/bin/ <br> |
+ZIP_FILE|Database ZIP archive path|File||||Default: /tmp/central_database_package.zip <br> |
+RECREATE_CLONE_SERVER_ID|Recreate clone server id. Do it only to fully reset the clone ID !|Boolean||✓|||
 
 
 #### Outputs
@@ -148,13 +147,13 @@ OUTPUT_STRING|Output message|String||
 
 #### Parameters
 
-| ID | Description | Type | Info | Required | Advanced |
-|:-:|:-:|:-:|:-:|:-:|:-:|
-CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String||✓||
-POSTGRESQL_BINARY_PATH|PostgreSQL binary path|File||✓||
-SCHEMAS|List of schemas to package, separated by commas. (schemas public, lizsync & audit are never processed)|String||✓||
-ADDITIONAL_SQL_FILE|Additionnal SQL file to run in the clone after the ZIP deployement|File||||
-ZIP_FILE|Output archive file (ZIP)|FileDestination||✓||
+| ID | Description | Type | Info | Required | Advanced | Option |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String||✓|||
+POSTGRESQL_BINARY_PATH|PostgreSQL binary path|File||✓||Default: /usr/bin/ <br> |
+SCHEMAS|List of schemas to package, separated by commas. (schemas public, lizsync & audit are never processed)|String||✓||Default: test <br> |
+ADDITIONAL_SQL_FILE|Additionnal SQL file to run in the clone after the ZIP deployement|File|||||
+ZIP_FILE|Output archive file (ZIP)|FileDestination||✓||Default: /tmp/central_database_package.zip <br> |
 
 
 #### Outputs
@@ -185,10 +184,10 @@ The central database stores which clone has replayed which audited modification,
 
 #### Parameters
 
-| ID | Description | Type | Info | Required | Advanced |
-|:-:|:-:|:-:|:-:|:-:|:-:|
-CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String||✓||
-CONNECTION_NAME_CLONE|PostgreSQL connection to the clone database|String||✓||
+| ID | Description | Type | Info | Required | Advanced | Option |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String||✓|||
+CONNECTION_NAME_CLONE|PostgreSQL connection to the clone database|String||✓|||
 
 
 #### Outputs
@@ -213,17 +212,17 @@ OUTPUT_STRING|Output message|String||
 
 #### Parameters
 
-| ID | Description | Type | Info | Required | Advanced |
-|:-:|:-:|:-:|:-:|:-:|:-:|
-CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String||✓||
-CENTRAL_FTP_HOST|Central FTP Server host|String||✓||
-CENTRAL_FTP_PORT|Central FTP Server port|Number||✓||
-CENTRAL_FTP_LOGIN|Central FTP Server login|String||✓||
-CENTRAL_FTP_PASSWORD|Central FTP Server password|String||||
-CENTRAL_FTP_REMOTE_DIR|Central FTP Server remote directory|String||✓||
-FTP_EXCLUDE_REMOTE_SUBDIRS|List of sub-directory to exclude from synchro, separated by commas.|String||||
-CLONE_QGIS_PROJECT_FOLDER|Clone QGIS project folder|File||✓||
-REPLACE_DATASOURCE_IN_QGIS_PROJECT|Adapt PostgreSQL connection parameters for GeoPoppy database ?|Boolean||✓||
+| ID | Description | Type | Info | Required | Advanced | Option |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String||✓|||
+CENTRAL_FTP_HOST|Central FTP Server host|String||✓|||
+CENTRAL_FTP_PORT|Central FTP Server port|Number||✓||Default: 21 <br> Type: Integer<br> Min: -1.7976931348623157e+308, Max: 1.7976931348623157e+308 <br>|
+CENTRAL_FTP_LOGIN|Central FTP Server login|String||✓|||
+CENTRAL_FTP_PASSWORD|Central FTP Server password|String|||||
+CENTRAL_FTP_REMOTE_DIR|Central FTP Server remote directory|String||✓|||
+FTP_EXCLUDE_REMOTE_SUBDIRS|List of sub-directory to exclude from synchro, separated by commas.|String||||Default: data <br> |
+CLONE_QGIS_PROJECT_FOLDER|Clone QGIS project folder|File||✓|||
+REPLACE_DATASOURCE_IN_QGIS_PROJECT|Adapt PostgreSQL connection parameters for GeoPoppy database ?|Boolean||✓||Default: True <br> |
 
 
 #### Outputs
@@ -251,16 +250,16 @@ OUTPUT_STRING|Output message|String||
 
 #### Parameters
 
-| ID | Description | Type | Info | Required | Advanced |
-|:-:|:-:|:-:|:-:|:-:|:-:|
-CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String||✓||
-LOCAL_QGIS_PROJECT_FOLDER|Local desktop QGIS project folder|File||✓||
-CLONE_FTP_HOST|Clone FTP Server host|String||✓||
-CLONE_FTP_PORT|Clone FTP Server port|Number||✓||
-CLONE_FTP_LOGIN|Clone FTP Server login|String||✓||
-CLONE_FTP_PASSWORD|Clone FTP Server password|String||||
-CLONE_FTP_REMOTE_DIR|Clone FTP Server remote directory|String||✓||
-FTP_EXCLUDE_REMOTE_SUBDIRS|List of sub-directory to exclude from synchro, separated by commas.|String||||
+| ID | Description | Type | Info | Required | Advanced | Option |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String||✓|||
+LOCAL_QGIS_PROJECT_FOLDER|Local desktop QGIS project folder|File||✓|||
+CLONE_FTP_HOST|Clone FTP Server host|String||✓|||
+CLONE_FTP_PORT|Clone FTP Server port|Number||✓||Default: 2021 <br> Type: Integer<br> Min: -1.7976931348623157e+308, Max: 1.7976931348623157e+308 <br>|
+CLONE_FTP_LOGIN|Clone FTP Server login|String||✓||Default: geopoppy <br> |
+CLONE_FTP_PASSWORD|Clone FTP Server password|String|||||
+CLONE_FTP_REMOTE_DIR|Clone FTP Server remote directory|String||✓||Default: / <br> |
+FTP_EXCLUDE_REMOTE_SUBDIRS|List of sub-directory to exclude from synchro, separated by commas.|String||||Default: data <br> |
 
 
 #### Outputs
@@ -286,14 +285,14 @@ OUTPUT_STRING|Output message|String||
 
 #### Parameters
 
-| ID | Description | Type | Info | Required | Advanced |
-|:-:|:-:|:-:|:-:|:-:|:-:|
-LOCAL_QGIS_PROJECT_FOLDER|Local QGIS project folder|File||✓||
-CENTRAL_FTP_HOST|Central FTP Server host|String||✓||
-CENTRAL_FTP_PORT|Central FTP Server port|Number||✓||
-CENTRAL_FTP_LOGIN|Central FTP Server login|String||✓||
-CENTRAL_FTP_PASSWORD|Central FTP Server password|String||||
-CENTRAL_FTP_REMOTE_DIR|Central FTP Server remote directory|String||✓||
+| ID | Description | Type | Info | Required | Advanced | Option |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+LOCAL_QGIS_PROJECT_FOLDER|Local QGIS project folder|File||✓|||
+CENTRAL_FTP_HOST|Central FTP Server host|String||✓|||
+CENTRAL_FTP_PORT|Central FTP Server port|Number||✓||Default: 21 <br> Type: Integer<br> Min: -1.7976931348623157e+308, Max: 1.7976931348623157e+308 <br>|
+CENTRAL_FTP_LOGIN|Central FTP Server login|String||✓|||
+CENTRAL_FTP_PASSWORD|Central FTP Server password|String|||||
+CENTRAL_FTP_REMOTE_DIR|Central FTP Server remote directory|String||✓|||
 
 
 #### Outputs
