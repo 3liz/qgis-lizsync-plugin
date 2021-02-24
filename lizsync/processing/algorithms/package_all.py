@@ -30,6 +30,8 @@ class PackageAll(BaseProcessingAlgorithm):
     CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     POSTGRESQL_BINARY_PATH = 'POSTGRESQL_BINARY_PATH'
     PG_LAYERS = 'PG_LAYERS'
+    ADD_UID_COLUMNS = 'ADD_UID_COLUMNS'
+    ADD_AUDIT_TRIGGERS = 'ADD_AUDIT_TRIGGERS'
     ADDITIONAL_SQL_FILE = 'ADDITIONAL_SQL_FILE'
     GPKG_LAYERS = 'GPKG_LAYERS'
     OVERWRITE_GPKG = 'OVERWRITE_GPKG'
@@ -102,6 +104,26 @@ class PackageAll(BaseProcessingAlgorithm):
                 tr('PostgreSQL Layers to edit in the field'),
                 QgsProcessing.TypeVector,
                 optional=False,
+            )
+        )
+
+        # Add uid columns in all the tables of the synchronized schemas
+        self.addParameter(
+            QgsProcessingParameterBoolean(
+                self.ADD_UID_COLUMNS,
+                tr('Add unique identifiers in all tables'),
+                defaultValue=True,
+                optional=False
+            )
+        )
+
+        # Add audit trigger for all tables in the synchronized schemas
+        self.addParameter(
+            QgsProcessingParameterBoolean(
+                self.ADD_AUDIT_TRIGGERS,
+                tr('Add audit triggers in all tables'),
+                defaultValue=True,
+                optional=False
             )
         )
 
@@ -213,6 +235,8 @@ class PackageAll(BaseProcessingAlgorithm):
             'CONNECTION_NAME_CENTRAL': connection_name_central,
             'POSTGRESQL_BINARY_PATH': parameters[self.POSTGRESQL_BINARY_PATH],
             'PG_LAYERS': parameters[self.PG_LAYERS],
+            'ADD_UID_COLUMNS': parameters[self.ADD_UID_COLUMNS],
+            'ADD_AUDIT_TRIGGERS': parameters[self.ADD_AUDIT_TRIGGERS],
             'ADDITIONNAL_SQL_FILE': parameters[self.ADDITIONAL_SQL_FILE],
             'ZIP_FILE': zip_archive,
         }

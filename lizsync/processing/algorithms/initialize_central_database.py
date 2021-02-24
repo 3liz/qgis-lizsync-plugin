@@ -126,7 +126,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
             QgsProcessingParameterBoolean(
                 self.ADD_UID_COLUMNS,
                 tr('Add unique identifiers in all tables'),
-                defaultValue=True,
+                defaultValue=False,
                 optional=False
             )
         )
@@ -136,7 +136,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
             QgsProcessingParameterBoolean(
                 self.ADD_AUDIT_TRIGGERS,
                 tr('Add audit triggers in all tables'),
-                defaultValue=True,
+                defaultValue=False,
                 optional=False
             )
         )
@@ -144,7 +144,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
         # Schemas to synchronize
         synchronized_schemas = ls.variable('postgresql:central/schemas').strip()
         if not synchronized_schemas:
-            synchronized_schemas = 'test'
+            synchronized_schemas = ''
         self.addParameter(
             QgsProcessingParameterString(
                 self.SCHEMAS,
@@ -219,7 +219,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
         add_uid_columns = self.parameterAsBool(parameters, self.ADD_UID_COLUMNS, context)
         add_server_id = self.parameterAsBool(parameters, self.ADD_SERVER_ID, context)
         add_audit_triggers = self.parameterAsBool(parameters, self.ADD_AUDIT_TRIGGERS, context)
-        synchronized_schemas = parameters[self.SCHEMAS]
+        synchronized_schemas = parameters[self.SCHEMAS].strip()
 
         # store parameters
         ls = lizsyncConfig()
@@ -272,6 +272,17 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
                 raise QgsProcessingException(m)
         feedback.pushInfo('')
 
+        # Check schema has been passed
+        if not synchronized_schemas:
+            msg = tr('No schema(s) has been given: not tests will be made for uid columns or audit triggers')
+            feedback.pushInfo(msg)
+
+            output = {
+                self.OUTPUT_STATUS: 1,
+                self.OUTPUT_STRING: 'Ok',
+            }
+            return output
+
         # Check UID columns
         feedback.pushInfo(tr('CHECK UID COLUMNS'))
         status, message = check_database_uid_columns(
@@ -290,6 +301,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
             if not status:
                 raise QgsProcessingException(message)
             feedback.pushInfo(message)
+
         feedback.pushInfo('')
 
         # Check audit triggers
@@ -311,6 +323,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
             if not status:
                 raise QgsProcessingException(message)
             feedback.pushInfo(message)
+
         feedback.pushInfo('')
 
         output = {

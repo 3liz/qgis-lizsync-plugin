@@ -23,6 +23,7 @@ from qgis.core import (
     QgsProcessing,
     QgsProcessingException,
     QgsProcessingParameterString,
+    QgsProcessingParameterBoolean,
     QgsProcessingParameterMultipleLayers,
     QgsProcessingParameterFile,
     QgsProcessingParameterFileDestination,
@@ -35,6 +36,8 @@ from .tools import (
     check_database_server_metadata_content,
     check_database_uid_columns,
     check_database_audit_triggers,
+    add_database_audit_triggers,
+    add_database_uid_columns,
     lizsyncConfig,
     getUriFromConnectionName,
     fetchDataFromSqlQuery,
@@ -54,6 +57,8 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
     # calling from the QGIS console.
     CONNECTION_NAME_CENTRAL = 'CONNECTION_NAME_CENTRAL'
     PG_LAYERS = 'PG_LAYERS'
+    ADD_UID_COLUMNS = 'ADD_UID_COLUMNS'
+    ADD_AUDIT_TRIGGERS = 'ADD_AUDIT_TRIGGERS'
     POSTGRESQL_BINARY_PATH = 'POSTGRESQL_BINARY_PATH'
     ZIP_FILE = 'ZIP_FILE'
     ADDITIONAL_SQL_FILE = 'ADDITIONAL_SQL_FILE'
@@ -137,6 +142,26 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             )
         )
 
+        # Add uid columns in all the tables of the synchronized schemas
+        self.addParameter(
+            QgsProcessingParameterBoolean(
+                self.ADD_UID_COLUMNS,
+                tr('Add unique identifiers in all tables'),
+                defaultValue=True,
+                optional=False
+            )
+        )
+
+        # Add audit trigger for all tables in the synchronized schemas
+        self.addParameter(
+            QgsProcessingParameterBoolean(
+                self.ADD_AUDIT_TRIGGERS,
+                tr('Add audit triggers in all tables'),
+                defaultValue=True,
+                optional=False
+            )
+        )
+
         # Additionnal SQL file to run on the clone
         additional_sql_file = ls.variable('general/additional_sql_file')
         self.addParameter(
@@ -182,7 +207,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             )
         )
 
-    def checkCentralDatabase(self, parameters, context, feedback):
+    def checkCentralDatabase(self, parameters, context, feedback, print_messages=False):
         """
         Check if central database
         has been initialized
@@ -196,22 +221,21 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             tables.append('"' + uri.schema() + '"."' + uri.table() + '"')
 
         # Check if needed schema and metadata has been created
-        feedback.pushInfo(tr('CHECK IF LIZSYNC HAS BEEN INSTALLED AND DATABASE INITIALIZED'))
-        checks = []
+        if print_messages:
+            feedback.pushInfo(tr('CHECK IF LIZSYNC HAS BEEN INSTALLED AND DATABASE INITIALIZED'))
+        checks = {}
 
         # structure
         status, message = check_database_structure(
             connection_name_central
         )
-        mandatory = True
-        checks.append((tr('structure'), status, message, mandatory))
+        checks['structure'] = (status, message)
 
         # server_metadata content
         status, message = check_database_server_metadata_content(
             connection_name_central
         )
-        mandatory = True
-        checks.append((tr('metadata'), status, message, mandatory))
+        checks['metadata'] = (status, message)
 
         # uid columns
         status, message = check_database_uid_columns(
@@ -219,38 +243,27 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             None,
             tables
         )
-        mandatory = True
-        checks.append((tr('uid columns'), status, message, mandatory))
+        checks['uid columns'] = (status, message)
 
         # audit triggers
-        # NOT MANDATORY (but at your own risks)
-        # tables without trigger will not be synchronized
         status, message = check_database_audit_triggers(
             connection_name_central,
             None,
             tables
         )
-        mandatory = False
-        checks.append((tr('audit triggers'), status, message, mandatory))
+        checks['audit triggers'] = (status, message)
 
         global_status = True
-        for info in checks:
-            feedback.pushInfo(info[0].upper())
-            feedback.pushInfo(info[2])
-            feedback.pushInfo('')
+        for item, item_data in checks.items():
+            if print_messages or not item_data[0]:
+                feedback.pushInfo(tr(item).upper())
+                feedback.pushInfo(item_data[1])
+                feedback.pushInfo('')
             # not mandatory for audit triggers
-            if not info[1] and info[3]:
+            if not item_data[0]:
                 global_status = False
 
-        if global_status:
-            message = tr('Every required test has passed successfully !')
-            return True, message
-        else:
-            message = tr(
-                'Some needed configuration are missing in the central database.'
-                ' Please correct them before proceeding.'
-            )
-            return False, message
+        return global_status, checks
 
     def checkParameterValues(self, parameters, context):
 
@@ -299,6 +312,8 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         # Parameters
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
+        add_uid_columns = self.parameterAsBool(parameters, self.ADD_UID_COLUMNS, context)
+        add_audit_triggers = self.parameterAsBool(parameters, self.ADD_AUDIT_TRIGGERS, context)
         additional_sql_file = self.parameterAsString(
             parameters,
             self.ADDITIONAL_SQL_FILE,
@@ -327,9 +342,45 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         ls.save()
 
         # First run some test in database
-        test, m = self.checkCentralDatabase(parameters, context, feedback)
-        if not test:
-            raise QgsProcessingException(m)
+        test, checks = self.checkCentralDatabase(parameters, context, feedback, True)
+        ok = True
+        if test:
+            message = tr('Every required test has passed successfully !')
+            feedback.pushInfo(message)
+        else:
+            message = tr('Some needed configuration are missing in the central database.')
+
+            # Add missing uid columns
+            if add_uid_columns and not checks['uid columns']:
+                feedback.pushInfo('')
+                status, message = add_database_uid_columns(
+                    connection_name_central,
+                    None,
+                    tables
+                )
+                if not status:
+                    raise QgsProcessingException(message)
+                feedback.pushInfo(message)
+
+            # Add missing uid columns
+            if add_audit_triggers and not checks['audit triggers']:
+                feedback.pushInfo('')
+                status, message = add_database_audit_triggers(
+                    connection_name_central,
+                    None,
+                    tables
+                )
+                if not status:
+                    raise QgsProcessingException(message)
+                feedback.pushInfo(message)
+
+            # Recheck
+            test_2, checks_2 = self.checkCentralDatabase(parameters, context, feedback, False)
+            if not test_2:
+                ok = False
+                message = tr('Some needed configuration are missing in the central database.')
+        if not ok:
+            raise QgsProcessingException(message)
 
         # Create temporary files
         sql_file_list = [
