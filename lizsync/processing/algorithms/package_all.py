@@ -217,7 +217,7 @@ class PackageAll(BaseProcessingAlgorithm):
             'ZIP_FILE': zip_archive,
         }
         processing.run(
-            "lizsync:package_master_database",
+            "lizsync:package_central_database",
             params, context=context, feedback=feedback,
             is_child_algorithm=True
         )

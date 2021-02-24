@@ -39,7 +39,7 @@ class LizsyncDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'initialize_central_database',
 
             'deploy_database_server_package',
-            'package_master_database',
+            'package_central_database',
             'synchronize_database',
 
             'send_projects_and_files_to_clone_ftp',

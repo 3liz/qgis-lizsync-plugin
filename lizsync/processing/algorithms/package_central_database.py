@@ -61,7 +61,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
     OUTPUT_STRING = 'OUTPUT_STRING'
 
     def name(self):
-        return 'package_master_database'
+        return 'package_central_database'
 
     def displayName(self):
         return tr('Create a package from the central database')

@@ -76,7 +76,7 @@
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_3">
            <item>
-            <widget class="QPushButton" name="button_package_master_database">
+            <widget class="QPushButton" name="button_package_central_database">
              <property name="toolTip">
               <string>Create a package from the central database</string>
              </property>

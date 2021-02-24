@@ -176,7 +176,7 @@ class TestSyncDatabase(unittest.TestCase):
         }
 
         processing.run(
-            "lizsync:package_master_database", params, feedback=feedback
+            "lizsync:package_central_database", params, feedback=feedback
         )
 
         # Deploy package to clones
