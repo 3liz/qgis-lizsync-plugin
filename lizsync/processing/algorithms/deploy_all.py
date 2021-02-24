@@ -31,6 +31,7 @@ import processing
 
 from .tools import (
     checkFtpBinary,
+    check_paramiko,
     lizsyncConfig,
     getUriFromConnectionName,
 )
@@ -332,6 +333,18 @@ class DeployAll(BaseProcessingAlgorithm):
         # Check for cancelation
         if feedback.isCanceled():
             return {}
+
+        # Check paramiko is installed if needed
+        protocol = self.CLONE_FTP_PROTOCOLS[parameters[self.CLONE_FTP_PROTOCOL]]
+        if protocol == 'SFTP' and not check_paramiko():
+            msg = tr(
+                'The Python module paramiko is not installed. '
+                'The SSH connection will not be tested before running the synchronisation. '
+                'You can install it by running the following commands in QGIS python console: '
+                'import pip'
+                "pip.main(['install', 'paramiko'])"
+            )
+            feedback.reportError(msg)
 
         # Send projects and files to clone FTP
         params = {

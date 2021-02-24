@@ -28,6 +28,7 @@ from qgis.core import (
 from .tools import (
     checkFtpBinary,
     check_ftp_connection,
+    check_paramiko,
     check_ssh_connection,
     ftp_sync,
     get_ftp_password,
@@ -262,12 +263,26 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
             ok, msg, ftpdir_exists = check_ftp_connection(
                 ftphost, ftpport, ftplogin, password, timeout, ftpdir
             )
+            if not ok:
+                raise QgsProcessingException(msg)
         else:
-            ok, msg, ftpdir_exists = check_ssh_connection(
-                ftphost, ftpport, ftplogin, password, timeout, ftpdir
-            )
-        if not ok:
-            raise QgsProcessingException(msg)
+            if not check_paramiko():
+                msg = tr(
+                    'The Python module paramiko is not installed. '
+                    'The SSH connection will not be tested before running the synchronisation. '
+                    'You can install it by running the following commands in QGIS python console: '
+                    'import pip'
+                    "pip.main(['install', 'paramiko'])"
+                )
+                feedback.reportError(msg)
+            else:
+                msg = tr('Check SSH connection is possible...')
+                feedback.pushInfo(msg)
+                ok, msg, ftpdir_exists = check_ssh_connection(
+                    ftphost, ftpport, ftplogin, password, timeout, ftpdir
+                )
+                if not ok:
+                    raise QgsProcessingException(msg)
 
         # Check if ftpdir exists
         feedback.pushInfo(tr('CHECK REMOTE DIRECTORY') + ' %s' % ftpdir)

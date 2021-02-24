@@ -23,7 +23,7 @@ try:
     )
 except ImportError:
     # Quick and dirty workaround
-    print('Module paramiko must be installed')
+    print('Python module paramiko is not installed')
 
 import os
 import netrc
@@ -110,6 +110,22 @@ def check_ftp_connection(host, port, login, password=None, timeout=5, ftpdir=Non
         if not ok:
             return False, msg, ftpdir_exists
     return True, '', ftpdir_exists
+
+
+def check_paramiko():
+    """
+    Check if paramiko is installed
+    """
+    has_paramiko = False
+    try:
+        # run dummy command just to check paramiko is installed
+        client = SSHClient()
+        client.load_system_host_keys()
+        has_paramiko = True
+    except NameError:
+        has_paramiko = False
+
+    return has_paramiko
 
 
 def check_ssh_connection(host, port, login, password=None, timeout=5, ftpdir=None):
