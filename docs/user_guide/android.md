@@ -1,11 +1,3 @@
----
-Title: LizSync plugin - PostgreSQL in Android
-Favicon: ../icon.png
-Index: yes
-...
-
-[TOC]
-
 ## Introduction
 
 There is two way to use PostgreSQL on Android, with two different apps:
