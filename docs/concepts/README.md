@@ -1,29 +1,37 @@
-## Presentation
+# What is LizSync ?
 
-**LizSync** is a set of tools allowing to perform PostgreSQL **database synchronisation** between a **central** database and one or many **clone** databases.
+## Introduction
+
+**LizSync** is a set of tools allowing to perform PostgreSQL **database synchronisations** between a **central** database and one or many **clone** databases.
 
 Two-way synchronisation is done:
 
-* for **data of tables** in chosen schemas,
-* between tables having **the same structure**.
+* for the **data of chosen tables** in chosen schemas,
+* between the same tables of distinct databases having **the same name and structure**.
 * No synchronisation is made on structure changes (adding a column, creating or droping tables, etc.).
 
 ## LizSync workflow
 
-* For the 1st time
-    * **install** the needed PostgreSQL **structure** in the central database
-    * **prepare the central database**:
-        - add an **uid column** to every synchronized table
-        - add needed **audit triggers**
-* Before each campain / when structure has changed
-    * **create an archive** from the central database with data from chosen schemas
+To start using **LizSync**, you need to:
+
+* **install** the needed PostgreSQL **structure** in the central database
+* **prepare the central database**:
+    - add an **uid column** to every synchronized table
+    - add the needed **audit triggers** for the same tables
+* Before each campaign or when the table(s) structure has changed:
+    * **create an zip archive** from the central database which contains the data and needed information
     * **deploy** it to one or many clones
-* Whenever needed
-    * **perform** a two-way synchronisation from the clone
+* Whenever needed:
+    * **perform** a two-way synchronisation from the clone by using the dedicated algorithm
 
-There is only one central database but you can have one or many clone databases.
+There is **only one central database** but you can have **one or many clone databases**.
 
-## PostgreSQL structure
+All these steps can be performed with **LizSync plugin** for QGIS, by using the dedicated algorithms in the **Processing toolbox**.
+
+!!! tip
+    The plugin provides a right panel in QGIS interface which gives a **direct access to the main algorithms**. You can read the auto-generated documentation of all the Processing algorithms in the [processing page](../processing/README.md).
+
+## PostgreSQL database structure
 
 LizSync uses **2 dedicated schemas**:
 
@@ -50,11 +58,6 @@ We added a new column `audit.sync_data` to the table `audit.logged_actions` need
 
 We modified the trigger to fill in this new JSON column.
 
-## Demo
-
-Read the [reference page](../references.md) for some videos.
-
-
 ## Key features
 
 * **Two-way sync**: clone 1 <-> central <-> clone B <-> central <-> clone C <-> central
@@ -66,3 +69,7 @@ SELECT lizsync.synchronize()
 ```
 * **Processing algs**: can be run in CLI if needed
 * **Unit tests**: installation/upgrade/synchronisation
+
+## Demo
+
+Read the [reference page](../references.md) for some videos.
