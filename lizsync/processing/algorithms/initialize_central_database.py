@@ -18,12 +18,15 @@ __copyright__ = '(C) 2018 by 3liz'
 __revision__ = '$Format:%H$'
 
 from qgis.core import (
+    Qgis,
     QgsProcessingException,
     QgsProcessingParameterString,
     QgsProcessingParameterBoolean,
     QgsProcessingOutputNumber,
     QgsProcessingOutputString
 )
+if Qgis.QGIS_VERSION_INT >= 31400:
+    from qgis.core import QgsProcessingParameterProviderConnection
 from .tools import (
     check_database_structure,
     check_database_server_metadata_content,
@@ -97,19 +100,37 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
         ls = lizsyncConfig()
 
         # INPUTS
+        # Central database connection name
         connection_name_central = ls.variable('postgresql:central/name')
-        db_param_a = QgsProcessingParameterString(
-            self.CONNECTION_NAME_CENTRAL,
-            tr('PostgreSQL connection to the central database'),
-            defaultValue=connection_name_central,
-            optional=False
+        label = tr('PostgreSQL connection to the central database')
+        if Qgis.QGIS_VERSION_INT >= 31400:
+            param = QgsProcessingParameterProviderConnection(
+                self.CONNECTION_NAME_CENTRAL,
+                label,
+                "postgres",
+                defaultValue=connection_name_central,
+                optional=False,
+            )
+        else:
+            param = QgsProcessingParameterString(
+                self.CONNECTION_NAME_CENTRAL,
+                label,
+                defaultValue=connection_name_central,
+                optional=False
+            )
+            param.setMetadata({
+                'widget_wrapper': {
+                    'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
+                }
+            })
+        tooltip = tr(
+            'The PostgreSQL connection to the central database.'
         )
-        db_param_a.setMetadata({
-            'widget_wrapper': {
-                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
-            }
-        })
-        self.addParameter(db_param_a)
+        if Qgis.QGIS_VERSION_INT >= 31600:
+            param.setHelp(tooltip)
+        else:
+            param.tooltip_3liz = tooltip
+        self.addParameter(param)
 
         # Add server id in metadata
         self.addParameter(

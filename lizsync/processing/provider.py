@@ -22,7 +22,6 @@ from qgis.PyQt.QtGui import QIcon
 
 from ..qgis_plugin_tools.tools.i18n import tr
 from ..qgis_plugin_tools.tools.resources import resources_path
-# from .algorithms.configure_plugin import ConfigurePlugin
 from .algorithms.create_database_structure import CreateDatabaseStructure
 from .algorithms.upgrade_database_structure import UpgradeDatabaseStructure
 from .algorithms.initialize_central_database import InitializeCentralDatabase
@@ -41,7 +40,6 @@ from .algorithms.deploy_all import DeployAll
 class LizsyncProvider(QgsProcessingProvider):
 
     def loadAlgorithms(self):
-        # self.addAlgorithm(ConfigurePlugin())
         self.addAlgorithm(PackageCentralDatabase())
         self.addAlgorithm(DeployDatabaseServerPackage())
         self.addAlgorithm(SynchronizeDatabase())

@@ -6,6 +6,7 @@ __revision__ = '$Format:%H$'
 import os
 
 from qgis.core import (
+    Qgis,
     QgsProcessing,
     QgsProcessingParameterString,
     QgsProcessingParameterFile,
@@ -14,6 +15,8 @@ from qgis.core import (
     QgsProcessingOutputNumber,
     QgsProcessingParameterMultipleLayers
 )
+if Qgis.QGIS_VERSION_INT >= 31400:
+    from qgis.core import QgsProcessingParameterProviderConnection
 
 import processing
 
@@ -71,19 +74,37 @@ class PackageAll(BaseProcessingAlgorithm):
 
         # Central database connection
         # Needed because we need to check we can connect to central database
+        # Central database connection name
         connection_name_central = ls.variable('postgresql:central/name')
-        db_param_a = QgsProcessingParameterString(
-            self.CONNECTION_NAME_CENTRAL,
-            tr('PostgreSQL connection to the central database'),
-            defaultValue=connection_name_central,
-            optional=False
+        label = tr('PostgreSQL connection to the central database')
+        if Qgis.QGIS_VERSION_INT >= 31400:
+            param = QgsProcessingParameterProviderConnection(
+                self.CONNECTION_NAME_CENTRAL,
+                label,
+                "postgres",
+                defaultValue=connection_name_central,
+                optional=False,
+            )
+        else:
+            param = QgsProcessingParameterString(
+                self.CONNECTION_NAME_CENTRAL,
+                label,
+                defaultValue=connection_name_central,
+                optional=False
+            )
+            param.setMetadata({
+                'widget_wrapper': {
+                    'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
+                }
+            })
+        tooltip = tr(
+            'The PostgreSQL connection to the central database.'
         )
-        db_param_a.setMetadata({
-            'widget_wrapper': {
-                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
-            }
-        })
-        self.addParameter(db_param_a)
+        if Qgis.QGIS_VERSION_INT >= 31600:
+            param.setHelp(tooltip)
+        else:
+            param.tooltip_3liz = tooltip
+        self.addParameter(param)
 
         # PostgreSQL binary path (with psql pg_restore, etc.)
         postgresql_binary_path = ls.variable('binaries/postgresql')

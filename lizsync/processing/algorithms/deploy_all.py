@@ -18,6 +18,7 @@ import tempfile
 from platform import system as psys
 
 from qgis.core import (
+    Qgis,
     QgsProcessingParameterEnum,
     QgsProcessingParameterBoolean,
     QgsProcessingParameterString,
@@ -26,6 +27,8 @@ from qgis.core import (
     QgsProcessingOutputString,
     QgsProcessingOutputNumber
 )
+if Qgis.QGIS_VERSION_INT >= 31400:
+    from qgis.core import QgsProcessingParameterProviderConnection
 
 import processing
 
@@ -94,33 +97,67 @@ class DeployAll(BaseProcessingAlgorithm):
 
         # Central database connection name
         connection_name_central = ls.variable('postgresql:central/name')
-        db_param_a = QgsProcessingParameterString(
-            self.CONNECTION_NAME_CENTRAL,
-            tr('PostgreSQL connection to the central database'),
-            defaultValue=connection_name_central,
-            optional=False
+        label = tr('PostgreSQL connection to the central database')
+        if Qgis.QGIS_VERSION_INT >= 31400:
+            param = QgsProcessingParameterProviderConnection(
+                self.CONNECTION_NAME_CENTRAL,
+                label,
+                "postgres",
+                defaultValue=connection_name_central,
+                optional=False,
+            )
+        else:
+            param = QgsProcessingParameterString(
+                self.CONNECTION_NAME_CENTRAL,
+                label,
+                defaultValue=connection_name_central,
+                optional=False
+            )
+            param.setMetadata({
+                'widget_wrapper': {
+                    'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
+                }
+            })
+        tooltip = tr(
+            'The PostgreSQL connection to the central database.'
         )
-        db_param_a.setMetadata({
-            'widget_wrapper': {
-                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
-            }
-        })
-        self.addParameter(db_param_a)
+        if Qgis.QGIS_VERSION_INT >= 31600:
+            param.setHelp(tooltip)
+        else:
+            param.tooltip_3liz = tooltip
+        self.addParameter(param)
 
         # Clone database connection parameters
         connection_name_clone = ls.variable('postgresql:clone/name')
-        db_param_b = QgsProcessingParameterString(
-            self.CONNECTION_NAME_CLONE,
-            tr('PostgreSQL connection to the clone database'),
-            defaultValue=connection_name_clone,
-            optional=False
+        label = tr('PostgreSQL connection to the clone database')
+        if Qgis.QGIS_VERSION_INT >= 31400:
+            param = QgsProcessingParameterProviderConnection(
+                self.CONNECTION_NAME_CLONE,
+                label,
+                "postgres",
+                defaultValue=connection_name_clone,
+                optional=False,
+            )
+        else:
+            param = QgsProcessingParameterString(
+                self.CONNECTION_NAME_CLONE,
+                label,
+                defaultValue=connection_name_clone,
+                optional=False
+            )
+            param.setMetadata({
+                'widget_wrapper': {
+                    'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
+                }
+            })
+        tooltip = tr(
+            'The PostgreSQL connection to the clone database.'
         )
-        db_param_b.setMetadata({
-            'widget_wrapper': {
-                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
-            }
-        })
-        self.addParameter(db_param_b)
+        if Qgis.QGIS_VERSION_INT >= 31600:
+            param.setHelp(tooltip)
+        else:
+            param.tooltip_3liz = tooltip
+        self.addParameter(param)
 
         # PostgreSQL binary path (with psql, pg_dump, pg_restore)
         postgresql_binary_path = ls.variable('binaries/postgresql')

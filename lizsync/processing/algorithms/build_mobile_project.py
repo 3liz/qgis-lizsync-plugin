@@ -9,6 +9,7 @@ import re
 import sys
 
 from qgis.core import (
+    Qgis,
     QgsProcessing,
     QgsProcessingException,
     QgsProcessingParameterString,
@@ -16,6 +17,9 @@ from qgis.core import (
     QgsProcessingOutputNumber,
     QgsProcessingParameterMultipleLayers
 )
+if Qgis.QGIS_VERSION_INT >= 31400:
+    from qgis.core import QgsProcessingParameterProviderConnection
+
 from qgis.PyQt.QtXml import QDomDocument
 from .tools import (
     lizsyncConfig,
@@ -48,10 +52,19 @@ class BuildMobileProject(BaseProcessingAlgorithm):
     def shortHelpString(self):
         short_help = tr(
             ' This scripts builds a mobile version of the current QGIS project.'
+            ' It only changes the qgs file, it is not in charge to export the layers.'
             '\n'
             '\n'
-            ' Todo'
-
+            ' The following actions are executed:'
+            '\n'
+            ' * search and replace the connection parameters for the PostgreSQL'
+            ' layers needed to be edited in the clone database'
+            '\n'
+            ' * search and replace the datasource for the layers which are exported to Geopackage'
+            '\n'
+            ' * save the changes in a new QGIS project file name after the current project name with'
+            ' the addition of the suffix _mobile. For example:'
+            ' YOUR_PROJECT_mobile.qgs if your project is named YOUR_PROJECT.qgs'
         )
         return short_help
 
@@ -64,38 +77,74 @@ class BuildMobileProject(BaseProcessingAlgorithm):
         # Central database connection
         # Needed because we need to check we can connect to central database
         connection_name_central = ls.variable('postgresql:central/name')
-        db_param_a = QgsProcessingParameterString(
-            self.CONNECTION_NAME_CENTRAL,
-            tr('PostgreSQL connection to the central database'),
-            defaultValue=connection_name_central,
-            optional=False
+        label = tr('PostgreSQL connection to the central database')
+        if Qgis.QGIS_VERSION_INT >= 31400:
+            param = QgsProcessingParameterProviderConnection(
+                self.CONNECTION_NAME_CENTRAL,
+                label,
+                "postgres",
+                defaultValue=connection_name_central,
+                optional=False,
+            )
+        else:
+            param = QgsProcessingParameterString(
+                self.CONNECTION_NAME_CENTRAL,
+                label,
+                defaultValue=connection_name_central,
+                optional=False
+            )
+            param.setMetadata({
+                'widget_wrapper': {
+                    'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
+                }
+            })
+        tooltip = tr(
+            'The PostgreSQL connection to the central database.'
         )
-        db_param_a.setMetadata({
-            'widget_wrapper': {
-                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
-            }
-        })
-        self.addParameter(db_param_a)
+        tooltip += tr(
+            ' Needed to be able to search & replace the database connection parameters in the QGIS project'
+            ' to make it usable in the clone (Termux or Geopoppy).'
+        )
+        if Qgis.QGIS_VERSION_INT >= 31600:
+            param.setHelp(tooltip)
+        else:
+            param.tooltip_3liz = tooltip
+        self.addParameter(param)
 
         # PostgreSQL layers
-        self.addParameter(
-            QgsProcessingParameterMultipleLayers(
-                self.PG_LAYERS,
-                tr('PostgreSQL Layers to edit in the field'),
-                QgsProcessing.TypeVector,
-                optional=False,
-            )
+        param = QgsProcessingParameterMultipleLayers(
+            self.PG_LAYERS,
+            tr('PostgreSQL Layers to edit in the field'),
+            QgsProcessing.TypeVector,
+            optional=False,
         )
+        tooltip = tr(
+            'Select the PostgreSQL layers you want to edit in the clone.'
+            ' The connection parameters of these layers will be adapted for the clone PostgreSQL datatabase'
+        )
+        if Qgis.QGIS_VERSION_INT >= 31600:
+            param.setHelp(tooltip)
+        else:
+            param.tooltip_3liz = tooltip
+        self.addParameter(param)
 
         # Layers to export to Geopackage
-        self.addParameter(
-            QgsProcessingParameterMultipleLayers(
-                self.GPKG_LAYERS,
-                tr('Layers to convert into Geopackage'),
-                QgsProcessing.TypeVector,
-                optional=False,
-            )
+        param = QgsProcessingParameterMultipleLayers(
+            self.GPKG_LAYERS,
+            tr('Layers to convert into Geopackage'),
+            QgsProcessing.TypeVector,
+            optional=False,
         )
+        tooltip = tr(
+            'Select the vector layers you have exported (or you will export) to a Geopackage file '
+            ' The datasource of these layers will be changed to reference the Geopackage layer'
+            ' instead of the initial source'
+        )
+        if Qgis.QGIS_VERSION_INT >= 31600:
+            param.setHelp(tooltip)
+        else:
+            param.tooltip_3liz = tooltip
+        self.addParameter(param)
 
         # OUTPUTS
         # Add output for message
@@ -171,6 +220,7 @@ class BuildMobileProject(BaseProcessingAlgorithm):
         # hard coded datasource for the Android PostgreSQL device database
         # we cannot use service, because QField cannot use a service defined inside Termux
         uris['clone'] = "dbname='gis' host=localhost user='gis' password='gis'"
+        # TODO: Since QField 1.8.0 - Selma, it is now possible: replace with a service !
 
         # Replace with regex
         regex = re.compile(uris['central'], re.IGNORECASE)
@@ -182,9 +232,6 @@ class BuildMobileProject(BaseProcessingAlgorithm):
         return datasource, 'Success'
 
     def processAlgorithm(self, parameters, context, feedback):
-        """
-        Run the needed steps for bi-directionnal database synchronization
-        """
         output = {
             self.OUTPUT_STATUS: 0,
             self.OUTPUT_STRING: ''
