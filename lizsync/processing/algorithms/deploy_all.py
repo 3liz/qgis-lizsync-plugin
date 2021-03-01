@@ -80,7 +80,7 @@ class DeployAll(BaseProcessingAlgorithm):
 
     def shortHelpString(self):
         short_help = tr(
-            ' Send QGIS projects, files and data to the clone'
+            ' Send packaged QGIS projects, files and data to the clone'
             '\n'
             '\n'
         )

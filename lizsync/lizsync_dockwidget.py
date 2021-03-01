@@ -42,9 +42,11 @@ class LizsyncDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'package_central_database',
             'synchronize_database',
 
+            'build_mobile_project',
             'send_projects_and_files_to_clone_ftp',
-            'get_projects_and_files_from_central_ftp',
-            'synchronize_media_subfolder_to_ftp',
+
+            'package_all',
+            'deploy_all',
         ]
         for alg in self.algorithms:
             button = self.findChild(QPushButton, 'button_{0}'.format(alg))
