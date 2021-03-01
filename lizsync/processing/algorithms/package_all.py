@@ -13,7 +13,8 @@ from qgis.core import (
     QgsProcessingParameterBoolean,
     QgsProcessingOutputString,
     QgsProcessingOutputNumber,
-    QgsProcessingParameterMultipleLayers
+    QgsProcessingParameterMultipleLayers,
+    QgsProcessingParameterDefinition
 )
 if Qgis.QGIS_VERSION_INT >= 31400:
     from qgis.core import QgsProcessingParameterProviderConnection
@@ -46,13 +47,13 @@ class PackageAll(BaseProcessingAlgorithm):
         return 'package_all'
 
     def displayName(self):
-        return tr('Package project and data')
+        return tr('Package project and data from the central server')
 
     def group(self):
-        return tr('04 Prepare field work')
+        return tr('04 All-in-one')
 
     def groupId(self):
-        return 'lizsync_prepare_field_work'
+        return 'lizsync_all_in_one'
 
     def shortHelpString(self):
         short_help = tr(
@@ -108,76 +109,75 @@ class PackageAll(BaseProcessingAlgorithm):
 
         # PostgreSQL binary path (with psql pg_restore, etc.)
         postgresql_binary_path = ls.variable('binaries/postgresql')
-        self.addParameter(
-            QgsProcessingParameterFile(
-                self.POSTGRESQL_BINARY_PATH,
-                tr('PostgreSQL binary path'),
-                defaultValue=postgresql_binary_path,
-                behavior=QgsProcessingParameterFile.Folder,
-                optional=False
-            )
+        param = QgsProcessingParameterFile(
+            self.POSTGRESQL_BINARY_PATH,
+            tr('PostgreSQL binary path'),
+            defaultValue=postgresql_binary_path,
+            behavior=QgsProcessingParameterFile.Folder,
+            optional=False
         )
+        param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(param)
 
         # PostgreSQL layers
-        self.addParameter(
-            QgsProcessingParameterMultipleLayers(
-                self.PG_LAYERS,
-                tr('PostgreSQL Layers to edit in the field'),
-                QgsProcessing.TypeVector,
-                optional=False,
-            )
+        param = QgsProcessingParameterMultipleLayers(
+            self.PG_LAYERS,
+            tr('PostgreSQL Layers to edit in the field'),
+            QgsProcessing.TypeVector,
+            optional=False,
         )
+        self.addParameter(param)
 
         # Add uid columns in all the tables of the synchronized schemas
-        self.addParameter(
-            QgsProcessingParameterBoolean(
-                self.ADD_UID_COLUMNS,
-                tr('Add unique identifiers in all tables'),
-                defaultValue=True,
-                optional=False
-            )
+        param = QgsProcessingParameterBoolean(
+            self.ADD_UID_COLUMNS,
+            tr('Add unique identifiers in all tables'),
+            defaultValue=True,
+            optional=False
         )
+        param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(param)
 
         # Add audit trigger for all tables in the synchronized schemas
-        self.addParameter(
-            QgsProcessingParameterBoolean(
-                self.ADD_AUDIT_TRIGGERS,
-                tr('Add audit triggers in all tables'),
-                defaultValue=True,
-                optional=False
-            )
+        param = QgsProcessingParameterBoolean(
+            self.ADD_AUDIT_TRIGGERS,
+            tr('Add audit triggers in all tables'),
+            defaultValue=True,
+            optional=False
         )
+        param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(param)
 
         # Additionnal SQL file to run on the clone
         additional_sql_file = ls.variable('general/additional_sql_file')
-        self.addParameter(
-            QgsProcessingParameterFile(
-                self.ADDITIONAL_SQL_FILE,
-                tr('Additionnal SQL file to run in the clone after the ZIP deployement'),
-                defaultValue=additional_sql_file,
-                behavior=QgsProcessingParameterFile.File,
-                optional=True,
-                extension='sql'
-            )
+        param = QgsProcessingParameterFile(
+            self.ADDITIONAL_SQL_FILE,
+            tr('Additionnal SQL file to run in the clone after the ZIP deployement'),
+            defaultValue=additional_sql_file,
+            behavior=QgsProcessingParameterFile.File,
+            optional=True,
+            extension='sql'
         )
+        param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(param)
 
         # Layers to export to Geopackage
-        self.addParameter(
-            QgsProcessingParameterMultipleLayers(
-                self.GPKG_LAYERS,
-                tr('Layers to convert into Geopackage'),
-                QgsProcessing.TypeVector,
-                optional=False,
-            )
+        param = QgsProcessingParameterMultipleLayers(
+            self.GPKG_LAYERS,
+            tr('Layers to convert into Geopackage'),
+            QgsProcessing.TypeVector,
+            optional=False,
         )
+        self.addParameter(param)
 
         # Override existing Geopackage file
-        p = QgsProcessingParameterBoolean(
+        param = QgsProcessingParameterBoolean(
             self.OVERWRITE_GPKG,
             tr('Overwrite the Geopackage file if it exists ?'),
             defaultValue=True,
         )
-        self.addParameter(p)
+        param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(param)
 
         # OUTPUTS
         # Add output for message

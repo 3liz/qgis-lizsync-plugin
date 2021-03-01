@@ -25,7 +25,8 @@ from qgis.core import (
     QgsProcessingParameterNumber,
     QgsProcessingParameterFile,
     QgsProcessingOutputString,
-    QgsProcessingOutputNumber
+    QgsProcessingOutputNumber,
+    QgsProcessingParameterDefinition
 )
 if Qgis.QGIS_VERSION_INT >= 31400:
     from qgis.core import QgsProcessingParameterProviderConnection
@@ -72,10 +73,10 @@ class DeployAll(BaseProcessingAlgorithm):
         return tr('Deploy project and data to a clone')
 
     def group(self):
-        return tr('04 Prepare field work')
+        return tr('04 All-in-one')
 
     def groupId(self):
-        return 'lizsync_prepare_field_work'
+        return 'lizsync_all_in_one'
 
     def shortHelpString(self):
         short_help = tr(
@@ -161,27 +162,26 @@ class DeployAll(BaseProcessingAlgorithm):
 
         # PostgreSQL binary path (with psql, pg_dump, pg_restore)
         postgresql_binary_path = ls.variable('binaries/postgresql')
-        self.addParameter(
-            QgsProcessingParameterFile(
-                self.POSTGRESQL_BINARY_PATH,
-                tr('PostgreSQL binary path'),
-                defaultValue=postgresql_binary_path,
-                behavior=QgsProcessingParameterFile.Folder,
-                optional=False
-            )
+        param = QgsProcessingParameterFile(
+            self.POSTGRESQL_BINARY_PATH,
+            tr('PostgreSQL binary path'),
+            defaultValue=postgresql_binary_path,
+            behavior=QgsProcessingParameterFile.Folder,
+            optional=False
         )
+        param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(param)
 
         # Local directory containing the files to send to the clone by FTP
         local_qgis_project_folder = ls.variable('local/qgis_project_folder')
-        self.addParameter(
-            QgsProcessingParameterFile(
-                self.LOCAL_QGIS_PROJECT_FOLDER,
-                tr('Local desktop QGIS project folder'),
-                defaultValue=local_qgis_project_folder,
-                behavior=QgsProcessingParameterFile.Folder,
-                optional=False
-            )
+        param =QgsProcessingParameterFile(
+            self.LOCAL_QGIS_PROJECT_FOLDER,
+            tr('Local desktop QGIS project folder'),
+            defaultValue=local_qgis_project_folder,
+            behavior=QgsProcessingParameterFile.Folder,
+            optional=False
         )
+        self.addParameter(param)
 
         # Database ZIP archive file
         database_archive_file = ls.variable('general/database_archive_file')
@@ -190,100 +190,98 @@ class DeployAll(BaseProcessingAlgorithm):
                 tempfile.gettempdir(),
                 'central_database_package.zip'
             )
-        self.addParameter(
-            QgsProcessingParameterFile(
-                self.ZIP_FILE,
-                tr('Database ZIP archive path'),
-                defaultValue=database_archive_file,
-                behavior=QgsProcessingParameterFile.File,
-                optional=True,
-                extension='zip'
-            )
+        param = QgsProcessingParameterFile(
+            self.ZIP_FILE,
+            tr('Database ZIP archive path'),
+            defaultValue=database_archive_file,
+            behavior=QgsProcessingParameterFile.File,
+            optional=True,
+            extension='zip'
         )
+        self.addParameter(param)
 
         # Recreate clone server id
-        self.addParameter(
-            QgsProcessingParameterBoolean(
-                self.RECREATE_CLONE_SERVER_ID,
-                tr('Recreate clone server id. Do it only to fully reset the clone ID !'),
-                defaultValue=False,
-                optional=False
-            )
+        param = QgsProcessingParameterBoolean(
+            self.RECREATE_CLONE_SERVER_ID,
+            tr('Recreate clone server id. Do it only to fully reset the clone ID !'),
+            defaultValue=False,
+            optional=False
         )
+        param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(param)
 
         # Clone FTP connection parameters
         # method
         self.CLONE_FTP_PROTOCOLS = ['SFTP', 'FTP']
-        self.addParameter(
-            QgsProcessingParameterEnum(
-                self.CLONE_FTP_PROTOCOL,
-                tr('Clone (S)FTP protocol'),
-                options=self.CLONE_FTP_PROTOCOLS,
-                defaultValue=0,
-                optional=False,
-            )
+        param = QgsProcessingParameterEnum(
+            self.CLONE_FTP_PROTOCOL,
+            tr('Clone (S)FTP protocol'),
+            options=self.CLONE_FTP_PROTOCOLS,
+            defaultValue=0,
+            optional=False,
         )
+        self.addParameter(param)
+
         # host
         clone_ftp_host = ls.variable('ftp:clone/host')
-        self.addParameter(
-            QgsProcessingParameterString(
-                self.CLONE_FTP_HOST,
-                tr('Clone FTP Server host'),
-                defaultValue=clone_ftp_host,
-                optional=False
-            )
+        param = QgsProcessingParameterString(
+            self.CLONE_FTP_HOST,
+            tr('Clone FTP Server host'),
+            defaultValue=clone_ftp_host,
+            optional=False
         )
+        self.addParameter(param)
+
         # port
         clone_ftp_port = ls.variable('ftp:clone/port')
-        self.addParameter(
-            QgsProcessingParameterNumber(
-                self.CLONE_FTP_PORT,
-                tr('Clone FTP Server port'),
-                defaultValue=clone_ftp_port,
-                optional=False
-            )
+        param = QgsProcessingParameterNumber(
+            self.CLONE_FTP_PORT,
+            tr('Clone FTP Server port'),
+            defaultValue=clone_ftp_port,
+            optional=False
         )
+        self.addParameter(param)
+
         # login
         clone_ftp_login = ls.variable('ftp:clone/user')
-        self.addParameter(
-            QgsProcessingParameterString(
-                self.CLONE_FTP_LOGIN,
-                tr('Clone FTP Server login'),
-                defaultValue=clone_ftp_login,
-                optional=False
-            )
+        param = QgsProcessingParameterString(
+            self.CLONE_FTP_LOGIN,
+            tr('Clone FTP Server login'),
+            defaultValue=clone_ftp_login,
+            optional=False
         )
+        self.addParameter(param)
+
         # password
-        self.addParameter(
-            QgsProcessingParameterString(
-                self.CLONE_FTP_PASSWORD,
-                tr('Clone FTP Server password'),
-                optional=True
-            )
+        param = QgsProcessingParameterString(
+            self.CLONE_FTP_PASSWORD,
+            tr('Clone FTP Server password'),
+            optional=True
         )
+        self.addParameter(param)
+
         # remote directory
         clone_ftp_remote_dir = ls.variable('ftp:clone/remote_directory')
-        self.addParameter(
-            QgsProcessingParameterString(
-                self.CLONE_FTP_REMOTE_DIR,
-                tr('Clone FTP Server remote directory'),
-                defaultValue=clone_ftp_remote_dir,
-                optional=False
-            )
+        param = QgsProcessingParameterString(
+            self.CLONE_FTP_REMOTE_DIR,
+            tr('Clone FTP Server remote directory'),
+            defaultValue=clone_ftp_remote_dir,
+            optional=False
         )
+        self.addParameter(param)
 
         # Exclude some directories from sync
         excluded_directories = ls.variable('local/excluded_directories')
         if not excluded_directories:
             excluded_directories = 'data'
-        self.addParameter(
-            QgsProcessingParameterString(
-                self.FTP_EXCLUDE_REMOTE_SUBDIRS,
-                tr('List of sub-directory to exclude from synchro, separated by commas.'),
-                defaultValue=excluded_directories,
-                optional=True
-            )
+        param = QgsProcessingParameterString(
+            self.FTP_EXCLUDE_REMOTE_SUBDIRS,
+            tr('List of sub-directory to exclude from synchro, separated by commas.'),
+            defaultValue=excluded_directories,
+            optional=True
         )
+        param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(param)
 
         # OUTPUTS
         # Add output for message
