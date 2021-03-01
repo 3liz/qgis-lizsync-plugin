@@ -637,7 +637,7 @@ def add_database_audit_triggers(connection_name, schemas=None, tables=None):
     else:
         message = error_message
 
-    return status, message, tables
+    return status, message
 
 
 def checkFtpBinary():

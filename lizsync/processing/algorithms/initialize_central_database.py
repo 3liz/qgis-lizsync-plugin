@@ -337,7 +337,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
         # Add missing audit triggers
         if add_audit_triggers and not status:
             feedback.pushInfo(tr('ADD AUDIT TRIGGERS IN ALL THE TABLES OF THE GIVEN SCHEMAS'))
-            status, message, tables = add_database_audit_triggers(
+            status, message = add_database_audit_triggers(
                 connection_name_central,
                 synchronized_schemas
             )

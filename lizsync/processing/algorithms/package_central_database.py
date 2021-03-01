@@ -242,7 +242,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
 
         # Check if needed schema and metadata has been created
         if print_messages:
-            feedback.pushInfo(tr('CHECK IF LIZSYNC HAS BEEN INSTALLED AND DATABASE INITIALIZED'))
+            feedback.pushInfo(tr('Check if lizsync has been installed and central database initialized'))
         checks = {}
 
         # structure
@@ -361,46 +361,37 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         ls.setVariable('general/database_archive_file', zip_file)
         ls.save()
 
-        # First run some test in database
+        # Add the asked configuration: uid and triggers
+        if add_uid_columns:
+            feedback.pushInfo(tr('Add missing uid columns in all the chosen layers tables'))
+            status, message = add_database_uid_columns(
+                connection_name_central,
+                None,
+                tables
+            )
+            if not status:
+                raise QgsProcessingException(message)
+
+        if add_audit_triggers:
+            feedback.pushInfo(tr('Add missing audit triggers for all the chosen layers tables'))
+            status, message = add_database_audit_triggers(
+                connection_name_central,
+                None,
+                tables
+            )
+            if not status:
+                raise QgsProcessingException(message)
+            feedback.pushInfo(message)
+
+        # Check every needed configuration in the central database
         test, checks = self.checkCentralDatabase(parameters, context, feedback, True)
-        ok = True
         if test:
             message = tr('Every required test has passed successfully !')
             feedback.pushInfo(message)
         else:
             message = tr('Some needed configuration are missing in the central database.')
-
-            # Add missing uid columns
-            if add_uid_columns and not checks['uid columns']:
-                feedback.pushInfo('')
-                status, message = add_database_uid_columns(
-                    connection_name_central,
-                    None,
-                    tables
-                )
-                if not status:
-                    raise QgsProcessingException(message)
-                feedback.pushInfo(message)
-
-            # Add missing uid columns
-            if add_audit_triggers and not checks['audit triggers']:
-                feedback.pushInfo('')
-                status, message = add_database_audit_triggers(
-                    connection_name_central,
-                    None,
-                    tables
-                )
-                if not status:
-                    raise QgsProcessingException(message)
-                feedback.pushInfo(message)
-
-            # Recheck
-            test_2, checks_2 = self.checkCentralDatabase(parameters, context, feedback, False)
-            if not test_2:
-                ok = False
-                message = tr('Some needed configuration are missing in the central database.')
-        if not ok:
             raise QgsProcessingException(message)
+        feedback.pushInfo('')
 
         # Create temporary files
         sql_file_list = [
