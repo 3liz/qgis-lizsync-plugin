@@ -1,4 +1,4 @@
-synchronized_schemas
+synchronized_tables
 server_metadata
 conflicts
 history
