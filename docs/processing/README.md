@@ -5,6 +5,77 @@ hide:
 
 # Processing
 
+## 03 File synchronization
+
+
+### Build a mobile QGIS project
+
+ This scripts builds a mobile version of the current QGIS project. It only changes the qgs file, it is not in charge to export the layers.
+
+ The following actions are executed:
+ * search and replace the connection parameters for the PostgreSQL layers needed to be edited in the clone database
+ * search and replace the datasource for the layers which are exported to Geopackage
+ * save the changes in a new QGIS project file name after the current project name with the addition of the suffix _mobile. For example: YOUR_PROJECT_mobile.qgs if your project is named YOUR_PROJECT.qgs
+
+![algo_id](./lizsync-build_mobile_project.png)
+
+#### Parameters
+
+| ID | Description | Type | Info | Required | Advanced | Option |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String|The PostgreSQL connection to the central database. Needed to be able to search & replace the database connection parameters in the QGIS project to make it usable in the clone (Termux or Geopoppy).|✓|||
+PG_LAYERS|PostgreSQL Layers to edit in the field|MultipleLayers|Select the PostgreSQL layers you want to edit in the clone. The connection parameters of these layers will be adapted for the clone PostgreSQL datatabase|✓|||
+GPKG_LAYERS|Layers to convert into Geopackage|MultipleLayers|Select the vector layers you have exported (or you will export) to a Geopackage file  The datasource of these layers will be changed to reference the Geopackage layer instead of the initial source|✓|||
+
+
+#### Outputs
+
+| ID | Description | Type | Info |
+|:-:|:-:|:-:|:-:|
+OUTPUT_STATUS|Output status|Number||
+OUTPUT_STRING|Output message|String||
+
+
+***
+
+
+### Send local QGIS projects and files to the clone FTP server
+
+ Send QGIS projects and files to the clone FTP server remote directory.
+
+ This script can be used by the geomatician in charge of the deployment of data to one or several clone(s).
+
+ It synchronizes the files from the given local QGIS project folder to the clone remote folder by using the given FTP connexion. This means all the files from the clone folder will be overwritten by the files from the local QGIS project folder.
+
+ Beware ! This script does not adapt projects for the clone database (no modification of the PostgreSQL connexion data inside the QGIS project files) !
+
+![algo_id](./lizsync-send_projects_and_files_to_clone_ftp.png)
+
+#### Parameters
+
+| ID | Description | Type | Info | Required | Advanced | Option |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+LOCAL_QGIS_PROJECT_FOLDER|Local desktop QGIS project folder|File||✓|||
+CLONE_FTP_PROTOCOL|Clone (S)FTP protocol|Enum||✓||Values: SFTP, FTP <br>|
+CLONE_FTP_HOST|Clone FTP Server host|String||✓|||
+CLONE_FTP_PORT|Clone FTP Server port|Number||✓||Default: 2021 <br> Type: Integer<br> Min: -1.7976931348623157e+308, Max: 1.7976931348623157e+308 <br>|
+CLONE_FTP_LOGIN|Clone FTP Server login|String||✓||Default: geopoppy <br> |
+CLONE_FTP_PASSWORD|Clone FTP Server password|String|||||
+CLONE_FTP_REMOTE_DIR|Clone FTP Server remote directory|String||✓||Default: / <br> |
+FTP_EXCLUDE_REMOTE_SUBDIRS|List of sub-directory to exclude from synchro, separated by commas.|String||||Default: data <br> |
+
+
+#### Outputs
+
+| ID | Description | Type | Info |
+|:-:|:-:|:-:|:-:|
+OUTPUT_STATUS|Output status|Number||
+OUTPUT_STRING|Output message|String||
+
+
+***
+
+
 ## 01 Installation
 
 
@@ -16,7 +87,7 @@ hide:
  * An audit schema with auditing functions and tables
  * A lizsync schema with tables and functions
 
-Beware ! If the schema lizsync or audit already exists in the database, not installation will be made. You will need to manually correct the situation (drop or modifiy the schemas, tables and functions.
+Beware ! If the schema lizsync or audit already exists in the database, not installation will be made. You will need to manually correct the situation (drop or modifiy the schemas, tables and functions) with SQL commands.
 
 ![algo_id](./lizsync-create_database_structure.png)
 
@@ -24,7 +95,7 @@ Beware ! If the schema lizsync or audit already exists in the database, not inst
 
 | ID | Description | Type | Info | Required | Advanced | Option |
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-CONNECTION_NAME|PostgreSQL connection to the central database|String||✓|||
+CONNECTION_NAME|PostgreSQL connection to the central database|String|The PostgreSQL connection to the central database. You need to have the right to create a new schema in this database, as a schema lizsync will be created and filled with the needed tables and functions|✓|||
 OVERRIDE_AUDIT|Drop audit schema and all data ?|Boolean||✓|||
 OVERRIDE_LIZSYNC|Drop lizsync schema and all data ?|Boolean||✓|||
 
@@ -57,11 +128,11 @@ OUTPUT_STRING|Output message|String||
 
 | ID | Description | Type | Info | Required | Advanced | Option |
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String||✓|||
+CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String|The PostgreSQL connection to the central database.|✓|||
 ADD_SERVER_ID|Add server id in metadata table|Boolean||✓||Default: True <br> |
-ADD_UID_COLUMNS|Add unique identifiers in all tables|Boolean||✓||Default: True <br> |
-ADD_AUDIT_TRIGGERS|Add audit triggers in all tables|Boolean||✓||Default: True <br> |
-SCHEMAS|Restrict to comma separated schema names. NB: schemas public, lizsync & audit are never processed|String||||Default: test <br> |
+ADD_UID_COLUMNS|Add unique identifiers in all tables|Boolean||✓|||
+ADD_AUDIT_TRIGGERS|Add audit triggers in all tables|Boolean||✓|||
+SCHEMAS|Restrict to comma separated schema names. NB: schemas public, lizsync & audit are never processed|String|||||
 
 
 #### Outputs
@@ -87,8 +158,82 @@ OUTPUT_STRING|Output message|String||
 
 | ID | Description | Type | Info | Required | Advanced | Option |
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-CONNECTION_NAME|PostgreSQL connection to the central database|String||✓|||
+CONNECTION_NAME|PostgreSQL connection to the central database|String|The PostgreSQL connection to the central database. You need to have the right to create a new schema in this database, as a schema lizsync will be created and filled with the needed tables and functions|✓|||
 RUNIT|Check this box to upgrade. No action will be done otherwise|Boolean||✓|||
+
+
+#### Outputs
+
+| ID | Description | Type | Info |
+|:-:|:-:|:-:|:-:|
+OUTPUT_STATUS|Output status|Number||
+OUTPUT_STRING|Output message|String||
+
+
+***
+
+
+## 04 All-in-one
+
+
+### Deploy project and data to a clone
+
+ Send packaged QGIS projects, files and data to the clone
+
+
+
+![algo_id](./lizsync-deploy_all.png)
+
+#### Parameters
+
+| ID | Description | Type | Info | Required | Advanced | Option |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String|The PostgreSQL connection to the central database.|✓|||
+CONNECTION_NAME_CLONE|PostgreSQL connection to the clone database|String|The PostgreSQL connection to the clone database.|✓|||
+POSTGRESQL_BINARY_PATH|PostgreSQL binary path|File||✓|✓|Default: /usr/bin/ <br> |
+LOCAL_QGIS_PROJECT_FOLDER|Local desktop QGIS project folder|File||✓|||
+ZIP_FILE|Database ZIP archive path|File||||Default: /tmp/central_database_package.zip <br> |
+RECREATE_CLONE_SERVER_ID|Recreate clone server id. Do it only to fully reset the clone ID !|Boolean||✓|✓||
+CLONE_FTP_PROTOCOL|Clone (S)FTP protocol|Enum||✓||Values: SFTP, FTP <br>|
+CLONE_FTP_HOST|Clone FTP Server host|String||✓|||
+CLONE_FTP_PORT|Clone FTP Server port|Number||✓||Default: 2021 <br> Type: Integer<br> Min: -1.7976931348623157e+308, Max: 1.7976931348623157e+308 <br>|
+CLONE_FTP_LOGIN|Clone FTP Server login|String||✓||Default: geopoppy <br> |
+CLONE_FTP_PASSWORD|Clone FTP Server password|String|||||
+CLONE_FTP_REMOTE_DIR|Clone FTP Server remote directory|String||✓||Default: / <br> |
+FTP_EXCLUDE_REMOTE_SUBDIRS|List of sub-directory to exclude from synchro, separated by commas.|String|||✓|Default: data <br> |
+
+
+#### Outputs
+
+| ID | Description | Type | Info |
+|:-:|:-:|:-:|:-:|
+OUTPUT_STATUS|Output status|Number||
+OUTPUT_STRING|Output message|String||
+
+
+***
+
+
+### Package project and data from the central server
+
+ This scripts helps to prepare field work: it creates a package with PostgreSQL layers data, a Geopackage file with the other vector layers data and creates a mobile version of the current QGIS project
+
+ 
+
+![algo_id](./lizsync-package_all.png)
+
+#### Parameters
+
+| ID | Description | Type | Info | Required | Advanced | Option |
+|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
+CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String|The PostgreSQL connection to the central database.|✓|||
+POSTGRESQL_BINARY_PATH|PostgreSQL binary path|File||✓|✓|Default: /usr/bin/ <br> |
+PG_LAYERS|PostgreSQL Layers to edit in the field|MultipleLayers||✓|||
+ADD_UID_COLUMNS|Add unique identifiers in all tables|Boolean||✓|✓|Default: True <br> |
+ADD_AUDIT_TRIGGERS|Add audit triggers in all tables|Boolean||✓|✓|Default: True <br> |
+ADDITIONAL_SQL_FILE|Additionnal SQL file to run in the clone after the ZIP deployement|File|||✓||
+GPKG_LAYERS|Layers to convert into Geopackage|MultipleLayers||✓|||
+OVERWRITE_GPKG|Overwrite the Geopackage file if it exists ?|Boolean||✓|✓|Default: True <br> |
 
 
 #### Outputs
@@ -115,8 +260,8 @@ OUTPUT_STRING|Output message|String||
 
 | ID | Description | Type | Info | Required | Advanced | Option |
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String||✓|||
-CONNECTION_NAME_CLONE|PostgreSQL connection to the clone database|String||✓|||
+CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String|The PostgreSQL connection to the central database.|✓|||
+CONNECTION_NAME_CLONE|PostgreSQL connection to the clone database|String|The PostgreSQL connection to the clone database.|✓|||
 POSTGRESQL_BINARY_PATH|PostgreSQL binary path|File||✓||Default: /usr/bin/ <br> |
 ZIP_FILE|Database ZIP archive path|File||||Default: /tmp/central_database_package.zip <br> |
 RECREATE_CLONE_SERVER_ID|Recreate clone server id. Do it only to fully reset the clone ID !|Boolean||✓|||
@@ -137,7 +282,7 @@ OUTPUT_STRING|Output message|String||
 
  Package data from the central database, for future deployement on one or several clone(s).
 
- This script backups all data from the given list of schemas to a ZIP archive, named by default "central_database_package.zip".
+ This script backups all data from the given list of tables to a ZIP archive, named by default "central_database_package.zip".
 
  You can add an optionnal SQL file to run in the clone after the deployment of the archive. This file must contain valid PostgreSQL queries and can be used to drop some triggers in the clone or remove some constraints. For example "DELETE FROM pg_trigger WHERE tgname = 'name_of_trigger';"
 
@@ -149,9 +294,11 @@ OUTPUT_STRING|Output message|String||
 
 | ID | Description | Type | Info | Required | Advanced | Option |
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String||✓|||
+CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String|The PostgreSQL connection to the central database.|✓|||
 POSTGRESQL_BINARY_PATH|PostgreSQL binary path|File||✓||Default: /usr/bin/ <br> |
-SCHEMAS|List of schemas to package, separated by commas. (schemas public, lizsync & audit are never processed)|String||✓||Default: test <br> |
+PG_LAYERS|PostgreSQL Layers to edit in the field|MultipleLayers||✓|||
+ADD_UID_COLUMNS|Add unique identifiers in all tables|Boolean||✓||Default: True <br> |
+ADD_AUDIT_TRIGGERS|Add audit triggers in all tables|Boolean||✓||Default: True <br> |
 ADDITIONAL_SQL_FILE|Additionnal SQL file to run in the clone after the ZIP deployement|File|||||
 ZIP_FILE|Output archive file (ZIP)|FileDestination||✓||Default: /tmp/central_database_package.zip <br> |
 
@@ -186,113 +333,8 @@ The central database stores which clone has replayed which audited modification,
 
 | ID | Description | Type | Info | Required | Advanced | Option |
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String||✓|||
-CONNECTION_NAME_CLONE|PostgreSQL connection to the clone database|String||✓|||
-
-
-#### Outputs
-
-| ID | Description | Type | Info |
-|:-:|:-:|:-:|:-:|
-OUTPUT_STATUS|Output status|Number||
-OUTPUT_STRING|Output message|String||
-
-
-***
-
-
-## 03 GeoPoppy file synchronization
-
-
-### Get projects and files from the central FTP server
-
- Get QGIS projects and files from the give FTP server and remote directory and adapt QGIS projects for the local clone database by replacing PostgreSQL connection data with the local PostgreSQL server data. An internet connection is needed to use this algorithm
-
-![algo_id](./lizsync-get_projects_and_files_from_central_ftp.png)
-
-#### Parameters
-
-| ID | Description | Type | Info | Required | Advanced | Option |
-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String||✓|||
-CENTRAL_FTP_HOST|Central FTP Server host|String||✓|||
-CENTRAL_FTP_PORT|Central FTP Server port|Number||✓||Default: 21 <br> Type: Integer<br> Min: -1.7976931348623157e+308, Max: 1.7976931348623157e+308 <br>|
-CENTRAL_FTP_LOGIN|Central FTP Server login|String||✓|||
-CENTRAL_FTP_PASSWORD|Central FTP Server password|String|||||
-CENTRAL_FTP_REMOTE_DIR|Central FTP Server remote directory|String||✓|||
-FTP_EXCLUDE_REMOTE_SUBDIRS|List of sub-directory to exclude from synchro, separated by commas.|String||||Default: data <br> |
-CLONE_QGIS_PROJECT_FOLDER|Clone QGIS project folder|File||✓|||
-REPLACE_DATASOURCE_IN_QGIS_PROJECT|Adapt PostgreSQL connection parameters for GeoPoppy database ?|Boolean||✓||Default: True <br> |
-
-
-#### Outputs
-
-| ID | Description | Type | Info |
-|:-:|:-:|:-:|:-:|
-OUTPUT_STATUS|Output status|Number||
-OUTPUT_STRING|Output message|String||
-
-
-***
-
-
-### Send local QGIS projects and files to the clone FTP server
-
- Send QGIS projects and files to the clone FTP server remote directory.
-
- This script can be used by the geomatician in charge of the deployment of data to one or several clone(s).
-
- It synchronizes the files from the given local QGIS project folder to the clone remote folder by using the given FTP connexion. This means all the files from the clone folder will be overwritten by the files from the local QGIS project folder.
-
- Beware ! This script does not adapt projects for the clone database (no modification of the PostgreSQL connexion data inside the QGIS project files) !
-
-![algo_id](./lizsync-send_projects_and_files_to_clone_ftp.png)
-
-#### Parameters
-
-| ID | Description | Type | Info | Required | Advanced | Option |
-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String||✓|||
-LOCAL_QGIS_PROJECT_FOLDER|Local desktop QGIS project folder|File||✓|||
-CLONE_FTP_HOST|Clone FTP Server host|String||✓|||
-CLONE_FTP_PORT|Clone FTP Server port|Number||✓||Default: 2021 <br> Type: Integer<br> Min: -1.7976931348623157e+308, Max: 1.7976931348623157e+308 <br>|
-CLONE_FTP_LOGIN|Clone FTP Server login|String||✓||Default: geopoppy <br> |
-CLONE_FTP_PASSWORD|Clone FTP Server password|String|||||
-CLONE_FTP_REMOTE_DIR|Clone FTP Server remote directory|String||✓||Default: / <br> |
-FTP_EXCLUDE_REMOTE_SUBDIRS|List of sub-directory to exclude from synchro, separated by commas.|String||||Default: data <br> |
-
-
-#### Outputs
-
-| ID | Description | Type | Info |
-|:-:|:-:|:-:|:-:|
-OUTPUT_STATUS|Output status|Number||
-OUTPUT_STRING|Output message|String||
-
-
-***
-
-
-### Synchronize the clone media subfolder to the central FTP server
-
- Send media files, such as new images, stored in the clone QGIS "media/upload/" folder, TO the central FTP server remote directory "media/upload/"
-
- These media files can for example have been added by using Lizmap editing form.
-
- Every file existing in the clone "media/upload/" folder but not in the central server "media/upload/" folder will be sent.
-
-![algo_id](./lizsync-synchronize_media_subfolder_to_ftp.png)
-
-#### Parameters
-
-| ID | Description | Type | Info | Required | Advanced | Option |
-|:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-LOCAL_QGIS_PROJECT_FOLDER|Local QGIS project folder|File||✓|||
-CENTRAL_FTP_HOST|Central FTP Server host|String||✓|||
-CENTRAL_FTP_PORT|Central FTP Server port|Number||✓||Default: 21 <br> Type: Integer<br> Min: -1.7976931348623157e+308, Max: 1.7976931348623157e+308 <br>|
-CENTRAL_FTP_LOGIN|Central FTP Server login|String||✓|||
-CENTRAL_FTP_PASSWORD|Central FTP Server password|String|||||
-CENTRAL_FTP_REMOTE_DIR|Central FTP Server remote directory|String||✓|||
+CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String|The PostgreSQL connection to the central database.|✓|||
+CONNECTION_NAME_CLONE|PostgreSQL connection to the clone database|String|The PostgreSQL connection to the clone database.|✓|||
 
 
 #### Outputs
