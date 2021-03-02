@@ -84,10 +84,9 @@ OUTPUT_STRING|Output message|String||
  Install the LizSync schema with tables and function on the central database.
 
  This script will add
- * An audit schema with auditing functions and tables
  * A lizsync schema with tables and functions
 
-Beware ! If the schema lizsync or audit already exists in the database, not installation will be made. You will need to manually correct the situation (drop or modifiy the schemas, tables and functions) with SQL commands.
+Beware ! If the schema lizsync already exists in the database, not installation will be made. You will need to manually correct the situation (drop or modifiy the schemas, tables and functions) with SQL commands.
 
 ![algo_id](./lizsync-create_database_structure.png)
 
@@ -96,7 +95,6 @@ Beware ! If the schema lizsync or audit already exists in the database, not inst
 | ID | Description | Type | Info | Required | Advanced | Option |
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 CONNECTION_NAME|PostgreSQL connection to the central database|String|The PostgreSQL connection to the central database. You need to have the right to create a new schema in this database, as a schema lizsync will be created and filled with the needed tables and functions|✓|||
-OVERRIDE_AUDIT|Drop audit schema and all data ?|Boolean||✓|||
 OVERRIDE_LIZSYNC|Drop lizsync schema and all data ?|Boolean||✓|||
 
 
@@ -118,7 +116,7 @@ OUTPUT_STRING|Output message|String||
  LizSync needs to have :
  * A server ID stored in the lizsync.server_metadata table
  * All tables from the given schema must have a unique identifier column (uid) with standard uuid inside
- * All tables from the given schema must be audited (trigger of the audit tool)
+ * All tables from the given schema must be audited by a trigger
 
  You can pass a list of PostgreSQL central database schemas and this alg will add the necessary data and tools
 
@@ -132,7 +130,7 @@ CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String|The
 ADD_SERVER_ID|Add server id in metadata table|Boolean||✓||Default: True <br> |
 ADD_UID_COLUMNS|Add unique identifiers in all tables|Boolean||✓|||
 ADD_AUDIT_TRIGGERS|Add audit triggers in all tables|Boolean||✓|||
-SCHEMAS|Restrict to comma separated schema names. NB: schemas public, lizsync & audit are never processed|String|||||
+SCHEMAS|Restrict to comma separated schema names. NB: schemas public & lizsync are never processed|String|||||
 
 
 #### Outputs
@@ -319,7 +317,7 @@ OUTPUT_STRING|Output message|String||
 
  This scripts run a two-way data synchronization between the central and clone database.
 
- The data to synchronize are listed by reading the content of the "audit.logged_actions" of each database, since the last synchronization or the last deployement of ZIP package.
+ The data to synchronize are listed by reading the content of the "lizsync.logged_actions" of each database, since the last synchronization or the last deployement of ZIP package.
 
  This audit data are transformed into INSERT/UPDATE/DELETE SQL queries which are played in the databases in this order:
  1/ From the CENTRAL to the CLONE database
