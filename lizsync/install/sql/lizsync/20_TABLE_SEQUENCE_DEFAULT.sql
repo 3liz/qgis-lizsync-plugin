@@ -74,15 +74,15 @@ CREATE TABLE lizsync.server_metadata (
 );
 
 
--- synchronized_schemas
-CREATE TABLE lizsync.synchronized_schemas (
+-- synchronized_tables
+CREATE TABLE lizsync.synchronized_tables (
     server_id uuid NOT NULL,
-    sync_schemas jsonb NOT NULL
+    sync_tables jsonb NOT NULL
 );
 
 
--- synchronized_schemas
-COMMENT ON TABLE lizsync.synchronized_schemas IS 'List of schemas to synchronize per slave server id. This list works as a white list. Only listed schemas will be synchronized for each server ids.';
+-- synchronized_tables
+COMMENT ON TABLE lizsync.synchronized_tables IS 'List of tables to synchronize per clone server id. This list works as a white list. Only listed tables will be synchronized for each server ids.';
 
 
 -- sys_structure_metadonnee

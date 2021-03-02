@@ -143,7 +143,7 @@ OUTPUT_STRING|Output message|String||
 
  An internet connection is needed because a synchronization item must be written to the central database "lizsync.history" table during the process. and obviously data must be downloaded from the central database
 
-![algo_id](./lizsync-package_master_database.png)
+![algo_id](./lizsync-package_central_database.png)
 
 #### Parameters
 

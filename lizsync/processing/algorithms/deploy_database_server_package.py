@@ -17,6 +17,7 @@ import os
 import tempfile
 
 from qgis.core import (
+    Qgis,
     QgsProcessingException,
     QgsProcessingParameterString,
     QgsProcessingParameterFile,
@@ -24,6 +25,9 @@ from qgis.core import (
     QgsProcessingOutputString,
     QgsProcessingOutputNumber
 )
+if Qgis.QGIS_VERSION_INT >= 31400:
+    from qgis.core import QgsProcessingParameterProviderConnection
+
 from .tools import (
     lizsyncConfig,
     getUriFromConnectionName,
@@ -84,35 +88,69 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         ls = lizsyncConfig()
 
         # INPUTS
-        # central database
+        # Central database connection name
         connection_name_central = ls.variable('postgresql:central/name')
-        db_param_a = QgsProcessingParameterString(
-            self.CONNECTION_NAME_CENTRAL,
-            tr('PostgreSQL connection to the central database'),
-            defaultValue=connection_name_central,
-            optional=False
+        label = tr('PostgreSQL connection to the central database')
+        if Qgis.QGIS_VERSION_INT >= 31400:
+            param = QgsProcessingParameterProviderConnection(
+                self.CONNECTION_NAME_CENTRAL,
+                label,
+                "postgres",
+                defaultValue=connection_name_central,
+                optional=False,
+            )
+        else:
+            param = QgsProcessingParameterString(
+                self.CONNECTION_NAME_CENTRAL,
+                label,
+                defaultValue=connection_name_central,
+                optional=False
+            )
+            param.setMetadata({
+                'widget_wrapper': {
+                    'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
+                }
+            })
+        tooltip = tr(
+            'The PostgreSQL connection to the central database.'
         )
-        db_param_a.setMetadata({
-            'widget_wrapper': {
-                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
-            }
-        })
-        self.addParameter(db_param_a)
+        if Qgis.QGIS_VERSION_INT >= 31600:
+            param.setHelp(tooltip)
+        else:
+            param.tooltip_3liz = tooltip
+        self.addParameter(param)
 
         # Clone database connection parameters
         connection_name_clone = ls.variable('postgresql:clone/name')
-        db_param_b = QgsProcessingParameterString(
-            self.CONNECTION_NAME_CLONE,
-            tr('PostgreSQL connection to the clone database'),
-            defaultValue=connection_name_clone,
-            optional=False
+        label = tr('PostgreSQL connection to the clone database')
+        if Qgis.QGIS_VERSION_INT >= 31400:
+            param = QgsProcessingParameterProviderConnection(
+                self.CONNECTION_NAME_CLONE,
+                label,
+                "postgres",
+                defaultValue=connection_name_clone,
+                optional=False,
+            )
+        else:
+            param = QgsProcessingParameterString(
+                self.CONNECTION_NAME_CLONE,
+                label,
+                defaultValue=connection_name_clone,
+                optional=False
+            )
+            param.setMetadata({
+                'widget_wrapper': {
+                    'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
+                }
+            })
+        tooltip = tr(
+            'The PostgreSQL connection to the clone database.'
         )
-        db_param_b.setMetadata({
-            'widget_wrapper': {
-                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
-            }
-        })
-        self.addParameter(db_param_b)
+        if Qgis.QGIS_VERSION_INT >= 31600:
+            param.setHelp(tooltip)
+        else:
+            param.tooltip_3liz = tooltip
+        self.addParameter(param)
 
         # PostgreSQL binary path (with psql, pg_dump, pg_restore)
         postgresql_binary_path = ls.variable('binaries/postgresql')
@@ -145,6 +183,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             )
         )
 
+        # Recreate clone server id
         self.addParameter(
             QgsProcessingParameterBoolean(
                 self.RECREATE_CLONE_SERVER_ID,
@@ -183,7 +222,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         if not has_bin_file:
             return False, tr('The needed PostgreSQL binaries cannot be found in the specified path')
 
-        # Check output zip path
+        # Check zip archive path
         database_archive_file = self.parameterAsString(parameters, self.ZIP_FILE, context)
         if not os.path.exists(database_archive_file):
             database_archive_file = os.path.join(
@@ -191,8 +230,6 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                 'central_database_package.zip'
             )
         ok = os.path.exists(database_archive_file)
-
-        # Check ZIP archive content
         if not ok:
             return False, tr("The ZIP archive does not exists in the specified path") + ": {0}".format(database_archive_file)
         parameters[self.ZIP_FILE] = database_archive_file
@@ -200,11 +237,29 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         # Check connections
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
         connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
-        ok, uri, msg = getUriFromConnectionName(connection_name_central, True)
+        ok, uri_central, msg = getUriFromConnectionName(connection_name_central, True)
         if not ok:
             return False, msg
         ok, uri, msg = getUriFromConnectionName(connection_name_clone, True)
         if not ok:
+            return False, msg
+
+        # Check we can retrieve host, port, user and password
+        # for central database
+        # since they are used inside the clone to connect to the central database with dblink
+        # service file are not possible yet
+        if uri_central.service():
+            msg = tr('Central database connection uses a service file. This is not supported yet')
+            return False, msg
+        if not uri_central.password():
+            password = get_connection_password_from_ini(uri_central)
+            uri_central.setPassword(password)
+        if not uri_central.password():
+            msg = tr('No password found for the central database connection !')
+            msg += tr(
+                'It is needed to let the clone connect to the central'
+                ' database during the synchronisation'
+            )
             return False, msg
 
         return super(DeployDatabaseServerPackage, self).checkParameterValues(parameters, context)
@@ -256,15 +311,16 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
 
         # Check needed files
         feedback.pushInfo(tr('CHECK UNCOMPRESSED FILES'))
-        sql_file_list = [
+        archive_files = [
             '01_before.sql',
+            '02_predata.sql',
             '02_data.sql',
             '03_after.sql',
             '04_lizsync.sql',
             'sync_id.txt',
-            'sync_schemas.txt'
+            'sync_tables.txt'
         ]
-        for f in sql_file_list:
+        for f in archive_files:
             if not os.path.exists(os.path.join(dir_path, f)):
                 m = tr('One mandatory file has not been found in the ZIP archive') + '  - %s' % f
                 raise QgsProcessingException(m)
@@ -372,28 +428,31 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                 ))
 
         # Get synchronized schemas from text file
-        feedback.pushInfo(tr('GET THE LIST OF SYNCHRONIZED SCHEMAS FROM THE FILE sync_schemas.txt'))
-        with open(os.path.join(dir_path, 'sync_schemas.txt')) as f:
-            sync_schemas = f.readline().strip()
-        if sync_schemas == '':
-            m = tr('No schema to syncronize')
+        feedback.pushInfo(tr('GET THE LIST OF SYNCHRONIZED TABLES FROM THE FILE sync_tables.txt'))
+        with open(os.path.join(dir_path, 'sync_tables.txt')) as f:
+            tables = f.readline().strip()
+        if tables == '':
+            m = tr('No table to syncronize')
             raise QgsProcessingException(m)
 
-        feedback.pushInfo(tr('Schema list found in sync_schemas.txt') + ': %s' % sync_schemas)
+        feedback.pushInfo(tr('List of tables found in sync_tables.txt') + ': %s' % tables)
 
         feedback.pushInfo('')
 
         # CLONE DATABASE
         # Run SQL scripts from archive with PSQL command
         feedback.pushInfo(tr('RUN SQL SCRIPT FROM THE DECOMPRESSED ZIP FILE'))
-        a_sql = os.path.join(dir_path, '01_before.sql')
-        b_sql = os.path.join(dir_path, '02_data.sql')
-        c_sql = os.path.join(dir_path, '03_after.sql')
-        d_sql = os.path.join(dir_path, '04_lizsync.sql')
-        if not os.path.exists(a_sql) or not os.path.exists(b_sql) or not os.path.exists(c_sql):
-            m = tr('SQL files not found')
-            raise QgsProcessingException(m)
-        sql_files = [a_sql, b_sql, c_sql, d_sql]
+        sql_files = [
+            os.path.join(dir_path, '01_before.sql'),
+            os.path.join(dir_path, '02_predata.sql'),
+            os.path.join(dir_path, '02_data.sql'),
+            os.path.join(dir_path, '03_after.sql'),
+            os.path.join(dir_path, '04_lizsync.sql'),
+        ]
+        for f in sql_files:
+            if not os.path.exists(f):
+                m = tr('SQL files not found') + ': {}'.format(f)
+                raise QgsProcessingException(m)
 
         # Add additional SQL file if present
         last_sql = os.path.join(dir_path, '99_last.sql')
@@ -431,14 +490,16 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             pgbin = '"' + pgbin + '"'
 
         # Run SQL files
-        for i in sql_files:
+        for sql_file in sql_files:
             try:
-                feedback.pushInfo(tr('Loading file') + ' {0} ....'.format(i))
+                short_file_name = sql_file.replace(dir_path, '')
+                feedback.pushInfo(tr('Loading file') + ' {0} ...'.format(short_file_name))
                 cmd = [
                           pgbin
                       ] + cmdo + [
+                          '-v "ON_ERROR_STOP=1"',
                           '--no-password',
-                          '-f "{0}"'.format(i)
+                          '-f "{0}"'.format(sql_file)
                       ]
                 # feedback.pushInfo('PSQL = %s' % ' '.join(cmd) )
                 # Add password if needed
@@ -449,23 +510,23 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                         uri.setPassword(password)
                     myenv = {**{'PGPASSWORD': uri.password()}, **os.environ}
 
-                run_command(cmd, myenv, feedback)
-                # subprocess.run(
-                # " ".join(cmd),
-                # shell=True,
-                # env=myenv
-                # )
-                msg += '* {0} -> OK'.format(i.replace(dir_path, ''))
+                returncode, stdout = run_command(cmd, myenv, feedback)
+                if returncode != 0:
+                    m = tr('Error loading file') + ' {0}'.format(short_file_name)
+                    raise QgsProcessingException(m)
+                msg += '* {0} -> OK'.format(short_file_name)
+                feedback.pushInfo('* {0} has been loaded'.format(sql_file.replace(dir_path, '')))
 
                 # Delete SQL scripts
-                os.remove(i)
+                if os.path.exists(sql_file):
+                    os.remove(sql_file)
 
-            except Exception:
-                m = tr('Error loading file') + ' {0}'.format(i)
+            except Exception as e:
+                m = tr('Error loading file') + ' {0}'.format(short_file_name)
+                m += ' - Details: ' + str(e)
                 raise QgsProcessingException(m)
 
             finally:
-                feedback.pushInfo('* {0} has been loaded'.format(i.replace(dir_path, '')))
                 feedback.pushInfo('')
 
         feedback.pushInfo('')
@@ -512,20 +573,22 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         feedback.pushInfo('')
 
         # CENTRAL DATABASE
-        # Add an item in lizsync.synchronized_schemas
+        # Add an item in lizsync.synchronized_tables
         # to know afterward wich schemas to use when performing sync
-        feedback.pushInfo(tr('ADDING THE LIST OF SYNCHRONIZED SCHEMAS FOR THIS CLONE IN THE CENTRAL DATABASE '))
+        feedback.pushInfo(tr('ADDING THE LIST OF SYNCHRONIZED TABLES FOR THIS CLONE IN THE CENTRAL DATABASE '))
         sql = '''
-            DELETE FROM lizsync.synchronized_schemas
-            WHERE server_id = '{0}';
-            INSERT INTO lizsync.synchronized_schemas
-            (server_id, sync_schemas)
+            INSERT INTO lizsync.synchronized_tables AS s
+            (server_id, sync_tables)
             VALUES
-            ( '{0}', jsonb_build_array( '{1}' ) );
+            ( '{0}', jsonb_build_array( '{1}' ) )
+            ON CONFLICT ON CONSTRAINT synchronized_tables_pkey
+            DO UPDATE
+            SET sync_tables = EXCLUDED.sync_tables || s.sync_tables
+            ;
 
         '''.format(
             clone_id,
-            "', '".join([a.strip() for a in sync_schemas.split(',')])
+            "', '".join([a.strip() for a in tables.split(',')])
         )
         # feedback.pushInfo(sql)
         header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
@@ -533,10 +596,10 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             sql
         )
         if ok:
-            msg = tr('List of synchronized schemas added in central database for this clone')
+            msg = tr('List of synchronized tables added in central database for this clone')
             feedback.pushInfo(msg)
         else:
-            m = tr('Error while adding the synchronized schemas in the central database')
+            m = tr('Error while adding the synchronized tables in the central database')
             m+= ' ' + error_message
             raise QgsProcessingException(m)
 
@@ -558,7 +621,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             raise QgsProcessingException(msg)
 
         # Add foreign server in the clone database
-        feedback.pushInfo(tr('ADDING THE FOREING SERVER AND SCHEMAS ID IN THE CLONE DATABASE'))
+        feedback.pushInfo(tr('ADDING THE FOREIGN SERVER AND SCHEMAS ID IN THE CLONE DATABASE'))
         sql = '''
         SELECT lizsync.create_central_server_fdw('{0}','{1}','{2}','{3}', '{4}');
         SELECT lizsync.import_central_server_schemas();
@@ -612,6 +675,13 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                 raise QgsProcessingException(m)
 
         feedback.pushInfo('')
+
+        # Delete txt files
+        other_files = [o for o in archive_files if not o.endswith('.sql')]
+        for a in other_files:
+            f = os.path.join(dir_path, a)
+            if os.path.exists(f):
+                os.remove(f)
 
         output = {
             self.OUTPUT_STATUS: 1,

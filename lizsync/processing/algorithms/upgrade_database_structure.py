@@ -7,12 +7,15 @@ import os
 
 from db_manager.db_plugins import createDbPlugin
 from qgis.core import (
+    Qgis,
     QgsProcessingException,
     QgsProcessingParameterString,
     QgsProcessingParameterBoolean,
     QgsProcessingOutputNumber,
     QgsProcessingOutputString
 )
+if Qgis.QGIS_VERSION_INT >= 31400:
+    from qgis.core import QgsProcessingParameterProviderConnection
 
 from .tools import (
     lizsyncConfig,
@@ -71,18 +74,39 @@ class UpgradeDatabaseStructure(BaseProcessingAlgorithm):
 
         # Central database connection name
         connection_name = ls.variable('postgresql:central/name')
-        db_param_a = QgsProcessingParameterString(
-            self.CONNECTION_NAME,
-            tr('PostgreSQL connection to the central database'),
-            defaultValue=connection_name,
-            optional=False
+        label = tr('PostgreSQL connection to the central database')
+        if Qgis.QGIS_VERSION_INT >= 31400:
+            param = QgsProcessingParameterProviderConnection(
+                self.CONNECTION_NAME,
+                label,
+                "postgres",
+                defaultValue=connection_name,
+                optional=False,
+            )
+        else:
+            param = QgsProcessingParameterString(
+                self.CONNECTION_NAME,
+                label,
+                defaultValue=connection_name,
+                optional=False
+            )
+            param.setMetadata({
+                'widget_wrapper': {
+                    'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
+                }
+            })
+        tooltip = tr(
+            'The PostgreSQL connection to the central database.'
         )
-        db_param_a.setMetadata({
-            'widget_wrapper': {
-                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
-            }
-        })
-        self.addParameter(db_param_a)
+        tooltip += tr(
+            ' You need to have the right to create a new schema in this database,'
+            ' as a schema lizsync will be created and filled with the needed tables and functions'
+        )
+        if Qgis.QGIS_VERSION_INT >= 31600:
+            param.setHelp(tooltip)
+        else:
+            param.tooltip_3liz = tooltip
+        self.addParameter(param)
 
         # Checkbox needed to be check to run the upgrade
         self.addParameter(

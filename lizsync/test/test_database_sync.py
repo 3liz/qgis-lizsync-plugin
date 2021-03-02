@@ -8,6 +8,7 @@ import processing
 
 from qgis.core import (
     QgsApplication,
+    QgsVectorLayer,
 )
 from qgis.testing import unittest
 
@@ -42,6 +43,8 @@ class TestSyncDatabase(unittest.TestCase):
 
     def setUp(self) -> None:
         super().setUp()
+
+        # Set PostgreSQL connections
         self.central_server = psycopg2.connect(service="test")
         self.central_cursor = self.central_server.cursor()
 
@@ -51,6 +54,7 @@ class TestSyncDatabase(unittest.TestCase):
         self.clone_b_server = psycopg2.connect(service="lizsync_clone_b")
         self.clone_b_cursor = self.clone_b_server.cursor()
 
+        # Add QGIS processing provider
         self.provider = ProcessingProvider()
         registry = QgsApplication.processingRegistry()
         if not registry.providerById(self.provider.id()):
@@ -59,6 +63,7 @@ class TestSyncDatabase(unittest.TestCase):
         self.feedback = LoggerProcessingFeedBack(use_logger=True)
         feedback = self.feedback if DEBUG else None
 
+        # Drop and recreate PostgreSQL test schema
         self.feedback.pushInfo('Recreating schemas…')
         _, _, _, ok, error_message = fetch_data_from_sql_query(
             "test", "DROP SCHEMA IF EXISTS {} CASCADE;".format(SCHEMA_DATA))
@@ -68,6 +73,7 @@ class TestSyncDatabase(unittest.TestCase):
             "test", "CREATE SCHEMA IF NOT EXISTS {};".format(SCHEMA_DATA))
         self.assertTrue(ok, error_message)
 
+        # Import data
         self.feedback.pushInfo('Importing data…')
         # Load testing data
         for root, directories, files in os.walk(plugin_test_data_path()):
@@ -118,6 +124,7 @@ class TestSyncDatabase(unittest.TestCase):
                     _, _, _, ok, error_message = fetch_data_from_sql_query("test", sql)
                     self.assertTrue(ok, error_message)
 
+        # Create database structure
         self.feedback.pushInfo('Creating database structure…')
         params = {
             "CONNECTION_NAME": "test",
@@ -129,6 +136,7 @@ class TestSyncDatabase(unittest.TestCase):
         )
         self.assertEqual(1, result['OUTPUT_STATUS'])
 
+        # Initialize central database
         self.feedback.pushInfo('Initializing central database…')
         params = {
             "CONNECTION_NAME_CENTRAL": "test",
@@ -142,20 +150,36 @@ class TestSyncDatabase(unittest.TestCase):
         )
         self.assertEqual(1, result['OUTPUT_STATUS'])
 
+        # Create a package from the central database
         self.feedback.pushInfo('Packaging master database…')
         zip_archive = "/tmp/archive_test.zip"
         # zip_archive = '/tests_directory/lizsync/zip_archive.zip'
+        district_layer = QgsVectorLayer(
+            'service=\'test\' key=\'ogc_fid\' estimatedmetadata=true srid=2154 type=Polygon checkPrimaryKeyUnicity=\'1\' table=\"test\".\"montpellier_districts\" (geom) sql=', 'test', 'postgres'
+        )
+        subdistrict_layer = QgsVectorLayer(
+            'service=\'test\' key=\'ogc_fid\' estimatedmetadata=true srid=2154 type=Polygon checkPrimaryKeyUnicity=\'1\' table=\"test\".\"montpellier_sub_districts\" (geom) sql=', 'test', 'postgres'
+        )
+        pluviometer_layer = QgsVectorLayer(
+            'service=\'test\' key=\'ogc_fid\' estimatedmetadata=true srid=2154 type=Point checkPrimaryKeyUnicity=\'1\' table=\"test\".\"pluviometers\" (geom) sql=', 'test', 'postgres'
+        )
         params = {
-            "CONNECTION_NAME_CENTRAL": "test",
-            "POSTGRESQL_BINARY_PATH": "/usr/bin/",
-            "SCHEMAS": SCHEMA_DATA,
-            "ZIP_FILE": zip_archive,
+            'CONNECTION_NAME_CENTRAL': 'test',
+            'POSTGRESQL_BINARY_PATH': '/usr/bin/',
+            'PG_LAYERS': [
+                district_layer,
+                subdistrict_layer,
+                pluviometer_layer,
+            ],
+            'ZIP_FILE': zip_archive,
             # "ADDITIONNAL_SQL_FILE": "additionnal_sql_commande.sql"
         }
+
         processing.run(
-            "lizsync:package_master_database", params, feedback=feedback
+            "lizsync:package_central_database", params, feedback=feedback
         )
 
+        # Deploy package to clones
         self.feedback.pushInfo('Deploying to clone A…')
         params = {
             "CONNECTION_NAME_CENTRAL": "test",
@@ -163,11 +187,10 @@ class TestSyncDatabase(unittest.TestCase):
             "POSTGRESQL_BINARY_PATH": "/usr/bin/",
             "ZIP_FILE": zip_archive
         }
-
-        self.feedback.pushInfo('Deploying to clone B…')
         processing.run(
             "lizsync:deploy_database_server_package", params, feedback=feedback
         )
+        self.feedback.pushInfo('Deploying to clone B…')
         params['CONNECTION_NAME_CLONE'] = 'lizsync_clone_b'
         processing.run(
             "lizsync:deploy_database_server_package", params, feedback=feedback

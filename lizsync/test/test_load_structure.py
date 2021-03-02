@@ -136,7 +136,7 @@ class TestProcessing(unittest.TestCase):
             "history",
             "server_metadata",
             "conflicts",
-            "synchronized_schemas",
+            "synchronized_tables",
             "sys_structure_metadonnee",
         ]
         self.assertCountEqual(expected, result)
@@ -189,7 +189,7 @@ class TestProcessing(unittest.TestCase):
             "history",
             "server_metadata",
             "conflicts",
-            "synchronized_schemas",
+            "synchronized_tables",
             "sys_structure_metadonnee",
         ]
         self.assertCountEqual(expected, result)

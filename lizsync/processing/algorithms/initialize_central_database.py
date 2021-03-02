@@ -18,17 +18,22 @@ __copyright__ = '(C) 2018 by 3liz'
 __revision__ = '$Format:%H$'
 
 from qgis.core import (
+    Qgis,
     QgsProcessingException,
     QgsProcessingParameterString,
     QgsProcessingParameterBoolean,
     QgsProcessingOutputNumber,
     QgsProcessingOutputString
 )
+if Qgis.QGIS_VERSION_INT >= 31400:
+    from qgis.core import QgsProcessingParameterProviderConnection
 from .tools import (
     check_database_structure,
     check_database_server_metadata_content,
     check_database_uid_columns,
     check_database_audit_triggers,
+    add_database_audit_triggers,
+    add_database_uid_columns,
     lizsyncConfig,
     getUriFromConnectionName,
     fetchDataFromSqlQuery,
@@ -95,19 +100,37 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
         ls = lizsyncConfig()
 
         # INPUTS
+        # Central database connection name
         connection_name_central = ls.variable('postgresql:central/name')
-        db_param_a = QgsProcessingParameterString(
-            self.CONNECTION_NAME_CENTRAL,
-            tr('PostgreSQL connection to the central database'),
-            defaultValue=connection_name_central,
-            optional=False
+        label = tr('PostgreSQL connection to the central database')
+        if Qgis.QGIS_VERSION_INT >= 31400:
+            param = QgsProcessingParameterProviderConnection(
+                self.CONNECTION_NAME_CENTRAL,
+                label,
+                "postgres",
+                defaultValue=connection_name_central,
+                optional=False,
+            )
+        else:
+            param = QgsProcessingParameterString(
+                self.CONNECTION_NAME_CENTRAL,
+                label,
+                defaultValue=connection_name_central,
+                optional=False
+            )
+            param.setMetadata({
+                'widget_wrapper': {
+                    'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
+                }
+            })
+        tooltip = tr(
+            'The PostgreSQL connection to the central database.'
         )
-        db_param_a.setMetadata({
-            'widget_wrapper': {
-                'class': 'processing.gui.wrappers_postgis.ConnectionWidgetWrapper'
-            }
-        })
-        self.addParameter(db_param_a)
+        if Qgis.QGIS_VERSION_INT >= 31600:
+            param.setHelp(tooltip)
+        else:
+            param.tooltip_3liz = tooltip
+        self.addParameter(param)
 
         # Add server id in metadata
         self.addParameter(
@@ -124,7 +147,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
             QgsProcessingParameterBoolean(
                 self.ADD_UID_COLUMNS,
                 tr('Add unique identifiers in all tables'),
-                defaultValue=True,
+                defaultValue=False,
                 optional=False
             )
         )
@@ -134,7 +157,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
             QgsProcessingParameterBoolean(
                 self.ADD_AUDIT_TRIGGERS,
                 tr('Add audit triggers in all tables'),
-                defaultValue=True,
+                defaultValue=False,
                 optional=False
             )
         )
@@ -142,7 +165,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
         # Schemas to synchronize
         synchronized_schemas = ls.variable('postgresql:central/schemas').strip()
         if not synchronized_schemas:
-            synchronized_schemas = 'test'
+            synchronized_schemas = ''
         self.addParameter(
             QgsProcessingParameterString(
                 self.SCHEMAS,
@@ -217,21 +240,13 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
         add_uid_columns = self.parameterAsBool(parameters, self.ADD_UID_COLUMNS, context)
         add_server_id = self.parameterAsBool(parameters, self.ADD_SERVER_ID, context)
         add_audit_triggers = self.parameterAsBool(parameters, self.ADD_AUDIT_TRIGGERS, context)
-        synchronized_schemas = parameters[self.SCHEMAS]
+        synchronized_schemas = parameters[self.SCHEMAS].strip()
 
         # store parameters
         ls = lizsyncConfig()
         ls.setVariable('postgresql:central/name', connection_name_central)
         ls.setVariable('postgresql:central/schemas', synchronized_schemas)
         ls.save()
-
-        # compile SQL schemas
-        schemas = [
-            "'{0}'".format(a.strip())
-            for a in synchronized_schemas.split(',')
-            if a.strip() not in ('public', 'lizsync', 'audit')
-        ]
-        schemas_sql = ', '.join(schemas)
 
         # Structure
         feedback.pushInfo(tr('CHECK LIZSYNC STRUCTURE'))
@@ -278,7 +293,18 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
                 raise QgsProcessingException(m)
         feedback.pushInfo('')
 
-        # UID columns
+        # Check schema has been passed
+        if not synchronized_schemas:
+            msg = tr('No schema(s) has been given: not tests will be made for uid columns or audit triggers')
+            feedback.pushInfo(msg)
+
+            output = {
+                self.OUTPUT_STATUS: 1,
+                self.OUTPUT_STRING: 'Ok',
+            }
+            return output
+
+        # Check UID columns
         feedback.pushInfo(tr('CHECK UID COLUMNS'))
         status, message = check_database_uid_columns(
             connection_name_central,
@@ -289,89 +315,36 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
         # Add UID columns for given schema names
         if add_uid_columns and not status:
             feedback.pushInfo(tr('ADD UID COLUMNS IN ALL THE TABLES OF THE SPECIFIED SCHEMAS'))
-            sql = '''
-                SELECT table_schema, table_name,
-                lizsync.add_uid_columns(table_schema, table_name)
-                FROM information_schema.tables
-                WHERE table_schema IN ( {0} )
-                AND table_type = 'BASE TABLE'
-                ORDER BY table_schema, table_name
-            '''.format(
-                schemas_sql
-            )
-            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            status, message = add_database_uid_columns(
                 connection_name_central,
-                sql
+                synchronized_schemas
             )
-            if ok:
-                names = []
-                for a in data:
-                    if a[2]:
-                        names.append(
-                            '"{0}"."{1}"'.format(a[0], a[1])
-                        )
-                if names:
-                    msg = tr('UID columns have been successfully added in the following tables:')
-                    feedback.pushInfo(msg)
-                    for n in names:
-                        feedback.pushInfo('* ' + n)
-                    msg += ', '.join(names)
-                else:
-                    msg = tr('No UID columns were missing.')
-                    feedback.pushInfo(msg)
-            else:
-                raise QgsProcessingException(error_message)
+            if not status:
+                raise QgsProcessingException(message)
+            feedback.pushInfo(message)
 
         feedback.pushInfo('')
 
-        # audit triggers
+        # Check audit triggers
         feedback.pushInfo(tr('CHECK AUDIT TRIGGERS'))
         status, message = check_database_audit_triggers(
             connection_name_central,
             synchronized_schemas
         )
         feedback.pushInfo(message)
+        feedback.pushInfo('')
 
         # Add missing audit triggers
         if add_audit_triggers and not status:
             feedback.pushInfo(tr('ADD AUDIT TRIGGERS IN ALL THE TABLES OF THE GIVEN SCHEMAS'))
-            sql = '''
-                SELECT table_schema, table_name,
-                audit.audit_table((quote_ident(table_schema) || '.' || quote_ident(table_name))::text)
-                FROM information_schema.tables
-                WHERE table_schema IN ( {0} )
-                AND table_type = 'BASE TABLE'
-                AND (quote_ident(table_schema) || '.' || quote_ident(table_name))::text
-                    NOT IN (
-                        SELECT (tgrelid::regclass)::text
-                        FROM pg_trigger
-                        WHERE tgname LIKE 'audit_trigger_%'
-                    )
-
-            '''.format(
-                schemas_sql
-            )
-            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            status, message = add_database_audit_triggers(
                 connection_name_central,
-                sql
+                synchronized_schemas
             )
-            if not ok:
-                raise QgsProcessingException(error_message)
+            if not status:
+                raise QgsProcessingException(message)
+            feedback.pushInfo(message)
 
-            names = []
-            for a in data:
-                names.append(
-                    '"{0}"."{1}"'.format(a[0], a[1])
-                )
-            if names:
-                msg = tr('Audit triggers have been successfully added in the following tables:')
-                feedback.pushInfo(msg)
-                for n in names:
-                    feedback.pushInfo('* ' + n)
-                msg += ', '.join(names)
-            else:
-                msg = tr('No audit triggers were missing.')
-                feedback.pushInfo(msg)
         feedback.pushInfo('')
 
         output = {
