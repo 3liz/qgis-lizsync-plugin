@@ -314,9 +314,9 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         archive_files = [
             '01_before.sql',
             '02_predata.sql',
-            '02_data.sql',
-            '03_after.sql',
-            '04_lizsync.sql',
+            '03_lizsync.sql',
+            '04_data.sql',
+            '05_after.sql',
             'sync_id.txt',
             'sync_tables.txt'
         ]
@@ -442,13 +442,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         # CLONE DATABASE
         # Run SQL scripts from archive with PSQL command
         feedback.pushInfo(tr('RUN SQL SCRIPT FROM THE DECOMPRESSED ZIP FILE'))
-        sql_files = [
-            os.path.join(dir_path, '01_before.sql'),
-            os.path.join(dir_path, '02_predata.sql'),
-            os.path.join(dir_path, '02_data.sql'),
-            os.path.join(dir_path, '03_after.sql'),
-            os.path.join(dir_path, '04_lizsync.sql'),
-        ]
+        sql_files = [os.path.join(dir_path, sql) for sql in archive_files if sql.endswith('.sql')]
         for f in sql_files:
             if not os.path.exists(f):
                 m = tr('SQL files not found') + ': {}'.format(f)

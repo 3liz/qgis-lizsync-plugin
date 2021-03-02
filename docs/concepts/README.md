@@ -33,28 +33,26 @@ All these steps can be performed with **LizSync plugin** for QGIS, by using the 
 
 ## PostgreSQL database structure
 
-LizSync uses **2 dedicated schemas**:
+LizSync uses **a dedicated schemas**:
 
-* **audit**
-    - in charge of recording every actions made on tables: **inserts, updates and deletes.**
-    - It is a slightly modified version of the [audit trigger tool](https://github.com/Oslandia/audit_trigger/blob/master/audit.sql)
 * **lizsync**
     - stores information on central and clones databases (uid),
+    - records every actions made on tables: **inserts, updates and deletes**,
     - manages the sync actions,
     - maintain an history of synchronisations
 
 ## Auditing changes
 
-LizSync uses a modified version of the [audit trigger tool](https://github.com/Oslandia/audit_trigger/blob/master/audit.sql) to **monitor the changes** made in the central and clone databases.
+LizSync uses a modified version of the [audit trigger tool](https://github.com/Oslandia/audit_trigger/blob/master/audit.sql) to **monitor the changes** made in the central and clone databases. There is no `audit` schema created though, as every needed audit table and functions are deployed within the schema `lizsync`. The triggers names begins with `lizsync_audit_trigger_` instead of `audit_trigger_`.
 
 The audit tool stores data in **two tables**:
 
-* **audit.logged_relations**: the list of audited tables and their primary key(s)
-* **audit.logged_actions**: the logs of every data modification made on the audited tables
+* **lizsync.logged_relations**: the list of audited tables and their primary key(s)
+* **lizsync.logged_actions**: the logs of every data modification made on the audited tables
 
-Each **insert, update or delete** triggers the addition of a new line in the `audit.logged_actions` table, with information about the time of the change, author, type of action, etc.
+Each **insert, update or delete** triggers the addition of a new line in the `lizsync.logged_actions` table, with information about the time of the change, author, type of action, etc.
 
-We added a new column `audit.sync_data` to the table `audit.logged_actions` needed by the synchronisation. It contains the unique ID of the origin database, and the synchronisation item key.
+We added a new column `lizsync.sync_data` to the table `lizsync.logged_actions` needed by the synchronisation. It contains the unique ID of the origin database, and the synchronisation item key.
 
 We modified the trigger to fill in this new JSON column.
 

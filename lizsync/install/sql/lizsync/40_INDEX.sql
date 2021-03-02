@@ -16,6 +16,20 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+SET default_tablespace = '';
+
+-- logged_actions_action_idx
+CREATE INDEX logged_actions_action_idx ON lizsync.logged_actions USING btree (action);
+
+
+-- logged_actions_action_tstamp_tx_stm_idx
+CREATE INDEX logged_actions_action_tstamp_tx_stm_idx ON lizsync.logged_actions USING btree (action_tstamp_stm);
+
+
+-- logged_actions_relid_idx
+CREATE INDEX logged_actions_relid_idx ON lizsync.logged_actions USING btree (relid);
+
+
 --
 -- PostgreSQL database dump complete
 --

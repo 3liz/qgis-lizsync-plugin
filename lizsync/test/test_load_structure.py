@@ -51,7 +51,6 @@ class TestProcessing(unittest.TestCase):
         feedback = LoggerProcessingFeedBack()
         params = {
             'CONNECTION_NAME': 'test',
-            'OVERRIDE_AUDIT': True,  # Must be true, for the first time in the test.
             'OVERRIDE_LIZSYNC': True,  # Must be true, for the first time in the test.
         }
 
@@ -138,6 +137,8 @@ class TestProcessing(unittest.TestCase):
             "conflicts",
             "synchronized_tables",
             "sys_structure_metadonnee",
+            "logged_actions",
+            "logged_relations",
         ]
         self.assertCountEqual(expected, result)
 
@@ -159,24 +160,10 @@ class TestProcessing(unittest.TestCase):
 
         params = {
             'CONNECTION_NAME': 'test',
-            'OVERRIDE_AUDIT': True,  # Must be true, for the first time in the test.
             'OVERRIDE_LIZSYNC': True,  # Must be true, for the first time in the test.
         }
         alg = "{}:create_database_structure".format(provider.id())
         processing.run(alg, params, feedback=feedback)
-
-        self.cursor.execute(
-            "SELECT table_name FROM information_schema.tables WHERE table_schema = '{}'".format(
-                'audit'
-            )
-        )
-        records = self.cursor.fetchall()
-        result = [r[0] for r in records]
-        expected = [
-            "logged_relations",
-            "logged_actions",
-        ]
-        self.assertCountEqual(expected, result)
 
         self.cursor.execute(
             "SELECT table_name FROM information_schema.tables WHERE table_schema = '{}'".format(
@@ -191,13 +178,14 @@ class TestProcessing(unittest.TestCase):
             "conflicts",
             "synchronized_tables",
             "sys_structure_metadonnee",
+            "logged_actions",
+            "logged_relations",
         ]
         self.assertCountEqual(expected, result)
 
         feedback.pushDebugInfo("Relaunch the algorithm without override")
         params = {
             "CONNECTION_NAME": "test",
-            'OVERRIDE_AUDIT': False,
             'OVERRIDE_LIZSYNC': False,
         }
 

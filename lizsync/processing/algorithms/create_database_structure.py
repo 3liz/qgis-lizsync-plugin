@@ -57,7 +57,6 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
     """
 
     CONNECTION_NAME = 'CONNECTION_NAME'
-    OVERRIDE_AUDIT = 'OVERRIDE_AUDIT'
     OVERRIDE_LIZSYNC = 'OVERRIDE_LIZSYNC'
 
     OUTPUT_STATUS = 'OUTPUT_STATUS'
@@ -82,12 +81,10 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
             '\n'
             ' This script will add'
             '\n'
-            ' * An audit schema with auditing functions and tables'
-            '\n'
             ' * A lizsync schema with tables and functions'
             '\n'
             '\n'
-            'Beware ! If the schema lizsync or audit already exists in the database, not installation will be made. You will need to manually correct the situation (drop or modifiy the schemas, tables and functions) with SQL commands.'
+            'Beware ! If the schema lizsync already exists in the database, not installation will be made. You will need to manually correct the situation (drop or modifiy the schemas, tables and functions) with SQL commands.'
 
         )
         return short_help
@@ -134,15 +131,6 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
 
         # Hidden parameters which allow to drop the schemas
         # Hidden to avoid misuse and data loss
-        # Drop schema audit
-        p = QgsProcessingParameterBoolean(
-            self.OVERRIDE_AUDIT,
-            tr('Drop audit schema and all data ?'),
-            defaultValue=False,
-        )
-        p.setFlags(QgsProcessingParameterDefinition.FlagHidden)
-        self.addParameter(p)
-
         # Drop schema lizsync
         p = QgsProcessingParameterBoolean(
             self.OVERRIDE_LIZSYNC,
@@ -180,12 +168,7 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
         if not ok:
             return False, msg
 
-        # Check audit schema
-        ok, msg = self.checkSchema('audit', parameters, context)
-        if not ok:
-            return False, msg
-
-        # Check audit schema
+        # Check lizsync schema
         ok, msg = self.checkSchema('lizsync', parameters, context)
         if not ok:
             return False, msg
@@ -212,11 +195,6 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
             return ok, error_message
 
         # Get override parameter for the schema to check
-        if schema_name == 'audit':
-            if self.OVERRIDE_AUDIT in parameters:
-                override = parameters[self.OVERRIDE_AUDIT]
-            else:
-                override = False
         if schema_name == 'lizsync':
             if self.OVERRIDE_LIZSYNC in parameters:
                 override = parameters[self.OVERRIDE_LIZSYNC]
@@ -237,7 +215,6 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
         connection_name = self.parameterAsString(
             parameters, self.CONNECTION_NAME, context
         )
-        override_audit = self.parameterAsBool(parameters, self.OVERRIDE_AUDIT, context)
         override_lizsync = self.parameterAsBool(parameters, self.OVERRIDE_LIZSYNC, context)
 
         # store parameters
@@ -247,7 +224,6 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
 
         # Drop schemas if needed
         schemas = {
-            'audit': override_audit,
             'lizsync': override_lizsync
         }
         for s, override in schemas.items():
@@ -271,7 +247,6 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
         # Create full structure
         sql_files = [
             "00_initialize_database.sql",
-            "audit.sql",
             "{}/10_FUNCTION.sql".format(SCHEMA),
             "{}/20_TABLE_SEQUENCE_DEFAULT.sql".format(SCHEMA),
             "{}/30_VIEW.sql".format(SCHEMA),

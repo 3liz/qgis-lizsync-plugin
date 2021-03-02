@@ -411,7 +411,7 @@ def convert_textual_schema_list_to_sql(schemas):
     schemas = [
         "'{0}'".format(a.strip())
         for a in schemas.split(',')
-        if a.strip() not in ('public', 'lizsync', 'audit')
+        if a.strip() not in ('public', 'lizsync')
     ]
     schemas_sql = ', '.join(schemas)
 
@@ -529,7 +529,7 @@ def check_database_audit_triggers(connection_name, schemas=None, tables=None):
     sql += "     SELECT (tgrelid::regclass)::text"
     sql += "     FROM pg_trigger"
     sql += "     WHERE TRUE"
-    sql += "     AND tgname LIKE 'audit_trigger_%'"
+    sql += "     AND tgname LIKE 'lizsync_audit_trigger_%'"
     sql += " )"
 
     header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
@@ -572,7 +572,7 @@ def get_database_audit_triggers(connection_name, schemas=None, tables=None):
     sql += "     SELECT (tgrelid::regclass)::text"
     sql += "     FROM pg_trigger"
     sql += "     WHERE TRUE"
-    sql += "     AND tgname LIKE 'audit_trigger_%'"
+    sql += "     AND tgname LIKE 'lizsync_audit_trigger_%'"
     sql += " )"
 
     header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
@@ -602,7 +602,7 @@ def add_database_audit_triggers(connection_name, schemas=None, tables=None):
     status = False
     sql = ""
     sql += " SELECT t.table_schema, t.table_name,"
-    sql += " audit.audit_table((quote_ident(t.table_schema) || '.' || quote_ident(t.table_name))::text)"
+    sql += " lizsync.audit_table((quote_ident(t.table_schema) || '.' || quote_ident(t.table_name))::text)"
     sql += " FROM information_schema.tables AS t"
     sql += " WHERE True"
     if schemas:
@@ -617,7 +617,7 @@ def add_database_audit_triggers(connection_name, schemas=None, tables=None):
     sql += "     NOT IN ("
     sql += "         SELECT (tgrelid::regclass)::text"
     sql += "         FROM pg_trigger"
-    sql += "         WHERE tgname LIKE 'audit_trigger_%'"
+    sql += "         WHERE tgname LIKE 'lizsync_audit_trigger_%'"
     sql += "     )"
 
     header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)

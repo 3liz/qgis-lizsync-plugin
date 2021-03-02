@@ -1,11 +1,5 @@
 ## Automatic generation of structure SQL files
 
-### Schema audit
-
-The files inside the `audit` folder are taken from https://github.com/Oslandia/audit_trigger/blob/master/audit.sql
-
-They have been modified to allow storing the synchronization data for each audit line !
-
 ### Schema lizsync
 
 Generation of the `lizsync` schema SQL files is made via a bash script
@@ -21,7 +15,7 @@ cd lizsync/install/sql
 # Go back to the plugin root directory
 cd ../../..
 # Reformat
-make reformat_sql 
+make reformat_sql
 ```
 
 This script will remove and regenerate the SQL files based on the `pg_dump` tool, by connecting to the database referenced by the PostgreSQL service `lizsync`. You need to pass the parameter `lizsync`, which is the name of the schema, and the name of the target folder (relative to `install/sql`)

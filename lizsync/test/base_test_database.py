@@ -49,7 +49,6 @@ class DatabaseTestCase(unittest.TestCase):
 
         params = {
             "CONNECTION_NAME": "test",
-            'OVERRIDE_AUDIT': True,
             'OVERRIDE_LIZSYNC': True,
         }
         processing.run(

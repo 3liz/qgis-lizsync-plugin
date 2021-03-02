@@ -46,7 +46,7 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
             '\n'
             '\n'
             ' The data to synchronize are listed by reading'
-            ' the content of the "audit.logged_actions" of each database,'
+            ' the content of the "lizsync.logged_actions" of each database,'
             ' since the last synchronization or the last deployement of ZIP package.'
             '\n'
             '\n'

@@ -397,9 +397,9 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         sql_file_list = [
             '01_before.sql',
             '02_predata.sql',
-            '02_data.sql',
-            '03_after.sql',
-            '04_lizsync.sql',
+            '03_lizsync.sql',
+            '04_data.sql',
+            '05_after.sql',
             'sync_id.txt',
             'sync_tables.txt'
         ]
@@ -410,7 +410,8 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             sql_files[k] = path
         # feedback.pushInfo(str(sql_files))
 
-        # 1/ 01_before.sql
+        ####
+        # 01_before.sql
         ####
         feedback.pushInfo('')
         feedback.pushInfo(tr('CREATE SCRIPT 01_before.sql'))
@@ -421,7 +422,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         schemas_to_create = [
             '"{0}"'.format(a.strip())
             for a in synchronized_schemas.split(',')
-            if a.strip() not in ('public', 'lizsync', 'audit')
+            if a.strip() not in ('public', 'lizsync')
         ]
         for schema in schemas_to_create:
             sql += '''
@@ -438,9 +439,9 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
                 table
             )
 
-        # Drop other sytem schemas
+        # Drop other system schemas
         sql += '''
-            DROP SCHEMA IF EXISTS lizsync,audit CASCADE;
+            DROP SCHEMA IF EXISTS lizsync CASCADE;
         '''
 
         # Create needed extension
@@ -449,13 +450,6 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             CREATE EXTENSION IF NOT EXISTS hstore;
             CREATE EXTENSION IF NOT EXISTS dblink;
         '''
-
-        # Add audit tools
-        alg_dir = os.path.dirname(__file__)
-        plugin_dir = os.path.join(alg_dir, '../../')
-        sql_file = os.path.join(plugin_dir, 'install/sql/audit.sql')
-        with open(sql_file, 'r') as f:
-            sql += f.read()
 
         sql += '''
             COMMIT;
@@ -467,7 +461,8 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             feedback.pushInfo(tr('File 01_before.sql created'))
         feedback.pushInfo('')
 
-        # 2/a) 02_predata.sql
+        ####
+        # 02_predata.sql
         ####
         # First we get functions from the needed schemas
         feedback.pushInfo(tr('CREATE SCRIPT 02_predata.sql'))
@@ -511,15 +506,40 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         feedback.pushInfo(tr('File 02_predata.sql created'))
         feedback.pushInfo('')
 
-        # 2/b) 02_data.sql
         ####
-        # Then we get the actual data for the needed tables of these schemas
-        feedback.pushInfo(tr('CREATE SCRIPT 02_data.sql'))
+        # 03_lizsync.sql
+        ####
+        # Add lizsync schema structure
+        # We get it from central database to be sure everything will be compatible
+        feedback.pushInfo(tr('CREATE SCRIPT 03_lizsync.sql'))
         pstatus, pmessages = pg_dump(
             feedback,
             postgresql_binary_path,
             connection_name_central,
-            sql_files['02_data.sql'],
+            sql_files['03_lizsync.sql'],
+            ['lizsync'],
+            None,
+            ['--schema-only']
+        )
+        for pmessage in pmessages:
+            feedback.pushInfo(pmessage)
+        if not pstatus:
+            m = ' '.join(pmessages)
+            raise QgsProcessingException(m)
+
+        feedback.pushInfo(tr('File 03_lizsync.sql created'))
+        feedback.pushInfo('')
+
+        ####
+        # 04_data.sql
+        ####
+        # Then we get the actual data for the needed tables of these schemas
+        feedback.pushInfo(tr('CREATE SCRIPT 04_data.sql'))
+        pstatus, pmessages = pg_dump(
+            feedback,
+            postgresql_binary_path,
+            connection_name_central,
+            sql_files['04_data.sql'],
             schemas,
             tables,
             []
@@ -529,18 +549,19 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         if not pstatus:
             m = ' '.join(pmessages)
             raise QgsProcessingException(m)
-        feedback.pushInfo(tr('File 02_data.sql created'))
+        feedback.pushInfo(tr('File 04_data.sql created'))
         feedback.pushInfo('')
 
-        # 3/ 03_after.sql
         ####
-        feedback.pushInfo(tr('CREATE SCRIPT 03_after.sql'))
+        # 05_after.sql
+        ####
+        feedback.pushInfo(tr('CREATE SCRIPT 05_after.sql'))
         sql = ''
 
         # Add audit trigger for these tables in given schemas
         # only for needed tables
         sql += '''
-            SELECT audit.audit_table((quote_ident(table_schema) || '.' || quote_ident(table_name))::text)
+            SELECT lizsync.audit_table((quote_ident(table_schema) || '.' || quote_ident(table_name))::text)
             FROM information_schema.tables AS t
             WHERE True
             AND table_type = 'BASE TABLE'
@@ -551,30 +572,9 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         # feedback.pushInfo(sql)
 
         # write content into temp file
-        with open(sql_files['03_after.sql'], 'w') as f:
+        with open(sql_files['05_after.sql'], 'w') as f:
             f.write(sql)
-            feedback.pushInfo(tr('File 03_after.sql created'))
-
-        feedback.pushInfo('')
-
-        #  4/ 04_lizsync.sql
-        # Add lizsync schema structure
-        # We get it from central database to be sure everything will be compatible
-        feedback.pushInfo(tr('CREATE SCRIPT 04_lizsync.sql'))
-        pstatus, pmessages = pg_dump(
-            feedback,
-            postgresql_binary_path,
-            connection_name_central,
-            sql_files['04_lizsync.sql'],
-            ['lizsync'],
-            None,
-            ['--schema-only']
-        )
-        for pmessage in pmessages:
-            feedback.pushInfo(pmessage)
-        if not pstatus:
-            m = ' '.join(pmessages)
-            raise QgsProcessingException(m)
+            feedback.pushInfo(tr('File 05_after.sql created'))
 
         feedback.pushInfo('')
 
@@ -601,9 +601,9 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
                 max_action_tstamp_tx, sync_type, sync_status
             ) VALUES (
                 (SELECT server_id FROM lizsync.server_metadata LIMIT 1),
-                (SELECT Coalesce(min(event_id),-1) FROM audit.logged_actions),
-                (SELECT Coalesce(max(event_id),0) FROM audit.logged_actions),
-                (SELECT Coalesce(max(action_tstamp_tx), now()) FROM audit.logged_actions),
+                (SELECT Coalesce(min(event_id),-1) FROM lizsync.logged_actions),
+                (SELECT Coalesce(max(event_id),0) FROM lizsync.logged_actions),
+                (SELECT Coalesce(max(action_tstamp_tx), now()) FROM lizsync.logged_actions),
                 'full',
                 'done'
             )
