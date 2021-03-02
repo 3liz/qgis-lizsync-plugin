@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<database name="gis" schema="lizsync" type="PostgreSQL - 10.14 (Debian 10.14-1.pgdg100+1)">
+<database name="gis" schema="lizsync" type="PostgreSQL - 10.15 (Debian 10.15-1.pgdg100+1)">
    <sequences>
       <sequence increment="1" name="conflicts_id_seq" startValue="1"/>
       <sequence increment="1" name="sys_structure_metadonnee_id_seq" startValue="1"/>
@@ -52,11 +52,11 @@
             <column ascending="true" name="server_name"/>
          </index>
       </table>
-      <table name="synchronized_schemas" numRows="0" remarks="List of schemas to synchronize per slave server id. This list works as a white list. Only listed schemas will be synchronized for each server ids." schema="lizsync" type="TABLE">
+      <table name="synchronized_tables" numRows="0" remarks="List of tables to synchronize per clone server id. This list works as a white list. Only listed tables will be synchronized for each server ids." schema="lizsync" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="server_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
-         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="sync_schemas" nullable="false" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="sync_tables" nullable="false" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
          <primaryKey column="server_id" sequenceNumberInPK="1"/>
-         <index name="synchronized_schemas_pkey" unique="true">
+         <index name="synchronized_tables_pkey" unique="true">
             <column ascending="true" name="server_id"/>
          </index>
       </table>
@@ -411,7 +411,7 @@ END;
 ]]></definition>
       </routine>
       <routine dataAccess="MODIFIES" deterministic="false" name="get_central_audit_logs" returnType="SETOF record" securityType="INVOKER" type="FUNCTION">
-         <comment><![CDATA[Get all the logs from the central database: modifications do not come from the clone, have not yet been replayed by the clone, are dated after the last synchronization, have an event id higher than the last sync maximum event id, and concern the synchronized schemas for this clone. Parameters: uid column name and excluded columns]]></comment>
+         <comment><![CDATA[Get all the logs from the central database: modifications do not come from the clone, have not yet been replayed by the clone, are dated after the last synchronization, have an event id higher than the last sync maximum event id, and concern the synchronized tables for this clone. Parameters: uid column name and excluded columns]]></comment>
          <definition language="PLPGSQL"><![CDATA[
 DECLARE
     p_clone_id text;
@@ -469,9 +469,9 @@ BEGIN
             ORDER BY sync_time DESC
             LIMIT 1
         ),
-        schemas AS (
-            SELECT sync_schemas
-            FROM lizsync.synchronized_schemas
+        tables AS (
+            SELECT sync_tables
+            FROM lizsync.synchronized_tables
             WHERE server_id = ''%1$s''::uuid
             LIMIT 1
         )
@@ -507,7 +507,7 @@ BEGIN
         FROM audit.logged_actions AS a
         -- Create as many lines as there are changed fields in UPDATE
         LEFT JOIN skeys(a.changed_fields) AS s ON TRUE,
-        last_sync, schemas
+        last_sync, tables
 
         WHERE True
 
@@ -521,12 +521,12 @@ BEGIN
         -- MAX_ACTION_TSTAMP_TX Par ex: 2019-04-20 12:00:00+02
         AND a.action_tstamp_tx > last_sync.max_action_tstamp_tx
 
-        -- et pour lesquelles l ID est supérieur
+        -- Event ID is bigger than last sync event id
         -- MAX_EVENT_ID
         AND a.event_id > last_sync.max_event_id
 
-        -- et pour les schémas listés
-        AND sync_schemas ? schema_name
+        -- only for tables synchronized by the clone server ID
+        AND sync_tables ? concat(''"'', a.schema_name, ''"."'', a.table_name, ''"'')
 
         ORDER BY a.event_id
         ;
@@ -697,20 +697,36 @@ BEGIN
     LIMIT 1;
 
     -- Import foreign tables of given schema
+    -- We must first get the unique schemas
     FOR rec IN
-        SELECT jsonb_array_elements(sync_schemas)::text AS sync_schema
-        FROM central_lizsync.synchronized_schemas
-        WHERE server_id::text = p_clone_id
+        WITH
+        synchronized_tables AS (
+            SELECT sync_tables
+            FROM central_lizsync.synchronized_tables
+            WHERE server_id::text = p_clone_id
+        ),
+        a AS (
+            SELECT DISTINCT jsonb_array_elements_text(sync_tables) AS sync_table
+            FROM synchronized_tables
+        ),
+        b AS (
+            SELECT regexp_split_to_array(sync_table, E'\\.') AS sync_table_elements
+            FROM a
+        )
+        SELECT sync_table_elements[1] AS t_schema, string_agg(sync_table_elements[2], ',') AS t_tables
+        FROM b
+        GROUP BY t_schema
     LOOP
-        p_sync_schema = replace(rec.sync_schema, '"', '');
+        p_sync_schema = trim(replace(rec.t_schema, '"', ''));
         p_imported_schemas = p_imported_schemas || p_sync_schema;
         sqltemplate = concat(
             sqltemplate,
-            'DROP SCHEMA IF EXISTS central_', p_sync_schema, ' CASCADE;',
-            'CREATE SCHEMA central_', p_sync_schema, ';',
-            'IMPORT FOREIGN SCHEMA ', p_sync_schema, '
+            'DROP SCHEMA IF EXISTS "central_', p_sync_schema, '" CASCADE;',
+            'CREATE SCHEMA "central_', p_sync_schema, '";',
+            'IMPORT FOREIGN SCHEMA "', p_sync_schema, '"
+            LIMIT TO (', rec.t_tables ,')
             FROM SERVER central_server
-            INTO central_', p_sync_schema, ';'
+            INTO "central_', p_sync_schema, '";'
         );
     END LOOP;
 

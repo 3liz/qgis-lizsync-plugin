@@ -2,4 +2,4 @@ sys_structure_metadonnee
 history
 conflicts
 server_metadata
-synchronized_schemas
+synchronized_tables

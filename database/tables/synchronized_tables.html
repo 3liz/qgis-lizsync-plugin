@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>synchronized_schemas - gis Database</title>
+        <title>synchronized_tables - gis Database</title>
         <!-- Tell the browser to be responsive to screen width -->
         <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
         <link rel="icon" type="image/png" sizes="16x16" href="../favicon.png">
@@ -73,7 +73,7 @@
             <div class="content-wrapper">
                 <!-- Content Header (Page header) -->
                 <section class="content-header">
-                    <h1>synchronized_schemas</h1><p><span id="recordNumber">0</span> rows</p><br />
+                    <h1>synchronized_tables</h1><p><span id="recordNumber">0</span> rows</p><br />
                     <div class="box box-primary">
                         <div class="box-header with-border">
                             <i class="fa fa-file-text-o"></i>
@@ -84,7 +84,7 @@
                             </div>
                         </div><!-- /.box-header -->
                         <div class="box-body clearfix">
-                            <p>List of schemas to synchronize per slave server id. This list works as a white list. Only listed schemas will be synchronized for each server ids.</p>
+                            <p>List of tables to synchronize per clone server id. This list works as a white list. Only listed tables will be synchronized for each server ids.</p>
                         </div><!-- /.box-body -->
                     </div>
                 </section>
@@ -133,7 +133,7 @@
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="sync_schemas">sync_schemas</span></td>
+                                    <td><span id="sync_tables">sync_tables</span></td>
                                     <td>jsonb</td>
                                     <td>2147483647</td>
                                     <td title=''></td>
@@ -174,7 +174,7 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td class='primaryKey' title='Primary Key'><i class='icon ion-key iconkey'></i> synchronized_schemas_pkey</td>
+                                    <td class='primaryKey' title='Primary Key'><i class='icon ion-key iconkey'></i> synchronized_tables_pkey</td>
                                     <td>Primary key</td>
                                     <td><span title='Ascending'>Asc</span></td>
                                     <td>server_id</td>
