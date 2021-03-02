@@ -97,6 +97,17 @@
                                 </thead>
                                 <tbody>
                                     <tr>
+                                        <td><a href="routines/rollback_event.html">rollback_event</a></td>
+                                        <td>FUNCTION</td>
+                                        <td>PLPGSQL</td>
+                                        <td>false</td>
+                                        <td>void</td>
+                                        <td>INVOKER</td>
+                                        <td><p>Rollback a logged event and returns to previous row data</p>
+<p>Arguments:<br />
+pevent_id:  The event_id of the event in lizsync.logged_actions to rollback</p></td>
+                                    </tr>
+                                    <tr>
                                         <td><a href="routines/compare_tables.html">compare_tables</a></td>
                                         <td>FUNCTION</td>
                                         <td>PLPGSQL</td>
@@ -112,7 +123,7 @@
                                         <td>false</td>
                                         <td>SETOF record</td>
                                         <td>INVOKER</td>
-                                        <td><p>Get all the logs from the central database: modifications do not come from the clone, have not yet been replayed by the clone, are dated after the last synchronization, have an event id higher than the last sync maximum event id, and concern the synchronized tables for this clone. Parameters: uid column name and excluded columns</p></td>
+                                        <td><p>Get all the logs from the central database: modifications do not come from the clone, have not yet been replayed by the clone, are dated after the last synchronisation, have an event id higher than the last sync maximum event id, and concern the synchronised tables for this clone. Parameters: uid column name and excluded columns</p></td>
                                     </tr>
                                     <tr>
                                         <td><a href="routines/analyse_audit_logs.html">analyse_audit_logs</a></td>
@@ -124,6 +135,20 @@
                                         <td><p>Get audit logs from the central database and the clone since the last synchronization. Compare the logs to find and resolved UPDATE conflicts (same table, feature, column): last modified object wins. This function store the resolved conflicts into the table lizsync.conflicts in the central database. Returns central server event ids, minimum event id, maximum event id, maximum action timestamp.</p></td>
                                     </tr>
                                     <tr>
+                                        <td><a href="routines/audit_view.html">audit_view</a></td>
+                                        <td>FUNCTION</td>
+                                        <td>PLPGSQL</td>
+                                        <td>false</td>
+                                        <td>void</td>
+                                        <td>INVOKER</td>
+                                        <td><p>ADD auditing support TO a VIEW.</p>
+<p>Arguments:<br />
+target_view:      TABLE name, schema qualified IF NOT ON search_path<br />
+audit_query_text: Record the text of the client query that triggered the audit event?<br />
+ignored_cols:     COLUMNS TO exclude FROM UPDATE diffs, IGNORE updates that CHANGE only ignored cols.<br />
+uid_cols:         COLUMNS to use to uniquely identify a row from the view (in order to replay UPDATE and DELETE)</p></td>
+                                    </tr>
+                                    <tr>
                                         <td><a href="routines/create_temporary_table.html">create_temporary_table</a></td>
                                         <td>FUNCTION</td>
                                         <td>PLPGSQL</td>
@@ -131,6 +156,39 @@
                                         <td>boolean</td>
                                         <td>INVOKER</td>
                                         <td><p>Create temporary table used during database bidirectionnal synchronization. Parameters: temporary table name, and table type (audit or conflit)</p></td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href="routines/if_modified_func.html">if_modified_func</a></td>
+                                        <td>FUNCTION</td>
+                                        <td>PLPGSQL</td>
+                                        <td>false</td>
+                                        <td>trigger</td>
+                                        <td>DEFINER</td>
+                                        <td><p>Track changes to a table at the statement and/or row level.</p>
+<p>Optional parameters to trigger in CREATE TRIGGER call:</p>
+<p>param 0: boolean, whether to log the query text. Default &lsquo;t&rsquo;.</p>
+<p>param 1: text[], columns to ignore in updates. Default [].</p>
+<pre><code>     Updates to ignored cols are omitted from changed_fields.
+
+     Updates with only ignored cols changed are not inserted
+     into the audit log.
+
+     Almost all the processing work is still done for updates
+     that ignored. If you need to save the load, you need to use
+     WHEN clause on the trigger instead.
+
+     No warning or error is issued if ignored_cols contains columns
+     that do not exist in the target table. This lets you specify
+     a standard set of ignored columns.
+</code></pre>
+<p>There is no parameter to disable logging of values. Add this trigger as<br />
+a &lsquo;FOR EACH STATEMENT&rsquo; rather than &lsquo;FOR EACH ROW&rsquo; trigger if you do not<br />
+want to log row values.</p>
+<p>Note that the user name logged is the login role for the session. The audit trigger<br />
+cannot obtain the active role because it is reset by the SECURITY DEFINER invocation<br />
+of the audit trigger its self.</p>
+<p>[]: ./null<br />
+[]: ./null</p></td>
                                     </tr>
                                     <tr>
                                         <td><a href="routines/add_uid_columns.html">add_uid_columns</a></td>
@@ -150,7 +208,7 @@
                                         <td>INVOKER</td>
                                         <td><p>Get the SQL to use for replay from a audit log event</p>
 <p>Arguments:<br />
-pevent_id:  The event_id of the event in audit.logged_actions to replay<br />
+pevent_id:  The event_id of the event in lizsync.logged_actions to replay<br />
 puid_column: The name of the column with unique uuid values</p></td>
                                     </tr>
                                     <tr>
@@ -160,7 +218,7 @@ puid_column: The name of the column with unique uuid values</p></td>
                                         <td>false</td>
                                         <td>boolean</td>
                                         <td>INVOKER</td>
-                                        <td><p>Create foreign server, needed central_audit and central_lizsync schemas, and import all central database tables as foreign tables. This will allow the clone to connect to the central databse</p></td>
+                                        <td><p>Create foreign server, needed central_lizsync schema, and import all central database tables as foreign tables. This will allow the clone to connect to the central databse</p></td>
                                     </tr>
                                     <tr>
                                         <td><a href="routines/get_clone_audit_logs.html">get_clone_audit_logs</a></td>
@@ -190,6 +248,17 @@ puid_column: The name of the column with unique uuid values</p></td>
                                         <td><p>Replay all logs from the clone to the central database. It returns the number of actions replayed. After this, the clone audit logs are truncated.</p></td>
                                     </tr>
                                     <tr>
+                                        <td><a href="routines/replay_event.html">replay_event</a></td>
+                                        <td>FUNCTION</td>
+                                        <td>PLPGSQL</td>
+                                        <td>false</td>
+                                        <td>void</td>
+                                        <td>INVOKER</td>
+                                        <td><p>Replay a logged event.</p>
+<p>Arguments:<br />
+pevent_id:  The event_id of the event in lizsync.logged_actions to replay</p></td>
+                                    </tr>
+                                    <tr>
                                         <td><a href="routines/store_conflicts.html">store_conflicts</a></td>
                                         <td>FUNCTION</td>
                                         <td>PLPGSQL</td>
@@ -197,6 +266,20 @@ puid_column: The name of the column with unique uuid values</p></td>
                                         <td>SETOF integer</td>
                                         <td>INVOKER</td>
                                         <td><p>Store resolved conflicts in the central database lizsync.conflicts table.</p></td>
+                                    </tr>
+                                    <tr>
+                                        <td><a href="routines/audit_table.html">audit_table</a></td>
+                                        <td>FUNCTION</td>
+                                        <td>PLPGSQL</td>
+                                        <td>false</td>
+                                        <td>void</td>
+                                        <td>INVOKER</td>
+                                        <td><p>Add auditing support to a table.</p>
+<p>Arguments:<br />
+target_table:     Table name, schema qualified if not on search_path<br />
+audit_rows:       Record each row change, or only audit at a statement level<br />
+audit_query_text: Record the text of the client query that triggered the audit event?<br />
+ignored_cols:     Columns to exclude from update diffs, ignore updates that change only ignored cols.</p></td>
                                     </tr>
                                     <tr>
                                         <td><a href="routines/replay_central_logs_to_clone.html">replay_central_logs_to_clone</a></td>
@@ -214,7 +297,7 @@ puid_column: The name of the column with unique uuid values</p></td>
                                         <td>false</td>
                                         <td>SETOF ARRAY</td>
                                         <td>INVOKER</td>
-                                        <td><p>Import synchronized schemas from the central database foreign server into central_XXX local schemas to the clone database. This allow to edit data of the central database from the clone.</p></td>
+                                        <td><p>Import synchronised schemas from the central database foreign server into central_XXX local schemas to the clone database. This allow to edit data of the central database from the clone.</p></td>
                                     </tr>
                                 </tbody>
                             </table>

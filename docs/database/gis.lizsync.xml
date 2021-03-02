@@ -2,11 +2,14 @@
 <database name="gis" schema="lizsync" type="PostgreSQL - 10.15 (Debian 10.15-1.pgdg100+1)">
    <sequences>
       <sequence increment="1" name="conflicts_id_seq" startValue="1"/>
+      <sequence increment="1" name="logged_actions_event_id_seq" startValue="1"/>
       <sequence increment="1" name="sys_structure_metadonnee_id_seq" startValue="1"/>
    </sequences>
    <tables>
       <table name="conflicts" numRows="0" remarks="Store conflicts resolution made during bidirectionnal database synchronizations." schema="lizsync" type="TABLE">
-         <column autoUpdated="true" defaultValue="nextval('lizsync.conflicts_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="Automatic ID" size="19" type="bigserial" typeCode="-5"/>
+         <column autoUpdated="true" defaultValue="nextval('lizsync.conflicts_id_seq'::regclass)" digits="0" id="0" name="id" nullable="false" remarks="Automatic ID" size="19" type="bigserial" typeCode="-5">
+            <child column="transaction_id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="lizsync" table="logged_actions"/>
+         </column>
          <column autoUpdated="false" defaultValue="now()" digits="6" id="1" name="conflict_time" nullable="false" remarks="Timestamp of the conflict resolution. Not related to timestamp of logged actions" size="35" type="timestamptz" typeCode="93"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="object_table" nullable="true" remarks="Schema and table name of the conflicted object." size="2147483647" type="text" typeCode="12"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="object_uid" nullable="true" remarks="UID of the conflicted object." size="2147483647" type="uuid" typeCode="1111"/>
@@ -41,6 +44,52 @@
             <column ascending="true" name="sync_id"/>
          </index>
       </table>
+      <table name="logged_actions" numRows="0" remarks="History of auditable actions on audited tables, from lizsync.if_modified_func()" schema="lizsync" type="TABLE">
+         <column autoUpdated="true" defaultValue="nextval('lizsync.logged_actions_event_id_seq'::regclass)" digits="0" id="0" name="event_id" nullable="false" remarks="Unique identifier for each auditable event" size="19" type="bigserial" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="schema_name" nullable="false" remarks="Database schema audited table for this event is in" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="2" name="table_name" nullable="false" remarks="Non-schema-qualified table name of table event occured in" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="3" name="relid" nullable="false" remarks="Table OID. Changes with drop/create. Get with 'tablename'::regclass" size="10" type="oid" typeCode="-5"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="4" name="session_user_name" nullable="true" remarks="Login / session user whose statement caused the audited event" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="5" name="action_tstamp_tx" nullable="false" remarks="Transaction start timestamp for tx in which audited event occurred" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="6" name="action_tstamp_stm" nullable="false" remarks="Statement start timestamp for tx in which audited event occurred" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="6" id="7" name="action_tstamp_clk" nullable="false" remarks="Wall clock time at which audited event's trigger call occurred" size="35" type="timestamptz" typeCode="93"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="8" name="transaction_id" nullable="true" remarks="Identifier of transaction that made the change. May wrap, but unique paired with action_tstamp_tx." size="19" type="int8" typeCode="-5">
+            <parent column="id" foreignKey="Implied Constraint" implied="true" onDeleteCascade="false" schema="lizsync" table="conflicts"/>
+         </column>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="9" name="application_name" nullable="true" remarks="Application name set when this audit event occurred. Can be changed in-session by client." size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="10" name="client_addr" nullable="true" remarks="IP address of client that issued query. Null for unix domain socket." size="2147483647" type="inet" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="11" name="client_port" nullable="true" remarks="Remote peer IP port address of client that issued query. Undefined for unix socket." size="10" type="int4" typeCode="4"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="12" name="client_query" nullable="false" remarks="Top-level query that caused this auditable event. May be more than one statement." size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="13" name="action" nullable="false" remarks="Action type; I = insert, D = delete, U = update, T = truncate" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="14" name="row_data" nullable="true" remarks="Record value. Null for statement-level trigger. For INSERT this is the new tuple. For DELETE and UPDATE it is the old tuple." size="2147483647" type="hstore" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="15" name="changed_fields" nullable="true" remarks="New values of fields changed by UPDATE. Null except for row-level UPDATE events." size="2147483647" type="hstore" typeCode="1111"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="16" name="statement_only" nullable="false" remarks="'t' if audit event is from an FOR EACH STATEMENT trigger, 'f' for FOR EACH ROW" size="1" type="bool" typeCode="-7"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="17" name="sync_data" nullable="false" remarks="Data used by the sync tool. origin = db name of the change, replayed_by = list of db name where the audit item has already been replayed, sync_id=id of the synchronisation item" size="2147483647" type="jsonb" typeCode="1111"/>
+         <primaryKey column="event_id" sequenceNumberInPK="1"/>
+         <index name="logged_actions_pkey" unique="true">
+            <column ascending="true" name="event_id"/>
+         </index>
+         <index name="logged_actions_action_idx" unique="false">
+            <column ascending="true" name="action"/>
+         </index>
+         <index name="logged_actions_action_tstamp_tx_stm_idx" unique="false">
+            <column ascending="true" name="action_tstamp_stm"/>
+         </index>
+         <index name="logged_actions_relid_idx" unique="false">
+            <column ascending="true" name="relid"/>
+         </index>
+         <checkConstraint constraint="((action = ANY (ARRAY['I'::text, 'D'::text, 'U'::text, 'T'::text])))" name="logged_actions_action_check"/>
+      </table>
+      <table name="logged_relations" numRows="0" remarks="Table used to store unique identifier columns for table or views, so that events can be replayed" schema="lizsync" type="TABLE">
+         <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="relation_name" nullable="false" remarks="Relation (table or view) name (with schema if needed)" size="2147483647" type="text" typeCode="12"/>
+         <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="uid_column" nullable="false" remarks="Name of a column that is used to uniquely identify a row in the relation" size="2147483647" type="text" typeCode="12"/>
+         <primaryKey column="relation_name" sequenceNumberInPK="1"/>
+         <primaryKey column="uid_column" sequenceNumberInPK="2"/>
+         <index name="logged_relations_pkey" unique="true">
+            <column ascending="true" name="relation_name"/>
+            <column ascending="true" name="uid_column"/>
+         </index>
+      </table>
       <table name="server_metadata" numRows="0" remarks="" schema="lizsync" type="TABLE">
          <column autoUpdated="false" defaultValue="(md5(((random())::text || (clock_timestamp())::text)))::uuid" digits="0" id="0" name="server_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="(md5(((random())::text || (clock_timestamp())::text)))::uuid" digits="0" id="1" name="server_name" nullable="false" remarks="" size="2147483647" type="text" typeCode="12"/>
@@ -52,7 +101,7 @@
             <column ascending="true" name="server_name"/>
          </index>
       </table>
-      <table name="synchronized_tables" numRows="0" remarks="List of tables to synchronize per clone server id. This list works as a white list. Only listed tables will be synchronized for each server ids." schema="lizsync" type="TABLE">
+      <table name="synchronized_tables" numRows="0" remarks="List of tables to synchronise per clone server id. This list works as a white list. Only listed tables will be synchronised for each server ids." schema="lizsync" type="TABLE">
          <column autoUpdated="false" defaultValue="null" digits="0" id="0" name="server_id" nullable="false" remarks="" size="2147483647" type="uuid" typeCode="1111"/>
          <column autoUpdated="false" defaultValue="null" digits="0" id="1" name="sync_tables" nullable="false" remarks="" size="2147483647" type="jsonb" typeCode="1111"/>
          <primaryKey column="server_id" sequenceNumberInPK="1"/>
@@ -236,6 +285,102 @@ BEGIN
 END;
 ]]></definition>
       </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="audit_table" returnType="void" securityType="INVOKER" type="FUNCTION">
+         <comment><![CDATA[
+Add auditing support to a table.
+
+Arguments:
+   target_table:     Table name, schema qualified if not on search_path
+   audit_rows:       Record each row change, or only audit at a statement level
+   audit_query_text: Record the text of the client query that triggered the audit event?
+   ignored_cols:     Columns to exclude from update diffs, ignore updates that change only ignored cols.
+]]></comment>
+         <definition language="PLPGSQL"><![CDATA[
+DECLARE
+  stm_targets text = 'INSERT OR UPDATE OR DELETE OR TRUNCATE';
+  _q_txt text;
+  _ignored_cols_snip text = '';
+BEGIN
+
+    EXECUTE 'DROP TRIGGER IF EXISTS lizsync_audit_trigger_row ON ' || target_table::TEXT;
+    EXECUTE 'DROP TRIGGER IF EXISTS lizsync_audit_trigger_stm ON ' || target_table::TEXT;
+
+
+    IF audit_rows THEN
+        IF array_length(ignored_cols,1) > 0 THEN
+            _ignored_cols_snip = ', ' || quote_literal(ignored_cols);
+        END IF;
+        _q_txt = 'CREATE TRIGGER lizsync_audit_trigger_row AFTER INSERT OR UPDATE OR DELETE ON ' ||
+                 target_table::TEXT ||
+
+                 ' FOR EACH ROW EXECUTE PROCEDURE lizsync.if_modified_func(' ||
+                 quote_literal(audit_query_text) || _ignored_cols_snip || ');';
+        RAISE NOTICE '%',_q_txt;
+        EXECUTE _q_txt;
+        stm_targets = 'TRUNCATE';
+    ELSE
+    END IF;
+
+    _q_txt = 'CREATE TRIGGER lizsync_audit_trigger_stm AFTER ' || stm_targets || ' ON ' ||
+             target_table ||
+             ' FOR EACH STATEMENT EXECUTE PROCEDURE lizsync.if_modified_func('||
+             quote_literal(audit_query_text) || ');';
+    RAISE NOTICE '%',_q_txt;
+    EXECUTE _q_txt;
+
+    -- store primary key names
+    insert into lizsync.logged_relations (relation_name, uid_column)
+         select target_table, a.attname
+           from pg_index i
+           join pg_attribute a on a.attrelid = i.indrelid
+                              and a.attnum = any(i.indkey)
+          where i.indrelid = target_table::regclass
+            and i.indisprimary
+    ON CONFLICT ON CONSTRAINT logged_relations_pkey
+    DO NOTHING
+            ;
+END;
+]]></definition>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="audit_view" returnType="void" securityType="INVOKER" type="FUNCTION">
+         <comment><![CDATA[
+ADD auditing support TO a VIEW.
+
+Arguments:
+   target_view:      TABLE name, schema qualified IF NOT ON search_path
+   audit_query_text: Record the text of the client query that triggered the audit event?
+   ignored_cols:     COLUMNS TO exclude FROM UPDATE diffs, IGNORE updates that CHANGE only ignored cols.
+   uid_cols:         COLUMNS to use to uniquely identify a row from the view (in order to replay UPDATE and DELETE)
+]]></comment>
+         <definition language="PLPGSQL"><![CDATA[
+DECLARE
+  stm_targets text = 'INSERT OR UPDATE OR DELETE';
+  _q_txt text;
+  _ignored_cols_snip text = '';
+
+BEGIN
+    EXECUTE 'DROP TRIGGER IF EXISTS lizsync_audit_trigger_row ON ' || target_view::text;
+    EXECUTE 'DROP TRIGGER IF EXISTS lizsync_audit_trigger_stm ON ' || target_view::text;
+
+    IF array_length(ignored_cols,1) > 0 THEN
+        _ignored_cols_snip = ', ' || quote_literal(ignored_cols);
+    END IF;
+    _q_txt = 'CREATE TRIGGER lizsync_audit_trigger_row INSTEAD OF INSERT OR UPDATE OR DELETE ON ' ||
+         target_view::TEXT ||
+         ' FOR EACH ROW EXECUTE PROCEDURE lizsync.if_modified_func(' ||
+         quote_literal(audit_query_text) || _ignored_cols_snip || ');';
+    RAISE NOTICE '%',_q_txt;
+    EXECUTE _q_txt;
+
+    -- store uid columns if not already present
+  IF (select count(*) from lizsync.logged_relations where relation_name = (select target_view)::text AND  uid_column= (select unnest(uid_cols))::text) = 0 THEN
+      insert into lizsync.logged_relations (relation_name, uid_column)
+       select target_view, unnest(uid_cols);
+  END IF;
+
+END;
+]]></definition>
+      </routine>
       <routine dataAccess="MODIFIES" deterministic="false" name="compare_tables" returnType="SETOF record" securityType="INVOKER" type="FUNCTION">
          <comment/>
          <definition language="PLPGSQL"><![CDATA[
@@ -247,7 +392,7 @@ BEGIN
     -- Get array of primary key field(s)
     SELECT array_agg(uid_column) as pkey_fields
     INTO pkeys
-    FROM audit.logged_relations r
+    FROM lizsync.logged_relations r
     WHERE relation_name = (quote_ident(p_schema_name) || '.' || quote_ident(p_table_name))
     ;
 
@@ -282,7 +427,7 @@ END;
 ]]></definition>
       </routine>
       <routine dataAccess="MODIFIES" deterministic="false" name="create_central_server_fdw" returnType="boolean" securityType="INVOKER" type="FUNCTION">
-         <comment><![CDATA[Create foreign server, needed central_audit and central_lizsync schemas, and import all central database tables as foreign tables. This will allow the clone to connect to the central databse]]></comment>
+         <comment><![CDATA[Create foreign server, needed central_lizsync schema, and import all central database tables as foreign tables. This will allow the clone to connect to the central databse]]></comment>
          <definition language="PLPGSQL"><![CDATA[
 DECLARE
     sqltemplate text;
@@ -323,14 +468,7 @@ BEGIN
     );
 
     -- Create local schemas
-    CREATE SCHEMA IF NOT EXISTS central_audit;
     CREATE SCHEMA IF NOT EXISTS central_lizsync;
-
-    -- Import foreign tables
-    -- audit
-    IMPORT FOREIGN SCHEMA audit
-    FROM SERVER central_server
-    INTO central_audit;
 
     -- lizsync
     IMPORT FOREIGN SCHEMA lizsync
@@ -411,7 +549,7 @@ END;
 ]]></definition>
       </routine>
       <routine dataAccess="MODIFIES" deterministic="false" name="get_central_audit_logs" returnType="SETOF record" securityType="INVOKER" type="FUNCTION">
-         <comment><![CDATA[Get all the logs from the central database: modifications do not come from the clone, have not yet been replayed by the clone, are dated after the last synchronization, have an event id higher than the last sync maximum event id, and concern the synchronized tables for this clone. Parameters: uid column name and excluded columns]]></comment>
+         <comment><![CDATA[Get all the logs from the central database: modifications do not come from the clone, have not yet been replayed by the clone, are dated after the last synchronisation, have an event id higher than the last sync maximum event id, and concern the synchronised tables for this clone. Parameters: uid column name and excluded columns]]></comment>
          <definition language="PLPGSQL"><![CDATA[
 DECLARE
     p_clone_id text;
@@ -504,7 +642,7 @@ BEGIN
                     THEN extract(epoch from Cast(a.sync_data->>''action_tstamp_tx'' AS TIMESTAMP WITH TIME ZONE))::integer
                 ELSE extract(epoch from a.action_tstamp_tx)::integer
             END AS original_action_tstamp_tx
-        FROM audit.logged_actions AS a
+        FROM lizsync.logged_actions AS a
         -- Create as many lines as there are changed fields in UPDATE
         LEFT JOIN skeys(a.changed_fields) AS s ON TRUE,
         last_sync, tables
@@ -517,7 +655,7 @@ BEGIN
         -- modifications have not yet been replayed in the clone database
         AND (NOT (a.sync_data->''replayed_by'' ? ''%1$s'') OR a.sync_data->''replayed_by'' = jsonb_build_object() )
 
-        -- modifications after the last synchronization
+        -- modifications after the last synchronisation
         -- MAX_ACTION_TSTAMP_TX Par ex: 2019-04-20 12:00:00+02
         AND a.action_tstamp_tx > last_sync.max_action_tstamp_tx
 
@@ -525,7 +663,7 @@ BEGIN
         -- MAX_EVENT_ID
         AND a.event_id > last_sync.max_event_id
 
-        -- only for tables synchronized by the clone server ID
+        -- only for tables synchronised by the clone server ID
         AND sync_tables ? concat(''"'', a.schema_name, ''"."'', a.table_name, ''"'')
 
         ORDER BY a.event_id
@@ -581,7 +719,7 @@ BEGIN
         ) AS action,
         s AS updated_field,
         (a.row_data->p_uid_field)::uuid AS uid
-    FROM audit.logged_actions AS a
+    FROM lizsync.logged_actions AS a
     -- Create as many lines as there are changed fields in UPDATE
     LEFT JOIN skeys(a.changed_fields) AS s ON TRUE
     WHERE True
@@ -595,7 +733,7 @@ END;
 Get the SQL to use for replay from a audit log event
 
 Arguments:
-   pevent_id:  The event_id of the event in audit.logged_actions to replay
+   pevent_id:  The event_id of the event in lizsync.logged_actions to replay
    puid_column: The name of the column with unique uuid values
 ]]></comment>
          <definition language="PLPGSQL"><![CDATA[
@@ -608,12 +746,12 @@ BEGIN
 
     WITH
     event AS (
-        SELECT * FROM audit.logged_actions WHERE event_id = pevent_id
+        SELECT * FROM lizsync.logged_actions WHERE event_id = pevent_id
     )
     -- get primary key names
     , where_pks AS (
         SELECT array_agg(uid_column) as pkey_fields
-        FROM audit.logged_relations r
+        FROM lizsync.logged_relations r
         JOIN event ON relation_name = (quote_ident(schema_name) || '.' || quote_ident(table_name))
     )
     -- create where clause with uid column
@@ -678,8 +816,136 @@ BEGIN
 END;
 ]]></definition>
       </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="if_modified_func" returnType="trigger" securityType="DEFINER" type="FUNCTION">
+         <comment><![CDATA[
+Track changes to a table at the statement and/or row level.
+
+Optional parameters to trigger in CREATE TRIGGER call:
+
+param 0: boolean, whether to log the query text. Default 't'.
+
+param 1: text[], columns to ignore in updates. Default [].
+
+         Updates to ignored cols are omitted from changed_fields.
+
+         Updates with only ignored cols changed are not inserted
+         into the audit log.
+
+         Almost all the processing work is still done for updates
+         that ignored. If you need to save the load, you need to use
+         WHEN clause on the trigger instead.
+
+         No warning or error is issued if ignored_cols contains columns
+         that do not exist in the target table. This lets you specify
+         a standard set of ignored columns.
+
+There is no parameter to disable logging of values. Add this trigger as
+a 'FOR EACH STATEMENT' rather than 'FOR EACH ROW' trigger if you do not
+want to log row values.
+
+Note that the user name logged is the login role for the session. The audit trigger
+cannot obtain the active role because it is reset by the SECURITY DEFINER invocation
+of the audit trigger its self.
+]]></comment>
+         <definition language="PLPGSQL"><![CDATA[
+DECLARE
+    audit_row lizsync.logged_actions;
+    include_values boolean;
+    log_diffs boolean;
+    h_old hstore;
+    h_new hstore;
+    excluded_cols text[] = ARRAY[]::text[];
+BEGIN
+    --RAISE WARNING '[lizsync.if_modified_func] start with TG_ARGV[0]: % ; TG_ARGV[1] : %, TG_OP: %, TG_LEVEL : %, TG_WHEN: % ', TG_ARGV[0], TG_ARGV[1], TG_OP, TG_LEVEL, TG_WHEN;
+
+    IF NOT (TG_WHEN IN ('AFTER' , 'INSTEAD OF')) THEN
+        RAISE EXCEPTION 'lizsync.if_modified_func() may only run as an AFTER trigger';
+    END IF;
+
+    audit_row = ROW(
+        nextval('lizsync.logged_actions_event_id_seq'), -- event_id
+        TG_TABLE_SCHEMA::text,                        -- schema_name
+        TG_TABLE_NAME::text,                          -- table_name
+        TG_RELID,                                     -- relation OID for much quicker searches
+        session_user::text,                           -- session_user_name
+        current_timestamp,                            -- action_tstamp_tx
+        statement_timestamp(),                        -- action_tstamp_stm
+        clock_timestamp(),                            -- action_tstamp_clk
+        txid_current(),                               -- transaction ID
+        (SELECT setting FROM pg_settings WHERE name = 'application_name'),
+        inet_client_addr(),                           -- client_addr
+        inet_client_port(),                           -- client_port
+        current_query(),                              -- top-level query or queries (if multistatement) from client
+        substring(TG_OP,1,1),                         -- action
+        NULL, NULL,                                   -- row_data, changed_fields
+        'f',                                          -- statement_only
+        jsonb_build_object(
+            'origin', current_setting('lizsync.server_from', true),
+            'replayed_by',
+            CASE
+                WHEN current_setting('lizsync.server_to', true) IS NOT NULL
+                AND current_setting('lizsync.sync_id', true) IS NOT NULL
+                    THEN jsonb_build_object(
+                        current_setting('lizsync.server_to', true),
+                        current_setting('lizsync.sync_id', true)
+                    )
+                ELSE jsonb_build_object()
+            END
+
+        )
+    );
+
+    IF NOT TG_ARGV[0]::boolean IS DISTINCT FROM 'f'::boolean THEN
+        audit_row.client_query = NULL;
+        RAISE WARNING '[lizsync.if_modified_func] - Trigger func triggered with no client_query tracking';
+
+    END IF;
+
+    IF TG_ARGV[1] IS NOT NULL THEN
+        excluded_cols = TG_ARGV[1]::text[];
+        RAISE WARNING '[lizsync.if_modified_func] - Trigger func triggered with excluded_cols: %',TG_ARGV[1];
+    END IF;
+
+    IF (TG_OP = 'UPDATE' AND TG_LEVEL = 'ROW') THEN
+        h_old = hstore(OLD.*) - excluded_cols;
+        audit_row.row_data = h_old;
+        h_new = hstore(NEW.*)- excluded_cols;
+        audit_row.changed_fields =  h_new - h_old;
+
+        IF audit_row.changed_fields = hstore('') THEN
+            -- All changed fields are ignored. Skip this update.
+            RAISE WARNING '[lizsync.if_modified_func] - Trigger detected NULL hstore. ending';
+            RETURN NULL;
+        END IF;
+  INSERT INTO lizsync.logged_actions VALUES (audit_row.*);
+  RETURN NEW;
+
+    ELSIF (TG_OP = 'DELETE' AND TG_LEVEL = 'ROW') THEN
+        audit_row.row_data = hstore(OLD.*) - excluded_cols;
+  INSERT INTO lizsync.logged_actions VALUES (audit_row.*);
+        RETURN OLD;
+
+    ELSIF (TG_OP = 'INSERT' AND TG_LEVEL = 'ROW') THEN
+        audit_row.row_data = hstore(NEW.*) - excluded_cols;
+  INSERT INTO lizsync.logged_actions VALUES (audit_row.*);
+        RETURN NEW;
+
+    ELSIF (TG_LEVEL = 'STATEMENT' AND TG_OP IN ('INSERT','UPDATE','DELETE','TRUNCATE')) THEN
+        audit_row.statement_only = 't';
+        INSERT INTO lizsync.logged_actions VALUES (audit_row.*);
+  RETURN NULL;
+
+    ELSE
+        RAISE EXCEPTION '[lizsync.if_modified_func] - Trigger func added as trigger for unhandled case: %, %',TG_OP, TG_LEVEL;
+        RETURN NEW;
+    END IF;
+
+
+END;
+]]></definition>
+      </routine>
       <routine dataAccess="MODIFIES" deterministic="false" name="import_central_server_schemas" returnType="SETOF ARRAY" securityType="INVOKER" type="FUNCTION">
-         <comment><![CDATA[Import synchronized schemas from the central database foreign server into central_XXX local schemas to the clone database. This allow to edit data of the central database from the clone.]]></comment>
+         <comment><![CDATA[Import synchronised schemas from the central database foreign server into central_XXX local schemas to the clone database. This allow to edit data of the central database from the clone.]]></comment>
          <definition language="PLPGSQL"><![CDATA[
 DECLARE
     p_clone_id text;
@@ -811,7 +1077,7 @@ BEGIN
 
         -- Update central audit logged actions
         -- To tell these actions have been replayed by this clone
-        UPDATE central_audit.logged_actions
+        UPDATE central_lizsync.logged_actions
         SET sync_data = jsonb_set(
             sync_data,
             '{"replayed_by"}',
@@ -821,7 +1087,7 @@ BEGIN
         WHERE event_id = ANY (p_ids)
         ;
 
-        -- Modify central server synchronization item central->clone
+        -- Modify central server synchronisation item central->clone
         -- to mark it as 'done'
         UPDATE central_lizsync.history
         SET sync_status = 'done'
@@ -940,7 +1206,7 @@ BEGIN
             sqlupdatelogs = concat(
                 sqlupdatelogs,
                 format('
-                    UPDATE audit.logged_actions
+                    UPDATE lizsync.logged_actions
                     SET sync_data = sync_data || jsonb_build_object(
                         ''action_tstamp_tx'',
                         Cast(''%1$s'' AS TIMESTAMP WITH TIME ZONE)
@@ -962,7 +1228,7 @@ BEGIN
 
         END LOOP;
 
-        -- Update central audit.logged_actions
+        -- Update central lizsync.logged_actions
         SELECT dblink_exec(
             dblink_connection_name,
             sqlupdatelogs
@@ -984,12 +1250,129 @@ BEGIN
 
 
     -- Remove logs from clone audit table
-    TRUNCATE audit.logged_actions
+    TRUNCATE lizsync.logged_actions
     RESTART IDENTITY;
 
     -- Return
     RETURN QUERY
     SELECT p_counter;
+END;
+]]></definition>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="replay_event" returnType="void" securityType="INVOKER" type="FUNCTION">
+         <comment><![CDATA[
+Replay a logged event.
+
+Arguments:
+   pevent_id:  The event_id of the event in lizsync.logged_actions to replay
+]]></comment>
+         <definition language="PLPGSQL"><![CDATA[
+DECLARE
+  query text;
+BEGIN
+    with
+    event as (
+        select * from lizsync.logged_actions where event_id = pevent_id
+    )
+    -- get primary key names
+    , where_pks as (
+        select array_to_string(array_agg(uid_column || '=' || quote_literal(row_data->uid_column)), ' AND ') as where_clause
+          from lizsync.logged_relations r
+          join event on relation_name = (schema_name || '.' || table_name)
+    )
+    select into query
+        case
+            when action = 'I' then
+                'INSERT INTO ' || schema_name || '.' || table_name ||
+                ' ('||(select string_agg(key, ',') from each(row_data))||') VALUES ' ||
+                '('||(select string_agg(case when value is null then 'null' else quote_literal(value) end, ',') from each(row_data))||')'
+            when action = 'D' then
+                'DELETE FROM ' || schema_name || '.' || table_name ||
+                ' WHERE ' || where_clause
+            when action = 'U' then
+                'UPDATE ' || schema_name || '.' || table_name ||
+                ' SET ' || (select string_agg(key || '=' || case when value is null then 'null' else quote_literal(value) end, ',') from each(changed_fields)) ||
+                ' WHERE ' || where_clause
+        end
+    from
+        event, where_pks
+    ;
+
+    execute query;
+END;
+]]></definition>
+      </routine>
+      <routine dataAccess="MODIFIES" deterministic="false" name="rollback_event" returnType="void" securityType="INVOKER" type="FUNCTION">
+         <comment><![CDATA[
+Rollback a logged event and returns to previous row data
+
+Arguments:
+   pevent_id:  The event_id of the event in lizsync.logged_actions to rollback
+]]></comment>
+         <definition language="PLPGSQL"><![CDATA[
+DECLARE
+    event record;
+    pkeys record;
+    last_event record;
+    query text;
+BEGIN
+    -- Get event
+    SELECT * INTO event FROM lizsync.logged_actions WHERE event_id = pevent_id;
+    -- RAISE NOTICE 'event id = %', event.event_id;
+
+    -- Get the WHERE clause to filter the events feature
+    SELECT INTO pkeys
+        array_to_string(array_agg(uid_column || '=' || quote_literal(event.row_data->uid_column)), ' AND ') AS where_clause,
+        hstore(array_agg(uid_column), array_agg( event.row_data->uid_column)) AS hstore_keys
+    FROM lizsync.logged_relations r
+    WHERE relation_name = (event.schema_name || '.' || event.table_name)
+    ;
+    -- RAISE NOTICE 'hstore_keys = %', pkeys.hstore_keys;
+
+    -- Check if this is the last event for the feature. If not cancel the rollback
+    SELECT INTO last_event
+        (pevent_id = la.event_id) AS is_last,
+        la.event_id
+    FROM lizsync.logged_actions AS la
+    WHERE true
+    AND la.schema_name = event.schema_name
+    AND la.table_name = event.table_name
+    AND la.row_data @> pkeys.hstore_keys
+    ORDER BY la.action_tstamp_tx DESC
+    LIMIT 1
+    ;
+    IF NOT last_event.is_last THEN
+        RAISE EXCEPTION '[lizsync.rollback_event] - Cannot rollback this event (id = %) because a more recent event (id = %) exists for this feature', pevent_id, last_event.event_id;
+        RETURN;
+    END IF;
+
+
+    -- Then apply the rollback
+    SELECT INTO query
+        CASE
+            WHEN action = 'I' THEN
+                'DELETE FROM ' || schema_name || '.' || table_name ||
+                ' WHERE ' || pkeys.where_clause
+            WHEN action = 'D' THEN
+                'INSERT INTO ' || schema_name || '.' || table_name ||
+                ' ('||(SELECT string_agg(key, ',') FROM each(row_data))||') VALUES ' ||
+                '('||(SELECT string_agg(CASE WHEN value IS NULL THEN 'null' ELSE quote_literal(value) END, ',') FROM each(row_data))||')'
+            WHEN action = 'U' THEN
+                'UPDATE ' || schema_name || '.' || table_name ||
+                ' SET ' || (
+                    SELECT string_agg(
+                        key || '=' || CASE WHEN value IS NULL THEN 'null' ELSE quote_literal(value) END
+                        , ','
+                    ) FROM each(row_data) WHERE key = ANY (akeys(changed_fields)) ) ||
+                ' WHERE ' || pkeys.where_clause
+
+        END
+    FROM
+        lizsync.logged_actions
+    WHERE event_id = pevent_id
+    ;
+
+    execute query;
 END;
 ]]></definition>
       </routine>

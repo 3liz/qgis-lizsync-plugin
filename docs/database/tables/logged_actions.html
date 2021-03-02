@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>conflicts - gis Database</title>
+        <title>logged_actions - gis Database</title>
         <!-- Tell the browser to be responsive to screen width -->
         <meta content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" name="viewport">
         <link rel="icon" type="image/png" sizes="16x16" href="../favicon.png">
@@ -73,7 +73,7 @@
             <div class="content-wrapper">
                 <!-- Content Header (Page header) -->
                 <section class="content-header">
-                    <h1>conflicts</h1><p><span id="recordNumber">0</span> rows</p><br />
+                    <h1>logged_actions</h1><p><span id="recordNumber">0</span> rows</p><br />
                     <div class="box box-primary">
                         <div class="box-header with-border">
                             <i class="fa fa-file-text-o"></i>
@@ -84,7 +84,7 @@
                             </div>
                         </div><!-- /.box-header -->
                         <div class="box-body clearfix">
-                            <p>Store conflicts resolution made during bidirectionnal database synchronizations.</p>
+                            <p>History of auditable actions on audited tables, from lizsync.if_modified_func()</p>
                         </div><!-- /.box-body -->
                     </div>
                 </section>
@@ -116,33 +116,29 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td class='primaryKey' title='Primary Key'><i class='icon ion-key iconkey' style='padding-left: 5px;'></i><span id="id">id</span></td>
+                                    <td class='primaryKey' title='Primary Key'><i class='icon ion-key iconkey' style='padding-left: 5px;'></i><span id="event_id">event_id</span></td>
                                     <td>bigserial</td>
                                     <td>19</td>
                                     <td title=''></td>
                                     <td title='Automatically updated by the database'>√</td>
-                                    <td>nextval(&#39;lizsync.conflicts_id_seq&#39;::regclass)</td>
+                                    <td>nextval(&#39;lizsync.logged_actions_event_id_seq&#39;::regclass)</td>
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
-                                            <tr>
-                                                <td title="logged_actions.transaction_id&#39;s name implies that it&#39;s a child of conflicts.id, but it doesn&#39;t reference that column."><a href='logged_actions.html'>logged_actions</a><span class='relatedKey'>.transaction_id</span></td>
-                                                <td class="constraint detail">Implied Constraint<span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
-                                            </tr>
                                         </table>
                                     </td>
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td><p>Automatic ID</p></td>
+                                    <td><p>Unique identifier for each auditable event</p></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="conflict_time">conflict_time</span></td>
-                                    <td>timestamptz</td>
-                                    <td>35,6</td>
+                                    <td><span id="schema_name">schema_name</span></td>
+                                    <td>text</td>
+                                    <td>2147483647</td>
                                     <td title=''></td>
                                     <td title=''></td>
-                                    <td>now()</td>
+                                    <td>null</td>
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
@@ -151,10 +147,44 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td><p>Timestamp of the conflict resolution. Not related to timestamp of logged actions</p></td>
+                                    <td><p>Database schema audited table for this event is in</p></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="object_table">object_table</span></td>
+                                    <td><span id="table_name">table_name</span></td>
+                                    <td>text</td>
+                                    <td>2147483647</td>
+                                    <td title=''></td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>Non-schema-qualified table name of table event occured in</p></td>
+                                </tr>
+                                <tr>
+                                    <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="relid">relid</span></td>
+                                    <td>oid</td>
+                                    <td>10</td>
+                                    <td title=''></td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>Table OID. Changes with drop/create. Get with &lsquo;tablename&rsquo;::regclass</p></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="session_user_name">session_user_name</span></td>
                                     <td>text</td>
                                     <td>2147483647</td>
                                     <td title='nullable'>√</td>
@@ -168,13 +198,13 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td><p>Schema and table name of the conflicted object.</p></td>
+                                    <td><p>Login / session user whose statement caused the audited event</p></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="object_uid">object_uid</span></td>
-                                    <td>uuid</td>
-                                    <td>2147483647</td>
-                                    <td title='nullable'>√</td>
+                                    <td><span id="action_tstamp_tx">action_tstamp_tx</span></td>
+                                    <td>timestamptz</td>
+                                    <td>35,6</td>
+                                    <td title=''></td>
                                     <td title=''></td>
                                     <td>null</td>
                                     <td>
@@ -185,13 +215,13 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td><p>UID of the conflicted object.</p></td>
+                                    <td><p>Transaction start timestamp for tx in which audited event occurred</p></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="clone_id">clone_id</span></td>
-                                    <td>uuid</td>
-                                    <td>2147483647</td>
-                                    <td title='nullable'>√</td>
+                                    <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="action_tstamp_stm">action_tstamp_stm</span></td>
+                                    <td>timestamptz</td>
+                                    <td>35,6</td>
+                                    <td title=''></td>
                                     <td title=''></td>
                                     <td>null</td>
                                     <td>
@@ -202,10 +232,27 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td><p>UID of the source clone database.</p></td>
+                                    <td><p>Statement start timestamp for tx in which audited event occurred</p></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="central_event_id">central_event_id</span></td>
+                                    <td><span id="action_tstamp_clk">action_tstamp_clk</span></td>
+                                    <td>timestamptz</td>
+                                    <td>35,6</td>
+                                    <td title=''></td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>Wall clock time at which audited event&rsquo;s trigger call occurred</p></td>
+                                </tr>
+                                <tr>
+                                    <td class='foreignKey' title='Foreign Key'><i class='icon ion-key iconkey' style='padding-left: 5px;'></i><span id="transaction_id">transaction_id</span></td>
                                     <td>int8</td>
                                     <td>19</td>
                                     <td title='nullable'>√</td>
@@ -217,29 +264,16 @@
                                     </td>
                                     <td>
                                         <table border='0' cellspacing='0' cellpadding='0'>
+                                            <tr>
+                                                <td title="logged_actions.transaction_id&#39;s name implies that it&#39;s a child of conflicts.id, but it doesn&#39;t reference that column."><a href='conflicts.html'>conflicts</a><span class='relatedKey'>.id</span></td>
+                                                <td class="constraint detail">Implied Constraint<span title='Restrict delete:&#10;Parent cannot be deleted if children exist'>R</span></td>
+                                            </tr>
                                         </table>
                                     </td>
-                                    <td><p>Event id of the conflicted central audit log</p></td>
+                                    <td><p>Identifier of transaction that made the change. May wrap, but unique paired with action_tstamp_tx.</p></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="central_event_timestamp">central_event_timestamp</span></td>
-                                    <td>timestamptz</td>
-                                    <td>35,6</td>
-                                    <td title='nullable'>√</td>
-                                    <td title=''></td>
-                                    <td>null</td>
-                                    <td>
-                                        <table border='0' cellspacing='0' cellpadding='0'>
-                                        </table>
-                                    </td>
-                                    <td>
-                                        <table border='0' cellspacing='0' cellpadding='0'>
-                                        </table>
-                                    </td>
-                                    <td><p>Event action_tstamp_tx of the conflicted central audit log</p></td>
-                                </tr>
-                                <tr>
-                                    <td><span id="central_sql">central_sql</span></td>
+                                    <td><span id="application_name">application_name</span></td>
                                     <td>text</td>
                                     <td>2147483647</td>
                                     <td title='nullable'>√</td>
@@ -253,11 +287,11 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td><p>Central SQL action in conflict</p></td>
+                                    <td><p>Application name set when this audit event occurred. Can be changed in-session by client.</p></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="clone_sql">clone_sql</span></td>
-                                    <td>text</td>
+                                    <td><span id="client_addr">client_addr</span></td>
+                                    <td>inet</td>
                                     <td>2147483647</td>
                                     <td title='nullable'>√</td>
                                     <td title=''></td>
@@ -270,11 +304,62 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td><p>Clone SQL action in conflict</p></td>
+                                    <td><p>IP address of client that issued query. Null for unix domain socket.</p></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="rejected">rejected</span></td>
+                                    <td><span id="client_port">client_port</span></td>
+                                    <td>int4</td>
+                                    <td>10</td>
+                                    <td title='nullable'>√</td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>Remote peer IP port address of client that issued query. Undefined for unix socket.</p></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="client_query">client_query</span></td>
                                     <td>text</td>
+                                    <td>2147483647</td>
+                                    <td title=''></td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>Top-level query that caused this auditable event. May be more than one statement.</p></td>
+                                </tr>
+                                <tr>
+                                    <td class='indexedColumn' title='Indexed'><i class='fa fa-sitemap fa-rotate-120' style='padding-right: 5px;'></i><span id="action">action</span></td>
+                                    <td>text</td>
+                                    <td>2147483647</td>
+                                    <td title=''></td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>Action type; I = insert, D = delete, U = update, T = truncate</p></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="row_data">row_data</span></td>
+                                    <td>hstore</td>
                                     <td>2147483647</td>
                                     <td title='nullable'>√</td>
                                     <td title=''></td>
@@ -287,11 +372,11 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td><p>Rejected object. If &ldquo;clone&rdquo;, it means the central data has been kept instead</p></td>
+                                    <td><p>Record value. Null for statement-level trigger. For INSERT this is the new tuple. For DELETE and UPDATE it is the old tuple.</p></td>
                                 </tr>
                                 <tr>
-                                    <td><span id="rule_applied">rule_applied</span></td>
-                                    <td>text</td>
+                                    <td><span id="changed_fields">changed_fields</span></td>
+                                    <td>hstore</td>
                                     <td>2147483647</td>
                                     <td title='nullable'>√</td>
                                     <td title=''></td>
@@ -304,7 +389,41 @@
                                         <table border='0' cellspacing='0' cellpadding='0'>
                                         </table>
                                     </td>
-                                    <td><p>Rule used when managing conflict</p></td>
+                                    <td><p>New values of fields changed by UPDATE. Null except for row-level UPDATE events.</p></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="statement_only">statement_only</span></td>
+                                    <td>bool</td>
+                                    <td>1</td>
+                                    <td title=''></td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>&lsquo;t&rsquo; if audit event is from an FOR EACH STATEMENT trigger, &lsquo;f&rsquo; for FOR EACH ROW</p></td>
+                                </tr>
+                                <tr>
+                                    <td><span id="sync_data">sync_data</span></td>
+                                    <td>jsonb</td>
+                                    <td>2147483647</td>
+                                    <td title=''></td>
+                                    <td title=''></td>
+                                    <td>null</td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td>
+                                        <table border='0' cellspacing='0' cellpadding='0'>
+                                        </table>
+                                    </td>
+                                    <td><p>Data used by the sync tool. origin = db name of the change, replayed_by = list of db name where the audit item has already been replayed, sync_id=id of the synchronisation item</p></td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -331,14 +450,58 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td class='primaryKey' title='Primary Key'><i class='icon ion-key iconkey'></i> conflicts_pkey</td>
+                                    <td class='primaryKey' title='Primary Key'><i class='icon ion-key iconkey'></i> logged_actions_pkey</td>
                                     <td>Primary key</td>
                                     <td><span title='Ascending'>Asc</span></td>
-                                    <td>id</td>
+                                    <td>event_id</td>
+                                </tr>
+                                <tr>
+                                    <td title='Indexed'>logged_actions_action_idx</td>
+                                    <td>Performance</td>
+                                    <td><span title='Ascending'>Asc</span></td>
+                                    <td>action</td>
+                                </tr>
+                                <tr>
+                                    <td title='Indexed'>logged_actions_action_tstamp_tx_stm_idx</td>
+                                    <td>Performance</td>
+                                    <td><span title='Ascending'>Asc</span></td>
+                                    <td>action_tstamp_stm</td>
+                                </tr>
+                                <tr>
+                                    <td title='Indexed'>logged_actions_relid_idx</td>
+                                    <td>Performance</td>
+                                    <td><span title='Ascending'>Asc</span></td>
+                                    <td>relid</td>
                                 </tr>
                                 </tbody>
                             </table>
                         </div><!-- /.box-body -->
+                    </div>
+                    <div class="box box-primary">
+                        <div class="box-header with-border">
+                            <i class="fa fa-sitemap"></i>
+                            <h3 class="box-title">Check Constraints</h3>
+                            <div class="box-tools pull-right">
+                                <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                                <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+                            </div>
+                        </div>
+                        <div class="box-body">
+                            <table id="check_table" class="table table-bordered table-striped dataTable" role="grid">
+                                <thead align='left'>
+                                <tr>
+                                    <th>Constraint Name</th>
+                                    <th>Constraint</th>
+                                </tr>
+                                </thead>
+                                <tbody>
+                                <tr>
+                                    <td>logged_actions_action_check</td>
+                                    <td>((action = ANY (ARRAY[&#39;I&#39;::text, &#39;D&#39;::text, &#39;U&#39;::text, &#39;T&#39;::text])))</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                     <div class="box box-primary">
                         <div class="box-header with-border">
@@ -359,16 +522,16 @@
                                 <div class="tab-content no-padding">
                                     <div class="chart tab-pane active" id="oneDegreeImg-chart" style="position: relative; overflow-x:auto;">
                                         <map id="oneDegreeRelationshipsDiagram" name="oneDegreeRelationshipsDiagram">
-<area shape="rect" id="node1" href="conflicts.html" target="_top" title="conflicts" alt="" coords="5,5,403,397">
+<area shape="rect" id="node1" href="logged_actions.html" target="_top" title="logged_actions" alt="" coords="5,5,365,603">
 </map>
-                                        <a name='diagram'><img id="oneDegreeImg" src="../diagrams/tables/conflicts.1degree.png" usemap="#oneDegreeRelationshipsDiagram" class="diagram" border="0" align="left"></a>
+                                        <a name='diagram'><img id="oneDegreeImg" src="../diagrams/tables/logged_actions.1degree.png" usemap="#oneDegreeRelationshipsDiagram" class="diagram" border="0" align="left"></a>
                                     </div>
                                     <div class="chart tab-pane " id="oneimpliedDegreeImg-chart" style="position: relative; overflow-x:auto;">
                                         <map id="oneDegreeRelationshipsDiagramImplied" name="oneDegreeRelationshipsDiagramImplied">
-<area shape="rect" id="node1" href="logged_actions.html" target="_top" title="logged_actions" alt="" coords="447,5,648,240">
-<area shape="rect" id="node2" href="conflicts.html" target="_top" title="conflicts" alt="" coords="5,91,403,483">
+<area shape="rect" id="node1" href="logged_actions.html" target="_top" title="logged_actions" alt="" coords="301,5,661,603">
+<area shape="rect" id="node2" href="conflicts.html" target="_top" title="conflicts" alt="" coords="5,243,257,360">
 </map>
-                                        <a name='diagram'><img id="oneimpliedDegreeImg" src="../diagrams/tables/conflicts.implied1degrees.png" usemap="#oneDegreeRelationshipsDiagramImplied" class="diagram" border="0" align="left"></a>
+                                        <a name='diagram'><img id="oneimpliedDegreeImg" src="../diagrams/tables/logged_actions.implied1degrees.png" usemap="#oneDegreeRelationshipsDiagramImplied" class="diagram" border="0" align="left"></a>
                                     </div>
                                 </div>
                             </div>
