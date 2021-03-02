@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Synchronization between PostgreSQL">
+        <meta name="description" content="Synchronization between PostgreSQL databases">
       
       
       
@@ -16,15 +16,15 @@
         <link rel="canonical" href="https://docs.3liz.org/qgis-lizsync-plugin/concepts/">
       
       <link rel="shortcut icon" href="../media/icon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.0.0">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.0.3">
     
     
       
-        <title>Concepts - LizSync</title>
+        <title>Presentation - LizSync</title>
       
     
     
-      <link rel="stylesheet" href="../assets/stylesheets/main.a3f8f96a.min.css">
+      <link rel="stylesheet" href="../assets/stylesheets/main.1655a90d.min.css">
       
         
         <link rel="stylesheet" href="../assets/stylesheets/palette.7fa14f5b.min.css">
@@ -67,7 +67,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#presentation" class="md-skip">
+        <a href="#what-is-lizsync" class="md-skip">
           Skip to content
         </a>
       
@@ -98,7 +98,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Concepts
+              Presentation
             
           </span>
         </div>
@@ -197,7 +197,7 @@
 
   <li class="md-tabs__item">
     <a href="./" class="md-tabs__link md-tabs__link--active">
-      Concepts
+      Presentation
     </a>
   </li>
 
@@ -208,8 +208,8 @@
 
 
   <li class="md-tabs__item">
-    <a href="../old_french_documentation/" class="md-tabs__link">
-      French doc
+    <a href="../user_guide/android/" class="md-tabs__link">
+      Android
     </a>
   </li>
 
@@ -270,6 +270,18 @@
   <li class="md-tabs__item">
     <a href="../database/" class="md-tabs__link">
       Database
+    </a>
+  </li>
+
+      
+        
+  
+  
+
+
+  <li class="md-tabs__item">
+    <a href="../old_french_documentation/" class="md-tabs__link">
+      French doc
     </a>
   </li>
 
@@ -366,12 +378,12 @@
       
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
-          Concepts
+          Presentation
           <span class="md-nav__icon md-icon"></span>
         </label>
       
       <a href="./" class="md-nav__link md-nav__link--active">
-        Concepts
+        Presentation
       </a>
       
         
@@ -388,6 +400,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    Introduction
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#lizsync-workflow" class="md-nav__link">
     LizSync workflow
   </a>
@@ -395,8 +414,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#postgresql-structure" class="md-nav__link">
-    PostgreSQL structure
+  <a href="#postgresql-database-structure" class="md-nav__link">
+    PostgreSQL database structure
   </a>
   
 </li>
@@ -409,15 +428,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#demo" class="md-nav__link">
-    Demo
+  <a href="#key-features" class="md-nav__link">
+    Key features
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#key-features" class="md-nav__link">
-    Key features
+  <a href="#demo" class="md-nav__link">
+    Demo
   </a>
   
 </li>
@@ -438,8 +457,8 @@
   
   
     <li class="md-nav__item">
-      <a href="../old_french_documentation/" class="md-nav__link">
-        French doc
+      <a href="../user_guide/android/" class="md-nav__link">
+        Android
       </a>
     </li>
   
@@ -520,6 +539,21 @@
   
 
     
+      
+      
+      
+
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../old_french_documentation/" class="md-nav__link">
+        French doc
+      </a>
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -545,6 +579,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    Introduction
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#lizsync-workflow" class="md-nav__link">
     LizSync workflow
   </a>
@@ -552,8 +593,8 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#postgresql-structure" class="md-nav__link">
-    PostgreSQL structure
+  <a href="#postgresql-database-structure" class="md-nav__link">
+    PostgreSQL database structure
   </a>
   
 </li>
@@ -566,15 +607,15 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#demo" class="md-nav__link">
-    Demo
+  <a href="#key-features" class="md-nav__link">
+    Key features
   </a>
   
 </li>
       
         <li class="md-nav__item">
-  <a href="#key-features" class="md-nav__link">
-    Key features
+  <a href="#demo" class="md-nav__link">
+    Demo
   </a>
   
 </li>
@@ -596,37 +637,39 @@
                   </a>
                 
                 
-                <h1 id="presentation">Presentation<a class="headerlink" href="#presentation" title="Permanent link">#</a></h1>
-<p><strong>LizSync</strong> is a set of tools allowing to perform PostgreSQL <strong>database synchronisation</strong> between a <strong>central</strong> database and one or many <strong>clone</strong> databases.</p>
+                <h1 id="what-is-lizsync">What is LizSync ?<a class="headerlink" href="#what-is-lizsync" title="Permanent link">#</a></h1>
+<h2 id="introduction">Introduction<a class="headerlink" href="#introduction" title="Permanent link">#</a></h2>
+<p><strong>LizSync</strong> is a set of tools allowing to perform PostgreSQL <strong>database synchronisations</strong> between a <strong>central</strong> database and one or many <strong>clone</strong> databases.</p>
 <p>Two-way synchronisation is done:</p>
 <ul>
-<li>for <strong>data of tables</strong> in chosen schemas,</li>
-<li>between tables having <strong>the same structure</strong>.</li>
+<li>for the <strong>data of chosen tables</strong> in chosen schemas,</li>
+<li>between the same tables of distinct databases having <strong>the same name and structure</strong>.</li>
 <li>No synchronisation is made on structure changes (adding a column, creating or droping tables, etc.).</li>
 </ul>
 <h2 id="lizsync-workflow">LizSync workflow<a class="headerlink" href="#lizsync-workflow" title="Permanent link">#</a></h2>
+<p>To start using <strong>LizSync</strong>, you need to:</p>
 <ul>
-<li>For the 1st time<ul>
 <li><strong>install</strong> the needed PostgreSQL <strong>structure</strong> in the central database</li>
 <li><strong>prepare the central database</strong>:<ul>
 <li>add an <strong>uid column</strong> to every synchronized table</li>
-<li>add needed <strong>audit triggers</strong></li>
+<li>add the needed <strong>audit triggers</strong> for the same tables</li>
 </ul>
 </li>
-</ul>
-</li>
-<li>Before each campain / when structure has changed<ul>
-<li><strong>create an archive</strong> from the central database with data from chosen schemas</li>
+<li>Before each campaign or when the table(s) structure has changed:<ul>
+<li><strong>create an zip archive</strong> from the central database which contains the data and needed information</li>
 <li><strong>deploy</strong> it to one or many clones</li>
 </ul>
 </li>
-<li>Whenever needed<ul>
-<li><strong>perform</strong> a two-way synchronisation from the clone</li>
+<li>Whenever needed:<ul>
+<li><strong>perform</strong> a two-way synchronisation from the clone by using the dedicated algorithm</li>
 </ul>
 </li>
 </ul>
-<p>There is only one central database but you can have one or many clone databases.</p>
-<h2 id="postgresql-structure">PostgreSQL structure<a class="headerlink" href="#postgresql-structure" title="Permanent link">#</a></h2>
+<p>There is <strong>only one central database</strong> but you can have <strong>one or many clone databases</strong>.</p>
+<p>All these steps can be performed with <strong>LizSync plugin</strong> for QGIS, by using the dedicated algorithms in the <strong>Processing toolbox</strong>.</p>
+<p>!!! tip
+    The plugin provides a right panel in QGIS interface which gives a <strong>direct access to the main algorithms</strong>. You can read the auto-generated documentation of all the Processing algorithms in the <a href="../processing/">processing page</a>.</p>
+<h2 id="postgresql-database-structure">PostgreSQL database structure<a class="headerlink" href="#postgresql-database-structure" title="Permanent link">#</a></h2>
 <p>LizSync uses <strong>2 dedicated schemas</strong>:</p>
 <ul>
 <li><strong>audit</strong><ul>
@@ -651,8 +694,6 @@
 <p>Each <strong>insert, update or delete</strong> triggers the addition of a new line in the <code>audit.logged_actions</code> table, with information about the time of the change, author, type of action, etc.</p>
 <p>We added a new column <code>audit.sync_data</code> to the table <code>audit.logged_actions</code> needed by the synchronisation. It contains the unique ID of the origin database, and the synchronisation item key.</p>
 <p>We modified the trigger to fill in this new JSON column.</p>
-<h2 id="demo">Demo<a class="headerlink" href="#demo" title="Permanent link">#</a></h2>
-<p>Read the <a href="../references/">reference page</a> for some videos.</p>
 <h2 id="key-features">Key features<a class="headerlink" href="#key-features" title="Permanent link">#</a></h2>
 <ul>
 <li><strong>Two-way sync</strong>: clone 1 &lt;-&gt; central &lt;-&gt; clone B &lt;-&gt; central &lt;-&gt; clone C &lt;-&gt; central</li>
@@ -665,6 +706,8 @@
 <li><strong>Processing algs</strong>: can be run in CLI if needed</li>
 <li><strong>Unit tests</strong>: installation/upgrade/synchronisation</li>
 </ul>
+<h2 id="demo">Demo<a class="headerlink" href="#demo" title="Permanent link">#</a></h2>
+<p>Read the <a href="../references/">reference page</a> for some videos.</p>
                 
               
               
@@ -697,13 +740,13 @@
         </a>
       
       
-        <a href="../old_french_documentation/" class="md-footer__link md-footer__link--next" rel="next">
+        <a href="../user_guide/android/" class="md-footer__link md-footer__link--next" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              French doc
+              Android
             </div>
           </div>
           <div class="md-footer__button md-icon">
@@ -775,10 +818,10 @@
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../assets/javascripts/workers/search.217ffd95.min.js", "version": null}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../assets/javascripts/workers/search.fb4a9340.min.js", "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.926459b3.min.js"></script>
+      <script src="../assets/javascripts/bundle.ca5457b8.min.js"></script>
       
         <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js"></script>
       
