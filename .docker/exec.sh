@@ -9,10 +9,10 @@ do
 done
 echo "PostgreSQL is now ready !"
 
-docker exec -i postgis sh \
+docker exec -t postgis sh \
   -c "runuser -l postgres -c 'dropdb lizsync_clone_a && dropdb lizsync_clone_b'"
-docker exec -i postgis sh \
+docker exec -t postgis sh \
   -c "runuser -l postgres -c 'createdb lizsync_clone_a && createdb lizsync_clone_b'"
 
-docker exec -i qgis sh \
+docker exec -t qgis sh \
   -c "cd /tests_directory/${PLUGIN_NAME} && qgis_testrunner.sh qgis_plugin_tools.infrastructure.test_runner.test_package"
