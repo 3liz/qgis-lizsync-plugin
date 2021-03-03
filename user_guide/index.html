@@ -377,9 +377,45 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          User guide
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="./" class="md-nav__link md-nav__link--active">
         User guide
       </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-and-workflow" class="md-nav__link">
+    Architecture and workflow
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#technical-considerations" class="md-nav__link">
+    Technical considerations
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -508,6 +544,28 @@
     
   
   
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#architecture-and-workflow" class="md-nav__link">
+    Architecture and workflow
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#technical-considerations" class="md-nav__link">
+    Technical considerations
+  </a>
+  
+</li>
+      
+    </ul>
+  
 </nav>
                   </div>
                 </div>
@@ -524,7 +582,26 @@
                 
                 
                 <h1 id="user-guide">User guide<a class="headerlink" href="#user-guide" title="Permanent link">#</a></h1>
-<p>Todo</p>
+<h2 id="architecture-and-workflow">Architecture and workflow<a class="headerlink" href="#architecture-and-workflow" title="Permanent link">#</a></h2>
+<p>A <strong>PostgreSQL</strong> database called <em>central database</em> contains data in <strong>tables</strong>, organised in <strong>schemas</strong>. No data is stored in the <code>public</code> schema.</p>
+<p>LizSync tools must be installed in this central database with the <a href="../processing/#install-lizsync-tools-on-the-central-database">dedicated QGIS processing algorithm</a>. This will create a new schema <code>lizsync</code> in the central database, containing the needed tables and functions in charge of the synchronisation.</p>
+<p>Then, you need to <a href="../processing/#prepare-the-central-database">prepare this database</a> to add the needed metadata (server id in the table <code>lizsync.server_metadata</code>) and optionally prepare some tables for the synchronisation: add a unique id <code>uid</code> colums (UUID) and a trigger in charge of logging the table data modifications (insert, update, delete).</p>
+<p>When the central database is ready, you can then <a href="../processing/#create-a-package-from-the-central-database">create a package from the central database </a>. To do so, just open or save a QGIS project containing PostgreSQL layers from the central database, choose the layers to export, and the zip package file path. This action is considered as a full synchronisation. The output zip archive contains the data from the chosen layers, but also the needed information about the central server and the tables which have been exported.</p>
+<p>This zip archive can be <a href="../processing/#deploy-a-database-package-to-the-clone">deployed to one or many clone PostgreSQL databases</a>. This action will completely <strong>remove the tables</strong> corresponding to the exported layers, and replace their content with the one inside the archive. It also <strong>re-installs the LizSync tools</strong> in the clone database, which will delete all previous audited data. After this step, the data of the synchronised tables in the clone(s) database will be the same as the one exported at the time of the package creation.</p>
+<p>Data of the central and clone(s) database tables can then evolve freely, as soon as the tables structure is not modified (no addition or removal of tables or fields). For example, you can go to the field with QField installed in your tablet (or QGIS in your laptop) and edit data inside the clone database.</p>
+<p>You can then <strong>run a bidirectional synchronisation</strong> with the <a href="#two-way-database-synchronization">dedicated QGIS processing algorithm</a> by choosing the PostgreSQL connections for the central database and the clone database. You can also run a synchronisation by running the SQL query <code>SELECT lizsync.synchronize()</code> from a PostgreSQL connection to the clone database. The synchronisation is <strong>a two-step action</strong>, which first gets the data modification from the central server and then pushes the data modifications the clone to the central database.</p>
+<h2 id="technical-considerations">Technical considerations<a class="headerlink" href="#technical-considerations" title="Permanent link">#</a></h2>
+<p>TODO: translate in English</p>
+<p>Certains choix <strong>méthodologiques et techniques</strong> ont été faits pour assurer la synchronisation bidirectionnelle.</p>
+<ul>
+<li>la base centrale stocke dans le schéma <code>lizsync</code> les données nécessaires aux synchronisations.</li>
+<li>les données du schéma <code>public</code> ne sont <strong>jamais synchronisées</strong></li>
+<li>les tables doivent avoir une <strong>clé primaire de type entier, autoincrémentée</strong>. Cet identifiant pourrait diverger entre la base centrale et les clones. Il n'est utile que localement pour certaines applications (QGIS préfère qu'il y ait une clé primaire entière)</li>
+<li>les tables à synchroniser doivent toutes posséder un champ <strong>uid</strong> de type <strong>uuid</strong> (valeur exemple: <code>5d3d503c-6d97-f11e-a2a4-5db030060f6d</code>) avec une valeur par défaut automatique. Ce champ est le pivot de la synchronisation. Il permet de reconnaître de manière unique un objet entre toutes les bases de données.</li>
+<li>les références de <strong>clés étrangères</strong> doivent se baser sur le champ <strong>uid</strong> de la table parente, et non sur la clé primaire, car les clés primaires peuvent diverger entre les bases.</li>
+<li>lors de la synchronisation bidirectionnelle, les modifications de la base centrale sont récupérées, puis comparées à celles du clone pour gérer les conflits d'édition. Elles sont ensuite rejouées sur le clone et la base centrale.</li>
+<li>les modifications de données sont rejouées seulement pour les champs modifiés.</li>
+</ul>
                 
               
               
