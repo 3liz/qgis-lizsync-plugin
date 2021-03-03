@@ -20,8 +20,38 @@ SET row_security = off;
 COMMENT ON FUNCTION lizsync.analyse_audit_logs() IS 'Get audit logs from the central database and the clone since the last synchronization. Compare the logs to find and resolved UPDATE conflicts (same table, feature, column): last modified object wins. This function store the resolved conflicts into the table lizsync.conflicts in the central database. Returns central server event ids, minimum event id, maximum event id, maximum action timestamp.';
 
 
+-- FUNCTION audit_table(target_table regclass)
+COMMENT ON FUNCTION lizsync.audit_table(target_table regclass) IS '
+Add auditing support to the given table. Row-level changes will be logged with full client query text. No cols are ignored.
+';
+
+
+-- FUNCTION audit_table(target_table regclass, audit_rows boolean, audit_query_text boolean, ignored_cols text[])
+COMMENT ON FUNCTION lizsync.audit_table(target_table regclass, audit_rows boolean, audit_query_text boolean, ignored_cols text[]) IS '
+Add auditing support to a table.
+
+Arguments:
+   target_table:     Table name, schema qualified if not on search_path
+   audit_rows:       Record each row change, or only audit at a statement level
+   audit_query_text: Record the text of the client query that triggered the audit event?
+   ignored_cols:     Columns to exclude from update diffs, ignore updates that change only ignored cols.
+';
+
+
+-- FUNCTION audit_view(target_view regclass, audit_query_text boolean, ignored_cols text[], uid_cols text[])
+COMMENT ON FUNCTION lizsync.audit_view(target_view regclass, audit_query_text boolean, ignored_cols text[], uid_cols text[]) IS '
+ADD auditing support TO a VIEW.
+
+Arguments:
+   target_view:      TABLE name, schema qualified IF NOT ON search_path
+   audit_query_text: Record the text of the client query that triggered the audit event?
+   ignored_cols:     COLUMNS TO exclude FROM UPDATE diffs, IGNORE updates that CHANGE only ignored cols.
+   uid_cols:         COLUMNS to use to uniquely identify a row from the view (in order to replay UPDATE and DELETE)
+';
+
+
 -- FUNCTION create_central_server_fdw(p_central_host text, p_central_port smallint, p_central_database text, p_central_username text, p_central_password text)
-COMMENT ON FUNCTION lizsync.create_central_server_fdw(p_central_host text, p_central_port smallint, p_central_database text, p_central_username text, p_central_password text) IS 'Create foreign server, needed central_audit and central_lizsync schemas, and import all central database tables as foreign tables. This will allow the clone to connect to the central databse';
+COMMENT ON FUNCTION lizsync.create_central_server_fdw(p_central_host text, p_central_port smallint, p_central_database text, p_central_username text, p_central_password text) IS 'Create foreign server, needed central_lizsync schema, and import all central database tables as foreign tables. This will allow the clone to connect to the central databse';
 
 
 -- FUNCTION create_temporary_table(temporary_table text, table_type text)
@@ -29,7 +59,7 @@ COMMENT ON FUNCTION lizsync.create_temporary_table(temporary_table text, table_t
 
 
 -- FUNCTION get_central_audit_logs(p_uid_field text, p_excluded_columns text[])
-COMMENT ON FUNCTION lizsync.get_central_audit_logs(p_uid_field text, p_excluded_columns text[]) IS 'Get all the logs from the central database: modifications do not come from the clone, have not yet been replayed by the clone, are dated after the last synchronization, have an event id higher than the last sync maximum event id, and concern the synchronized tables for this clone. Parameters: uid column name and excluded columns';
+COMMENT ON FUNCTION lizsync.get_central_audit_logs(p_uid_field text, p_excluded_columns text[]) IS 'Get all the logs from the central database: modifications do not come from the clone, have not yet been replayed by the clone, are dated after the last synchronisation, have an event id higher than the last sync maximum event id, and concern the synchronised tables for this clone. Parameters: uid column name and excluded columns';
 
 
 -- FUNCTION get_clone_audit_logs(p_uid_field text, p_excluded_columns text[])
@@ -41,13 +71,46 @@ COMMENT ON FUNCTION lizsync.get_event_sql(pevent_id bigint, puid_column text, ex
 Get the SQL to use for replay from a audit log event
 
 Arguments:
-   pevent_id:  The event_id of the event in audit.logged_actions to replay
+   pevent_id:  The event_id of the event in lizsync.logged_actions to replay
    puid_column: The name of the column with unique uuid values
 ';
 
 
+-- FUNCTION if_modified_func()
+COMMENT ON FUNCTION lizsync.if_modified_func() IS '
+Track changes to a table at the statement and/or row level.
+
+Optional parameters to trigger in CREATE TRIGGER call:
+
+param 0: boolean, whether to log the query text. Default ''t''.
+
+param 1: text[], columns to ignore in updates. Default [].
+
+         Updates to ignored cols are omitted from changed_fields.
+
+         Updates with only ignored cols changed are not inserted
+         into the audit log.
+
+         Almost all the processing work is still done for updates
+         that ignored. If you need to save the load, you need to use
+         WHEN clause on the trigger instead.
+
+         No warning or error is issued if ignored_cols contains columns
+         that do not exist in the target table. This lets you specify
+         a standard set of ignored columns.
+
+There is no parameter to disable logging of values. Add this trigger as
+a ''FOR EACH STATEMENT'' rather than ''FOR EACH ROW'' trigger if you do not
+want to log row values.
+
+Note that the user name logged is the login role for the session. The audit trigger
+cannot obtain the active role because it is reset by the SECURITY DEFINER invocation
+of the audit trigger its self.
+';
+
+
 -- FUNCTION import_central_server_schemas()
-COMMENT ON FUNCTION lizsync.import_central_server_schemas() IS 'Import synchronized schemas from the central database foreign server into central_XXX local schemas to the clone database. This allow to edit data of the central database from the clone.';
+COMMENT ON FUNCTION lizsync.import_central_server_schemas() IS 'Import synchronised schemas from the central database foreign server into central_XXX local schemas to the clone database. This allow to edit data of the central database from the clone.';
 
 
 -- FUNCTION replay_central_logs_to_clone(p_ids bigint[], p_min_event_id bigint, p_max_event_id bigint, p_max_action_tstamp_tx timestamp with time zone)
@@ -56,6 +119,24 @@ COMMENT ON FUNCTION lizsync.replay_central_logs_to_clone(p_ids bigint[], p_min_e
 
 -- FUNCTION replay_clone_logs_to_central()
 COMMENT ON FUNCTION lizsync.replay_clone_logs_to_central() IS 'Replay all logs from the clone to the central database. It returns the number of actions replayed. After this, the clone audit logs are truncated.';
+
+
+-- FUNCTION replay_event(pevent_id integer)
+COMMENT ON FUNCTION lizsync.replay_event(pevent_id integer) IS '
+Replay a logged event.
+
+Arguments:
+   pevent_id:  The event_id of the event in lizsync.logged_actions to replay
+';
+
+
+-- FUNCTION rollback_event(pevent_id bigint)
+COMMENT ON FUNCTION lizsync.rollback_event(pevent_id bigint) IS '
+Rollback a logged event and returns to previous row data
+
+Arguments:
+   pevent_id:  The event_id of the event in lizsync.logged_actions to rollback
+';
 
 
 -- FUNCTION store_conflicts()
@@ -114,8 +195,96 @@ COMMENT ON COLUMN lizsync.conflicts.rejected IS 'Rejected object. If "clone", it
 COMMENT ON COLUMN lizsync.conflicts.rule_applied IS 'Rule used when managing conflict';
 
 
+-- logged_actions
+COMMENT ON TABLE lizsync.logged_actions IS 'History of auditable actions on audited tables, from lizsync.if_modified_func()';
+
+
+-- logged_actions.event_id
+COMMENT ON COLUMN lizsync.logged_actions.event_id IS 'Unique identifier for each auditable event';
+
+
+-- logged_actions.schema_name
+COMMENT ON COLUMN lizsync.logged_actions.schema_name IS 'Database schema audited table for this event is in';
+
+
+-- logged_actions.table_name
+COMMENT ON COLUMN lizsync.logged_actions.table_name IS 'Non-schema-qualified table name of table event occured in';
+
+
+-- logged_actions.relid
+COMMENT ON COLUMN lizsync.logged_actions.relid IS 'Table OID. Changes with drop/create. Get with ''tablename''::regclass';
+
+
+-- logged_actions.session_user_name
+COMMENT ON COLUMN lizsync.logged_actions.session_user_name IS 'Login / session user whose statement caused the audited event';
+
+
+-- logged_actions.action_tstamp_tx
+COMMENT ON COLUMN lizsync.logged_actions.action_tstamp_tx IS 'Transaction start timestamp for tx in which audited event occurred';
+
+
+-- logged_actions.action_tstamp_stm
+COMMENT ON COLUMN lizsync.logged_actions.action_tstamp_stm IS 'Statement start timestamp for tx in which audited event occurred';
+
+
+-- logged_actions.action_tstamp_clk
+COMMENT ON COLUMN lizsync.logged_actions.action_tstamp_clk IS 'Wall clock time at which audited event''s trigger call occurred';
+
+
+-- logged_actions.transaction_id
+COMMENT ON COLUMN lizsync.logged_actions.transaction_id IS 'Identifier of transaction that made the change. May wrap, but unique paired with action_tstamp_tx.';
+
+
+-- logged_actions.application_name
+COMMENT ON COLUMN lizsync.logged_actions.application_name IS 'Application name set when this audit event occurred. Can be changed in-session by client.';
+
+
+-- logged_actions.client_addr
+COMMENT ON COLUMN lizsync.logged_actions.client_addr IS 'IP address of client that issued query. Null for unix domain socket.';
+
+
+-- logged_actions.client_port
+COMMENT ON COLUMN lizsync.logged_actions.client_port IS 'Remote peer IP port address of client that issued query. Undefined for unix socket.';
+
+
+-- logged_actions.client_query
+COMMENT ON COLUMN lizsync.logged_actions.client_query IS 'Top-level query that caused this auditable event. May be more than one statement.';
+
+
+-- logged_actions.action
+COMMENT ON COLUMN lizsync.logged_actions.action IS 'Action type; I = insert, D = delete, U = update, T = truncate';
+
+
+-- logged_actions.row_data
+COMMENT ON COLUMN lizsync.logged_actions.row_data IS 'Record value. Null for statement-level trigger. For INSERT this is the new tuple. For DELETE and UPDATE it is the old tuple.';
+
+
+-- logged_actions.changed_fields
+COMMENT ON COLUMN lizsync.logged_actions.changed_fields IS 'New values of fields changed by UPDATE. Null except for row-level UPDATE events.';
+
+
+-- logged_actions.statement_only
+COMMENT ON COLUMN lizsync.logged_actions.statement_only IS '''t'' if audit event is from an FOR EACH STATEMENT trigger, ''f'' for FOR EACH ROW';
+
+
+-- logged_actions.sync_data
+COMMENT ON COLUMN lizsync.logged_actions.sync_data IS 'Data used by the sync tool. origin = db name of the change, replayed_by = list of db name where the audit item has already been replayed, sync_id=id of the synchronisation item';
+
+
+-- logged_relations
+COMMENT ON TABLE lizsync.logged_relations IS 'Table used to store unique identifier columns for table or views, so that events can be replayed';
+
+
+-- logged_relations.relation_name
+COMMENT ON COLUMN lizsync.logged_relations.relation_name IS 'Relation (table or view) name (with schema if needed)';
+
+
+-- logged_relations.uid_column
+COMMENT ON COLUMN lizsync.logged_relations.uid_column IS 'Name of a column that is used to uniquely identify a row in the relation';
+
+
 -- synchronized_tables
-COMMENT ON TABLE lizsync.synchronized_tables IS 'List of tables to synchronize per clone server id. This list works as a white list. Only listed tables will be synchronized for each server ids.';
+COMMENT ON TABLE lizsync.synchronized_tables IS 'List of tables to synchronise per clone server id. This list works as a white list. Only listed tables will be synchronised for each server ids.';
 
 
 -- sys_structure_metadonnee

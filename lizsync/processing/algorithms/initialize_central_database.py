@@ -84,7 +84,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
             '\n'
             ' * All tables from the given schema must have a unique identifier column (uid) with standard uuid inside'
             '\n'
-            ' * All tables from the given schema must be audited (trigger of the audit tool)'
+            ' * All tables from the given schema must be audited by a trigger'
             '\n'
             '\n'
             ' You can pass a list of PostgreSQL central database schemas and this alg will add the necessary data and tools'
@@ -169,7 +169,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
         self.addParameter(
             QgsProcessingParameterString(
                 self.SCHEMAS,
-                tr('Restrict to comma separated schema names. NB: schemas public, lizsync & audit are never processed'),
+                tr('Restrict to comma separated schema names. NB: schemas public & lizsync are never processed'),
                 defaultValue=synchronized_schemas,
                 optional=True
             )

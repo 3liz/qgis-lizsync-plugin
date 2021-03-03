@@ -128,7 +128,6 @@ class TestSyncDatabase(unittest.TestCase):
         self.feedback.pushInfo('Creating database structure…')
         params = {
             "CONNECTION_NAME": "test",
-            "OVERRIDE_AUDIT": True,
             "OVERRIDE_LIZSYNC": True,
         }
         result = processing.run(

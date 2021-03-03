@@ -1,5 +1,7 @@
 sys_structure_metadonnee
-history
 conflicts
+logged_actions
+history
+logged_relations
 server_metadata
 synchronized_tables

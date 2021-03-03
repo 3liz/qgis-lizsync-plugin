@@ -28,6 +28,16 @@ ALTER TABLE ONLY lizsync.history
     ADD CONSTRAINT history_pkey PRIMARY KEY (sync_id);
 
 
+-- logged_actions logged_actions_pkey
+ALTER TABLE ONLY lizsync.logged_actions
+    ADD CONSTRAINT logged_actions_pkey PRIMARY KEY (event_id);
+
+
+-- logged_relations logged_relations_pkey
+ALTER TABLE ONLY lizsync.logged_relations
+    ADD CONSTRAINT logged_relations_pkey PRIMARY KEY (relation_name, uid_column);
+
+
 -- server_metadata server_metadata_pkey
 ALTER TABLE ONLY lizsync.server_metadata
     ADD CONSTRAINT server_metadata_pkey PRIMARY KEY (server_id);

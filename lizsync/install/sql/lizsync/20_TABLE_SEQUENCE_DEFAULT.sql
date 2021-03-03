@@ -67,6 +67,58 @@ CREATE TABLE lizsync.history (
 );
 
 
+-- logged_actions
+CREATE TABLE lizsync.logged_actions (
+    event_id bigint NOT NULL,
+    schema_name text NOT NULL,
+    table_name text NOT NULL,
+    relid oid NOT NULL,
+    session_user_name text,
+    action_tstamp_tx timestamp with time zone NOT NULL,
+    action_tstamp_stm timestamp with time zone NOT NULL,
+    action_tstamp_clk timestamp with time zone NOT NULL,
+    transaction_id bigint,
+    application_name text,
+    client_addr inet,
+    client_port integer,
+    client_query text NOT NULL,
+    action text NOT NULL,
+    row_data public.hstore,
+    changed_fields public.hstore,
+    statement_only boolean NOT NULL,
+    sync_data jsonb NOT NULL,
+    CONSTRAINT logged_actions_action_check CHECK ((action = ANY (ARRAY['I'::text, 'D'::text, 'U'::text, 'T'::text])))
+);
+
+
+-- logged_actions
+COMMENT ON TABLE lizsync.logged_actions IS 'History of auditable actions on audited tables, from lizsync.if_modified_func()';
+
+
+-- logged_actions_event_id_seq
+CREATE SEQUENCE lizsync.logged_actions_event_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+-- logged_actions_event_id_seq
+ALTER SEQUENCE lizsync.logged_actions_event_id_seq OWNED BY lizsync.logged_actions.event_id;
+
+
+-- logged_relations
+CREATE TABLE lizsync.logged_relations (
+    relation_name text NOT NULL,
+    uid_column text NOT NULL
+);
+
+
+-- logged_relations
+COMMENT ON TABLE lizsync.logged_relations IS 'Table used to store unique identifier columns for table or views, so that events can be replayed';
+
+
 -- server_metadata
 CREATE TABLE lizsync.server_metadata (
     server_id uuid DEFAULT (md5(((random())::text || (clock_timestamp())::text)))::uuid NOT NULL,
@@ -82,7 +134,7 @@ CREATE TABLE lizsync.synchronized_tables (
 
 
 -- synchronized_tables
-COMMENT ON TABLE lizsync.synchronized_tables IS 'List of tables to synchronize per clone server id. This list works as a white list. Only listed tables will be synchronized for each server ids.';
+COMMENT ON TABLE lizsync.synchronized_tables IS 'List of tables to synchronise per clone server id. This list works as a white list. Only listed tables will be synchronised for each server ids.';
 
 
 -- sys_structure_metadonnee
@@ -113,6 +165,10 @@ ALTER SEQUENCE lizsync.sys_structure_metadonnee_id_seq OWNED BY lizsync.sys_stru
 
 -- conflicts id
 ALTER TABLE ONLY lizsync.conflicts ALTER COLUMN id SET DEFAULT nextval('lizsync.conflicts_id_seq'::regclass);
+
+
+-- logged_actions event_id
+ALTER TABLE ONLY lizsync.logged_actions ALTER COLUMN event_id SET DEFAULT nextval('lizsync.logged_actions_event_id_seq'::regclass);
 
 
 -- sys_structure_metadonnee id
