@@ -11,7 +11,7 @@ site_dir: build
 nav:
     - docs.3liz.org: '../'
     - Home: index.md
-    - Presentation: concepts/README.md
+    - User guide: user_guide/README.md
     - Android: user_guide/android.md
     - Processing: processing/README.md
     - References: references.md
