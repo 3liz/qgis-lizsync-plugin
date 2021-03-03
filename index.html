@@ -528,30 +528,27 @@
                 
                 
                 <h1 id="lizsync">LizSync<a class="headerlink" href="#lizsync" title="Permanent link">#</a></h1>
-<p><strong>LizSync</strong> is a set of tools allowing performing PostgreSQL <strong>database synchronization</strong> between a central 
+<p><strong>LizSync</strong> is a set of tools allowing performing PostgreSQL <strong>database synchronisation</strong> between a central
 database and one or many clone databases.</p>
 <ul>
 <li>The <strong>central database</strong> is the full PostgreSQL database, containing stable data. It is the source of trust.</li>
 <li>The <strong>clone database</strong> is a PostgreSQL database installed on a computer, other server, tablet. It contains a
-  <strong>subset of schemas and tables</strong> from the central database. It may be dropped or recreated. It has been 
+  <strong>subset of schemas and tables</strong> from the central database. It may be dropped or recreated. It has been
   created by deploying an archive created with the QGIS plugin.</li>
 </ul>
-<p>Synchronization is done for <strong>data of tables</strong> in chosen schemas, between tables having <strong>the same structure</strong>.
-No synchronization is made on structure changes (adding a column, creating or dropping tables, etc.).</p>
+<p>Synchronisation is done for <strong>data of tables</strong> in chosen schemas, between tables having <strong>the same structure</strong>.
+No synchronisation is made on structure changes (adding a column, creating or dropping tables, etc.).</p>
 <p>It is based on PostgreSQL and QGIS:</p>
 <ul>
 <li><strong>PostgreSQL</strong>:<ul>
-<li>a schema <strong>audit</strong> contains tables, functions and triggers in charge of recording every actions made on
-  tables: inserts, updates and deletes. It is a (small) adaptation of the 
-  <a href="https://github.com/Oslandia/audit_trigger/blob/master/audit.sql">audit trigger tool</a></li>
 <li>a schema <strong>lizsync</strong> contains tables and functions helping to manage the sync actions, stores history
   and information on central and clones databases.</li>
 </ul>
 </li>
 <li><strong>QGIS</strong> with a set of <strong>processing algorithms</strong> to help the user to:<ul>
-<li>prepare a database for synchronization,</li>
+<li>prepare a database for synchronisation,</li>
 <li>create an archive from database and deploy it on clones,</li>
-<li>perform the synchronization.</li>
+<li>perform the synchronisation.</li>
 </ul>
 </li>
 </ul>

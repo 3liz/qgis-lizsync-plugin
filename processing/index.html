@@ -1403,9 +1403,8 @@
 <h3 id="install-lizsync-tools-on-the-central-database">Install Lizsync tools on the central database<a class="headerlink" href="#install-lizsync-tools-on-the-central-database" title="Permanent link">#</a></h3>
 <p>Install the LizSync schema with tables and function on the central database.</p>
 <p>This script will add
- * An audit schema with auditing functions and tables
  * A lizsync schema with tables and functions</p>
-<p>Beware ! If the schema lizsync or audit already exists in the database, not installation will be made. You will need to manually correct the situation (drop or modifiy the schemas, tables and functions) with SQL commands.</p>
+<p>Beware ! If the schema lizsync already exists in the database, not installation will be made. You will need to manually correct the situation (drop or modifiy the schemas, tables and functions) with SQL commands.</p>
 <p><img alt="algo_id" src="lizsync-create_database_structure.png" /></p>
 <h4 id="parameters_2">Parameters<a class="headerlink" href="#parameters_2" title="Permanent link">#</a></h4>
 <table>
@@ -1426,15 +1425,6 @@
 <td align="center">PostgreSQL connection to the central database</td>
 <td align="center">String</td>
 <td align="center">The PostgreSQL connection to the central database. You need to have the right to create a new schema in this database, as a schema lizsync will be created and filled with the needed tables and functions</td>
-<td align="center">✓</td>
-<td align="center"></td>
-<td align="center"></td>
-</tr>
-<tr>
-<td align="center">OVERRIDE_AUDIT</td>
-<td align="center">Drop audit schema and all data ?</td>
-<td align="center">Boolean</td>
-<td align="center"></td>
 <td align="center">✓</td>
 <td align="center"></td>
 <td align="center"></td>
@@ -1481,7 +1471,7 @@
 <p>LizSync needs to have :
  * A server ID stored in the lizsync.server_metadata table
  * All tables from the given schema must have a unique identifier column (uid) with standard uuid inside
- * All tables from the given schema must be audited (trigger of the audit tool)</p>
+ * All tables from the given schema must be audited by a trigger</p>
 <p>You can pass a list of PostgreSQL central database schemas and this alg will add the necessary data and tools</p>
 <p><img alt="algo_id" src="lizsync-initialize_central_database.png" /></p>
 <h4 id="parameters_3">Parameters<a class="headerlink" href="#parameters_3" title="Permanent link">#</a></h4>
@@ -1536,7 +1526,7 @@
 </tr>
 <tr>
 <td align="center">SCHEMAS</td>
-<td align="center">Restrict to comma separated schema names. NB: schemas public, lizsync &amp; audit are never processed</td>
+<td align="center">Restrict to comma separated schema names. NB: schemas public &amp; lizsync are never processed</td>
 <td align="center">String</td>
 <td align="center"></td>
 <td align="center"></td>
@@ -2125,7 +2115,7 @@
 <hr />
 <h3 id="two-way-database-synchronization">Two-way database synchronization<a class="headerlink" href="#two-way-database-synchronization" title="Permanent link">#</a></h3>
 <p>This scripts run a two-way data synchronization between the central and clone database.</p>
-<p>The data to synchronize are listed by reading the content of the "audit.logged_actions" of each database, since the last synchronization or the last deployement of ZIP package.</p>
+<p>The data to synchronize are listed by reading the content of the "lizsync.logged_actions" of each database, since the last synchronization or the last deployement of ZIP package.</p>
 <p>This audit data are transformed into INSERT/UPDATE/DELETE SQL queries which are played in the databases in this order:
  1/ From the CENTRAL to the CLONE database
  2/ From the CLONE to the CENTRAL database</p>

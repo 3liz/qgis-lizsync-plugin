@@ -1,5 +1,7 @@
 synchronized_tables
 server_metadata
-conflicts
+logged_relations
 history
+logged_actions
+conflicts
 sys_structure_metadonnee

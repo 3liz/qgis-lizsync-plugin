@@ -73,7 +73,27 @@
             <div class="content-wrapper">
                 <!-- Content Header (Page header) -->
                 <section class="content-header">
-                    <h1>compare_tables</h1><br />
+                    <h1>audit_table</h1><br />
+                    <div class="box box-primary">
+                        <div class="box-header with-border">
+                            <i class="fa fa-file-text-o"></i>
+                            <h3 id="Description" class="box-title">Description</h3>
+                            <div class="box-tools pull-right">
+                                <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
+                                <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
+                            </div>
+                        </div>
+                        <!-- /.box-header -->
+                        <div class="box-body clearfix">
+                            <p><p>Add auditing support to a table.</p>
+<p>Arguments:<br />
+target_table:     Table name, schema qualified if not on search_path<br />
+audit_rows:       Record each row change, or only audit at a statement level<br />
+audit_query_text: Record the text of the client query that triggered the audit event?<br />
+ignored_cols:     Columns to exclude from update diffs, ignore updates that change only ignored cols.</p></p>
+                        </div>
+                        <!-- /.box-body -->
+                    </div>
                 </section>
                 <!-- Main content -->
                 <section class="content">
@@ -97,34 +117,44 @@
                                 </thead>
                                 <tbody>
                                 <tr>
-                                    <td>p_schema_name</td>
-                                    <td>text</td>
+                                    <td>target_table</td>
+                                    <td>regclass</td>
                                     <td>IN</td>
                                 </tr>
                                 <tr>
-                                    <td>p_table_name</td>
-                                    <td>text</td>
+                                    <td>target_table</td>
+                                    <td>regclass</td>
                                     <td>IN</td>
                                 </tr>
                                 <tr>
-                                    <td>uid</td>
-                                    <td>uuid</td>
-                                    <td>OUT</td>
+                                    <td>audit_rows</td>
+                                    <td>boolean</td>
+                                    <td>IN</td>
                                 </tr>
                                 <tr>
-                                    <td>status</td>
-                                    <td>text</td>
-                                    <td>OUT</td>
+                                    <td>audit_query_text</td>
+                                    <td>boolean</td>
+                                    <td>IN</td>
                                 </tr>
                                 <tr>
-                                    <td>clone_table_values</td>
-                                    <td>USER-DEFINED</td>
-                                    <td>OUT</td>
+                                    <td>target_table</td>
+                                    <td>regclass</td>
+                                    <td>IN</td>
                                 </tr>
                                 <tr>
-                                    <td>central_table_values</td>
-                                    <td>USER-DEFINED</td>
-                                    <td>OUT</td>
+                                    <td>audit_rows</td>
+                                    <td>boolean</td>
+                                    <td>IN</td>
+                                </tr>
+                                <tr>
+                                    <td>audit_query_text</td>
+                                    <td>boolean</td>
+                                    <td>IN</td>
+                                </tr>
+                                <tr>
+                                    <td>ignored_cols</td>
+                                    <td>ARRAY</td>
+                                    <td>IN</td>
                                 </tr>
                                 </tbody>
                             </table>
@@ -140,7 +170,7 @@
                             </div>
                         </div>
                         <div class="box-body">
-                            <textarea id="sql-script-codemirror" name="sql-script-codemirror" rows="" style="display: none;">&#10;DECLARE&#10;    pkeys text[];&#10;    sqltemplate text;&#10;BEGIN&#10;&#10;    -- Get array of primary key field(s)&#10;    SELECT array_agg(uid_column) as pkey_fields&#10;    INTO pkeys&#10;    FROM lizsync.logged_relations r&#10;    WHERE relation_name = (quote_ident(p_schema_name) || &#39;.&#39; || quote_ident(p_table_name))&#10;    ;&#10;&#10;    -- Compare data&#10;    sqltemplate = &#39;&#10;    SELECT&#10;        coalesce(t1.uid, t2.uid) AS uid,&#10;        CASE&#10;            WHEN t1.uid IS NULL THEN &#39;&#39;not in table 1&#39;&#39;&#10;            WHEN t2.uid IS NULL THEN &#39;&#39;not in table 2&#39;&#39;&#10;            ELSE &#39;&#39;table 1 != table 2&#39;&#39;&#10;        END AS status,&#10;        (hstore(t1.*) - &#39;&#39;%1$s&#39;&#39;::text[]) - (hstore(t2) - &#39;&#39;%1$s&#39;&#39;::text[]) AS values_in_table_1,&#10;        (hstore(t2.*) - &#39;&#39;%1$s&#39;&#39;::text[]) - (hstore(t1) - &#39;&#39;%1$s&#39;&#39;::text[]) AS values_in_table_2&#10;    FROM &quot;%2$s&quot;.&quot;%3$s&quot; AS t1&#10;    FULL JOIN &quot;central_%2$s&quot;.&quot;%3$s&quot; AS t2&#10;        ON t1.uid = t2.uid&#10;    WHERE&#10;        ((hstore(t1.*) - &#39;&#39;%1$s&#39;&#39;::text[]) != (hstore(t2.*) - &#39;&#39;%1$s&#39;&#39;::text[]))&#10;        OR (t1.uid IS NULL)&#10;        OR (t2.uid IS NULL)&#10;    &#39;;&#10;&#10;    RETURN QUERY&#10;    EXECUTE format(sqltemplate,&#10;        pkeys,&#10;        p_schema_name,&#10;        p_table_name&#10;    );&#10;&#10;END;&#10;</textarea>
+                            <textarea id="sql-script-codemirror" name="sql-script-codemirror" rows="" style="display: none;">&#10;DECLARE&#10;  stm_targets text = &#39;INSERT OR UPDATE OR DELETE OR TRUNCATE&#39;;&#10;  _q_txt text;&#10;  _ignored_cols_snip text = &#39;&#39;;&#10;BEGIN&#10;&#10;    EXECUTE &#39;DROP TRIGGER IF EXISTS lizsync_audit_trigger_row ON &#39; || target_table::TEXT;&#10;    EXECUTE &#39;DROP TRIGGER IF EXISTS lizsync_audit_trigger_stm ON &#39; || target_table::TEXT;&#10;&#10;&#10;    IF audit_rows THEN&#10;        IF array_length(ignored_cols,1) &gt; 0 THEN&#10;            _ignored_cols_snip = &#39;, &#39; || quote_literal(ignored_cols);&#10;        END IF;&#10;        _q_txt = &#39;CREATE TRIGGER lizsync_audit_trigger_row AFTER INSERT OR UPDATE OR DELETE ON &#39; ||&#10;                 target_table::TEXT ||&#10;&#10;                 &#39; FOR EACH ROW EXECUTE PROCEDURE lizsync.if_modified_func(&#39; ||&#10;                 quote_literal(audit_query_text) || _ignored_cols_snip || &#39;);&#39;;&#10;        RAISE NOTICE &#39;%&#39;,_q_txt;&#10;        EXECUTE _q_txt;&#10;        stm_targets = &#39;TRUNCATE&#39;;&#10;    ELSE&#10;    END IF;&#10;&#10;    _q_txt = &#39;CREATE TRIGGER lizsync_audit_trigger_stm AFTER &#39; || stm_targets || &#39; ON &#39; ||&#10;             target_table ||&#10;             &#39; FOR EACH STATEMENT EXECUTE PROCEDURE lizsync.if_modified_func(&#39;||&#10;             quote_literal(audit_query_text) || &#39;);&#39;;&#10;    RAISE NOTICE &#39;%&#39;,_q_txt;&#10;    EXECUTE _q_txt;&#10;&#10;    -- store primary key names&#10;    insert into lizsync.logged_relations (relation_name, uid_column)&#10;         select target_table, a.attname&#10;           from pg_index i&#10;           join pg_attribute a on a.attrelid = i.indrelid&#10;                              and a.attnum = any(i.indkey)&#10;          where i.indrelid = target_table::regclass&#10;            and i.indisprimary&#10;    ON CONFLICT ON CONSTRAINT logged_relations_pkey&#10;    DO NOTHING&#10;            ;&#10;END;&#10;</textarea>
                         </div>
                     </div>
                 </section>

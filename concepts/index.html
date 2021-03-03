@@ -670,29 +670,25 @@
 <p>!!! tip
     The plugin provides a right panel in QGIS interface which gives a <strong>direct access to the main algorithms</strong>. You can read the auto-generated documentation of all the Processing algorithms in the <a href="../processing/">processing page</a>.</p>
 <h2 id="postgresql-database-structure">PostgreSQL database structure<a class="headerlink" href="#postgresql-database-structure" title="Permanent link">#</a></h2>
-<p>LizSync uses <strong>2 dedicated schemas</strong>:</p>
+<p>LizSync uses <strong>a dedicated schemas</strong>:</p>
 <ul>
-<li><strong>audit</strong><ul>
-<li>in charge of recording every actions made on tables: <strong>inserts, updates and deletes.</strong></li>
-<li>It is a slightly modified version of the <a href="https://github.com/Oslandia/audit_trigger/blob/master/audit.sql">audit trigger tool</a></li>
-</ul>
-</li>
 <li><strong>lizsync</strong><ul>
 <li>stores information on central and clones databases (uid),</li>
+<li>records every actions made on tables: <strong>inserts, updates and deletes</strong>,</li>
 <li>manages the sync actions,</li>
 <li>maintain an history of synchronisations</li>
 </ul>
 </li>
 </ul>
 <h2 id="auditing-changes">Auditing changes<a class="headerlink" href="#auditing-changes" title="Permanent link">#</a></h2>
-<p>LizSync uses a modified version of the <a href="https://github.com/Oslandia/audit_trigger/blob/master/audit.sql">audit trigger tool</a> to <strong>monitor the changes</strong> made in the central and clone databases.</p>
+<p>LizSync uses a modified version of the <a href="https://github.com/Oslandia/audit_trigger/blob/master/audit.sql">audit trigger tool</a> to <strong>monitor the changes</strong> made in the central and clone databases. There is no <code>audit</code> schema created though, as every needed audit table and functions are deployed within the schema <code>lizsync</code>. The triggers names begins with <code>lizsync_audit_trigger_</code> instead of <code>audit_trigger_</code>.</p>
 <p>The audit tool stores data in <strong>two tables</strong>:</p>
 <ul>
-<li><strong>audit.logged_relations</strong>: the list of audited tables and their primary key(s)</li>
-<li><strong>audit.logged_actions</strong>: the logs of every data modification made on the audited tables</li>
+<li><strong>lizsync.logged_relations</strong>: the list of audited tables and their primary key(s)</li>
+<li><strong>lizsync.logged_actions</strong>: the logs of every data modification made on the audited tables</li>
 </ul>
-<p>Each <strong>insert, update or delete</strong> triggers the addition of a new line in the <code>audit.logged_actions</code> table, with information about the time of the change, author, type of action, etc.</p>
-<p>We added a new column <code>audit.sync_data</code> to the table <code>audit.logged_actions</code> needed by the synchronisation. It contains the unique ID of the origin database, and the synchronisation item key.</p>
+<p>Each <strong>insert, update or delete</strong> triggers the addition of a new line in the <code>lizsync.logged_actions</code> table, with information about the time of the change, author, type of action, etc.</p>
+<p>We added a new column <code>lizsync.sync_data</code> to the table <code>lizsync.logged_actions</code> needed by the synchronisation. It contains the unique ID of the origin database, and the synchronisation item key.</p>
 <p>We modified the trigger to fill in this new JSON column.</p>
 <h2 id="key-features">Key features<a class="headerlink" href="#key-features" title="Permanent link">#</a></h2>
 <ul>
