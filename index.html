@@ -67,7 +67,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#lizsync" class="md-skip">
+        <a href="#what-is-lizsync" class="md-skip">
           Skip to content
         </a>
       
@@ -196,8 +196,8 @@
 
 
   <li class="md-tabs__item">
-    <a href="concepts/" class="md-tabs__link">
-      Presentation
+    <a href="user_guide/" class="md-tabs__link">
+      User guide
     </a>
   </li>
 
@@ -296,9 +296,7 @@
           
             
               
-                
-              
-              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" hidden>
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -364,9 +362,80 @@
         
       
       
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          Home
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
       <a href="." class="md-nav__link md-nav__link--active">
         Home
       </a>
+      
+        
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#presentation" class="md-nav__link">
+    Presentation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#softwares" class="md-nav__link">
+    Softwares
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lizsync-workflow" class="md-nav__link">
+    LizSync workflow
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#postgresql-database-structure" class="md-nav__link">
+    PostgreSQL database structure
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#auditing-changes" class="md-nav__link">
+    Auditing changes
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-features" class="md-nav__link">
+    Key features
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#demo" class="md-nav__link">
+    Demo
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
       
     </li>
   
@@ -380,8 +449,8 @@
   
   
     <li class="md-nav__item">
-      <a href="concepts/" class="md-nav__link">
-        Presentation
+      <a href="user_guide/" class="md-nav__link">
+        User guide
       </a>
     </li>
   
@@ -500,9 +569,7 @@
             
             
               
-                
-              
-              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" hidden>
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
                 <div class="md-sidebar__scrollwrap">
                   <div class="md-sidebar__inner">
                     
@@ -511,6 +578,63 @@
   
     
   
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#presentation" class="md-nav__link">
+    Presentation
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#softwares" class="md-nav__link">
+    Softwares
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#lizsync-workflow" class="md-nav__link">
+    LizSync workflow
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#postgresql-database-structure" class="md-nav__link">
+    PostgreSQL database structure
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#auditing-changes" class="md-nav__link">
+    Auditing changes
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#key-features" class="md-nav__link">
+    Key features
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#demo" class="md-nav__link">
+    Demo
+  </a>
+  
+</li>
+      
+    </ul>
   
 </nav>
                   </div>
@@ -527,33 +651,96 @@
                   </a>
                 
                 
-                <h1 id="lizsync">LizSync<a class="headerlink" href="#lizsync" title="Permanent link">#</a></h1>
-<p><strong>LizSync</strong> is a set of tools allowing performing PostgreSQL <strong>database synchronisation</strong> between a central
-database and one or many clone databases.</p>
+                <h1 id="what-is-lizsync">What is LizSync ?<a class="headerlink" href="#what-is-lizsync" title="Permanent link">#</a></h1>
+<h2 id="presentation">Presentation<a class="headerlink" href="#presentation" title="Permanent link">#</a></h2>
+<p><strong>LizSync</strong> is a set of tools allowing to perform PostgreSQL <strong>database synchronisations</strong> between a <strong>central</strong> database and one or many <strong>clone</strong> databases:</p>
 <ul>
 <li>The <strong>central database</strong> is the full PostgreSQL database, containing stable data. It is the source of trust.</li>
-<li>The <strong>clone database</strong> is a PostgreSQL database installed on a computer, other server, tablet. It contains a
-  <strong>subset of schemas and tables</strong> from the central database. It may be dropped or recreated. It has been
+<li>The <strong>clone database</strong> is a PostgreSQL database installed on a computer, on another server, on a device (Android). It contains a
+  <strong>subset of the schemas and tables</strong> of the central database. It may be dropped or recreated. It has been
   created by deploying an archive created with the QGIS plugin.</li>
 </ul>
-<p>Synchronisation is done for <strong>data of tables</strong> in chosen schemas, between tables having <strong>the same structure</strong>.
-No synchronisation is made on structure changes (adding a column, creating or dropping tables, etc.).</p>
-<p>It is based on PostgreSQL and QGIS:</p>
+<p>Two-way synchronisation is done:</p>
+<ul>
+<li>between the same tables of the central and clone(s) databases having <strong>the same name and structure</strong>,</li>
+<li>only for the <strong>data of chosen tables</strong> in chosen schemas: no synchronisation is made on structure changes (adding a column, creating or dropping tables, etc.).</li>
+</ul>
+<h2 id="softwares">Softwares<a class="headerlink" href="#softwares" title="Permanent link">#</a></h2>
+<p>It is based on <strong>PostgreSQL</strong> and <strong>QGIS</strong>:</p>
 <ul>
 <li><strong>PostgreSQL</strong>:<ul>
-<li>a schema <strong>lizsync</strong> contains tables and functions helping to manage the sync actions, stores history
-  and information on central and clones databases.</li>
+<li>a schema <strong>lizsync</strong> contains the tables and functions in charge of managing the synchronisation actions, storing the history
+  and needed information on the central and clones databases.</li>
 </ul>
 </li>
 <li><strong>QGIS</strong> with a set of <strong>processing algorithms</strong> to help the user to:<ul>
 <li>prepare a database for synchronisation,</li>
 <li>create an archive from database and deploy it on clones,</li>
 <li>perform the synchronisation.</li>
+<li>some algorithm allow to prepare a QGIS project for the field work.</li>
 </ul>
 </li>
 </ul>
-                
-                  
+<h2 id="lizsync-workflow">LizSync workflow<a class="headerlink" href="#lizsync-workflow" title="Permanent link">#</a></h2>
+<p>To start using <strong>LizSync</strong>, you need to:</p>
+<ul>
+<li><strong>install</strong> the needed PostgreSQL <strong>structure</strong> in the central database</li>
+<li><strong>prepare the central database</strong>:<ul>
+<li>add the needed <strong>metadata</strong>, such as the server id</li>
+<li>add an <strong>uid column</strong> to every table to synchronise</li>
+<li>add the needed <strong>audit triggers</strong> for the same tables</li>
+</ul>
+</li>
+<li>Before each field work campaign or when the table(s) structure has changed:<ul>
+<li><strong>create an zip archive</strong>, called a <strong>package</strong>, from the central database which contains the data and needed information</li>
+<li><strong>deploy</strong> it to one or many clones</li>
+</ul>
+</li>
+<li>Whenever needed:<ul>
+<li><strong>perform</strong> a two-way synchronisation from the clone by using the dedicated algorithm</li>
+</ul>
+</li>
+</ul>
+<p>There is <strong>only one central database</strong> but you can have <strong>one or many clone databases</strong>.</p>
+<p>All these steps can be performed with <strong>LizSync plugin</strong> for QGIS, by using the dedicated algorithms in the <strong>Processing toolbox</strong>.</p>
+<div class="admonition tip">
+<p class="admonition-title">Tip</p>
+<p>The plugin provides a right panel in QGIS interface which gives a <strong>direct access to the main algorithms</strong>. You can read the auto-generated documentation of all the Processing algorithms in the <a href="../processing/README.md">processing page</a>.</p>
+</div>
+<h2 id="postgresql-database-structure">PostgreSQL database structure<a class="headerlink" href="#postgresql-database-structure" title="Permanent link">#</a></h2>
+<p>LizSync uses <strong>a dedicated schemas</strong>:</p>
+<ul>
+<li><strong>lizsync</strong><ul>
+<li>stores information on central and clones databases (uid),</li>
+<li>records every actions made on tables: <strong>inserts, updates and deletes</strong>,</li>
+<li>manages the sync actions,</li>
+<li>maintain an history of synchronisations</li>
+</ul>
+</li>
+</ul>
+<h2 id="auditing-changes">Auditing changes<a class="headerlink" href="#auditing-changes" title="Permanent link">#</a></h2>
+<p>LizSync uses a modified version of the <a href="https://github.com/Oslandia/audit_trigger/blob/master/audit.sql">audit trigger tool</a> to <strong>monitor the changes</strong> made in the central and clone databases. There is no <code>audit</code> schema created though, as every needed audit table and functions are deployed within the schema <code>lizsync</code>. The triggers names begins with <code>lizsync_audit_trigger_</code> instead of <code>audit_trigger_</code>. It allows to use the original audit trigger tool independently if needed.</p>
+<p>The audit tool stores its data in <strong>two tables</strong>:</p>
+<ul>
+<li><strong>lizsync.logged_relations</strong>: the list of audited tables and their primary key(s)</li>
+<li><strong>lizsync.logged_actions</strong>: the logs of every data modification made on the audited tables</li>
+</ul>
+<p>Each <strong>insert, update or delete</strong> triggers the addition of a new line in the <code>lizsync.logged_actions</code> table, with information about the time of the change, author, the type of action, etc.</p>
+<p>We added a new column <code>lizsync.sync_data</code> to the table <code>lizsync.logged_actions</code> needed by the synchronisation. It contains the unique ID of the origin database, and the synchronisation item key. We modified the triggers to fill in this new JSON column.</p>
+<h2 id="key-features">Key features<a class="headerlink" href="#key-features" title="Permanent link">#</a></h2>
+<ul>
+<li><strong>Two-way sync</strong>: clone 1 &lt;-&gt; central &lt;-&gt; clone B &lt;-&gt; central &lt;-&gt; clone C &lt;-&gt; central</li>
+<li><strong>Field granularity</strong>: SQL Queries replay only needed changes</li>
+<li><strong>Manage conflicts</strong>: last date of edition wins (last person in the field)</li>
+<li><strong>SQL based</strong>: run from any clone DB
+<table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal">1</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><code><span class="k">SELECT</span> <span class="n">lizsync</span><span class="p">.</span><span class="n">synchronize</span><span class="p">()</span>
+</code></pre></div>
+</td></tr></table></li>
+<li>Based on QGIS <strong>Processing</strong>: algorithms can be run in CLI if needed</li>
+<li><strong>Unit tests</strong> cover the key features: installation, upgrade, synchronisation</li>
+</ul>
+<h2 id="demo">Demo<a class="headerlink" href="#demo" title="Permanent link">#</a></h2>
+<p>Read the <a href="../references.md">reference page</a> for some videos.</p>
                 
               
               
@@ -572,13 +759,13 @@ No synchronisation is made on structure changes (adding a column, creating or dr
     <nav class="md-footer__inner md-grid" aria-label="Footer">
       
       
-        <a href="concepts/" class="md-footer__link md-footer__link--next" rel="next">
+        <a href="user_guide/" class="md-footer__link md-footer__link--next" rel="next">
           <div class="md-footer__title">
             <div class="md-ellipsis">
               <span class="md-footer__direction">
                 Next
               </span>
-              Presentation
+              User guide
             </div>
           </div>
           <div class="md-footer__button md-icon">
