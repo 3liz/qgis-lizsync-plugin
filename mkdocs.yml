@@ -35,6 +35,7 @@ markdown_extensions:
   - pymdownx.snippets:
   - pymdownx.keys:
   - attr_list:
+  - admonition:
 
 extra_javascript:
   - https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js
