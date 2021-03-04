@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## 0.5.0 - 2021-03-04
+
+* Audit - All the auditing tables and functions have been move into the lizsync schema. This allows to use the original audit tool independently of lizsync.
+* Package central database - the PostgreSQL data is now only exported for the chosen PostgreSQL layers of the opened QGIS project, not for the full schema(s)
+* Let the user add UID columns and audit triggers only for the chosen PostgreSQL layers when creating a package from the central database
+* New algorithm which helps to create a mobile version of a QGIS project, by exporting the other vector layers to a Geopackage file, and by modifying the QGIS project PostgreSQL layers to target the clone database
+* Send files and project to the clone: add the possibility to use SFTP (file transfer over SSH)
+* Remove useless algorithms (fetch from central FTP server, synchronise media subfolders)
+* QGIS - Adapt some algorithm for QGIS >= 3.14
+* Continuous integration - Move from Travis to Github Actions
+* Documentation - Many improvements, such as a new documentation engine (Mkdoc) and style, and more information given in the user guide. See: https://docs.3liz.org/qgis-lizsync-plugin/
+* Tested with a clone database installed inside Android tablet by using Termux: https://github.com/mdouchin/termux-postgis-script/
+* Other minor improvements and code refactoring
+
 ## 0.4.5 - 2020-09-18
 
 * Prepare the central database - Allow to not add automatically the audit triggers
