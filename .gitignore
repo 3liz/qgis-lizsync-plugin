@@ -9,7 +9,7 @@ __pycache__/*
 *.swp
 *.pyc
 *.DS_Store
-.idea
+.venv/
 
 lizmap.cfg
 
@@ -26,7 +26,8 @@ TODO
 # QGIS-Plugin-CI
 lizsync*zip
 lizsync/i18n/*.ts
-# lizsync/i18n/*.qm
+lizsync/i18n/*.qm
+plugins.xml
 
 # MkDocs
 docs/CHANGELOG.md
