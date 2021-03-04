@@ -274,18 +274,6 @@
   </li>
 
       
-        
-  
-  
-
-
-  <li class="md-tabs__item">
-    <a href="../old_french_documentation/" class="md-tabs__link">
-      French doc
-    </a>
-  </li>
-
-      
     </ul>
   </div>
 </nav>
@@ -413,6 +401,20 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#prepare-the-field-work-in-qgis" class="md-nav__link">
+    Prepare the field work in QGIS
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plugin-dock-menu" class="md-nav__link">
+    Plugin dock menu
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -511,21 +513,6 @@
   
 
     
-      
-      
-      
-
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../old_french_documentation/" class="md-nav__link">
-        French doc
-      </a>
-    </li>
-  
-
-    
   </ul>
 </nav>
                   </div>
@@ -564,6 +551,20 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#prepare-the-field-work-in-qgis" class="md-nav__link">
+    Prepare the field work in QGIS
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#plugin-dock-menu" class="md-nav__link">
+    Plugin dock menu
+  </a>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -591,16 +592,44 @@
 <p>Data of the central and clone(s) database tables can then evolve freely, as soon as the tables structure is not modified (no addition or removal of tables or fields). For example, you can go to the field with QField installed in your tablet (or QGIS in your laptop) and edit data inside the clone database.</p>
 <p>You can then <strong>run a bidirectional synchronisation</strong> with the <a href="#two-way-database-synchronization">dedicated QGIS processing algorithm</a> by choosing the PostgreSQL connections for the central database and the clone database. You can also run a synchronisation by running the SQL query <code>SELECT lizsync.synchronize()</code> from a PostgreSQL connection to the clone database. The synchronisation is <strong>a two-step action</strong>, which first gets the data modification from the central server and then pushes the data modifications the clone to the central database.</p>
 <h2 id="technical-considerations">Technical considerations<a class="headerlink" href="#technical-considerations" title="Permanent link">#</a></h2>
-<p>TODO: translate in English</p>
-<p>Certains choix <strong>méthodologiques et techniques</strong> ont été faits pour assurer la synchronisation bidirectionnelle.</p>
+<p>Bidirectional synchronisation in LizSync is tied to some requirements:</p>
 <ul>
-<li>la base centrale stocke dans le schéma <code>lizsync</code> les données nécessaires aux synchronisations.</li>
-<li>les données du schéma <code>public</code> ne sont <strong>jamais synchronisées</strong></li>
-<li>les tables doivent avoir une <strong>clé primaire de type entier, autoincrémentée</strong>. Cet identifiant pourrait diverger entre la base centrale et les clones. Il n'est utile que localement pour certaines applications (QGIS préfère qu'il y ait une clé primaire entière)</li>
-<li>les tables à synchroniser doivent toutes posséder un champ <strong>uid</strong> de type <strong>uuid</strong> (valeur exemple: <code>5d3d503c-6d97-f11e-a2a4-5db030060f6d</code>) avec une valeur par défaut automatique. Ce champ est le pivot de la synchronisation. Il permet de reconnaître de manière unique un objet entre toutes les bases de données.</li>
-<li>les références de <strong>clés étrangères</strong> doivent se baser sur le champ <strong>uid</strong> de la table parente, et non sur la clé primaire, car les clés primaires peuvent diverger entre les bases.</li>
-<li>lors de la synchronisation bidirectionnelle, les modifications de la base centrale sont récupérées, puis comparées à celles du clone pour gérer les conflits d'édition. Elles sont ensuite rejouées sur le clone et la base centrale.</li>
-<li>les modifications de données sont rejouées seulement pour les champs modifiés.</li>
+<li>the history of synchronisation, data modification changes and other needed information are <strong>stored inside the central database</strong> <code>lizsync</code> schema.</li>
+<li>the data of the schemas <code>public</code> and <code>lizsync</code> are <strong>never synchronised</strong>.</li>
+<li>the tables to synchronise must have a <strong>uid</strong> field of type <strong>uuid</strong> with a automatic uuid as its default value. This field is the <strong>pivot of the synchronisation process</strong>, since it <strong>identifies each object</strong>. The same object in reality will share the same <strong>uid</strong> value across databases. Example of a UUID value for this field: <code>5d3d503c-6d97-f11e-a2a4-5db030060f6d</code>.</li>
+<li>the tables to synchronise must have an <strong>auto increment primary key of the type integer</strong>. This id column will contain unique values in each database, but <strong>will not reliably identify the same object across databases</strong>. This means the same object could have a different auto-increment id in the central and the clone(s) databases. This id must still exists, as many applications need it to perform well, such as QGIS.</li>
+<li>The <strong>foreign key constraints</strong> must be based on the <strong>uid</strong> field of the parent table, not on the auto-increment id field, since the id columns <strong>can differ between databases</strong> for the same object.</li>
+<li>During the <strong>bidirectional synchronisation</strong>,<ul>
+<li>insertions and deletions are <strong>first applied from the central server to the clone</strong>, and then <strong>pushed from the clone to the central database</strong>. This method has an impact for some scenarios. For example, if an object has been updated by the central database and deleted in a clone database, the update won't matter because at the end the object will be deleted.</li>
+<li>For updates, the modifications are applied <strong>only for the modified columns</strong> in the synchronised tables, which prevents conflicts from happening to often.</li>
+<li>When the <strong>same object has been modified for the same column</strong>, conflicts are automatically handled: <strong>the last update wins</strong> (the one with the more recent modification timestamp).</li>
+</ul>
+</li>
+</ul>
+<h2 id="prepare-the-field-work-in-qgis">Prepare the field work in QGIS<a class="headerlink" href="#prepare-the-field-work-in-qgis" title="Permanent link">#</a></h2>
+<p>LizSync proposes two algorithms which helps to create a portable version of a QGIS project and then send the created files (modified project, LizSync zip archive and the exported Geopackage) to the clone via FTP or SFTP:</p>
+<p>Basically, before going to the field, you need to:</p>
+<ul>
+<li><strong>package the data from your central database</strong> only for the PostgreSQL layers to edit, and then <strong>deploy the ZIP archive</strong> created to the clone database of your portable device (Android smartphone or laptop)</li>
+<li>create a <strong>mobile version of your QGIS project</strong> which you can use with no internet connection inside you clone (Android device, laptop with QGIS):<ul>
+<li>change the datasource of the PostgreSQL layers to target the clone database</li>
+<li>export the other vector layers to a Geopackage file and adapt their datasource to target this new file</li>
+</ul>
+</li>
+<li><strong>send the project and all related files</strong> to the clone</li>
+</ul>
+<p>Two all-in-one algorithms allows to perform all the needed steps:</p>
+<ul>
+<li><a href="../processing/#package-project-and-data-from-the-central-server">Package project and data from the central server</a></li>
+<li><a href="../processing/#deploy-project-and-data-to-a-clone">Deploy project and data to a clone</a></li>
+</ul>
+<h2 id="plugin-dock-menu">Plugin dock menu<a class="headerlink" href="#plugin-dock-menu" title="Permanent link">#</a></h2>
+<p>A QGIS menu allows to quickly access the Processing algorithms proposed by the LizSync plugin:</p>
+<ul>
+<li>The "Main" tab allows to run the two principal all-in-one algorithms
+    <img alt="Main dock tab" src="lizsync_dock_main.jpg" /></li>
+<li>The "Advanced" tab allows to run the other algorithms
+    <img alt="Advanced dock tab" src="lizsync_dock_advanced.jpg" /></li>
 </ul>
                 
               
