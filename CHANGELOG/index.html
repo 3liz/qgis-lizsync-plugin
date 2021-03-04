@@ -477,6 +477,13 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
+  <a href="#050-2021-03-04" class="md-nav__link">
+    0.5.0 - 2021-03-04
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#045-2020-09-18" class="md-nav__link">
     0.4.5 - 2020-09-18
   </a>
@@ -599,6 +606,20 @@
                 
                 
                 <h1 id="changelog">CHANGELOG<a class="headerlink" href="#changelog" title="Permanent link">#</a></h1>
+<h2 id="050-2021-03-04">0.5.0 - 2021-03-04<a class="headerlink" href="#050-2021-03-04" title="Permanent link">#</a></h2>
+<ul>
+<li>Audit - All the auditing tables and functions have been move into the lizsync schema. This allows to use the original audit tool independently of lizsync.</li>
+<li>Package central database - the PostgreSQL data is now only exported for the chosen PostgreSQL layers of the opened QGIS project, not for the full schema(s)</li>
+<li>Let the user add UID columns and audit triggers only for the chosen PostgreSQL layers when creating a package from the central database</li>
+<li>New algorithm which helps to create a mobile version of a QGIS project, by exporting the other vector layers to a Geopackage file, and by modifying the QGIS project PostgreSQL layers to target the clone database</li>
+<li>Send files and project to the clone: add the possibility to use SFTP (file transfer over SSH)</li>
+<li>Remove useless algorithms (fetch from central FTP server, synchronise media subfolders)</li>
+<li>QGIS - Adapt some algorithm for QGIS &gt;= 3.14</li>
+<li>Continuous integration - Move from Travis to Github Actions</li>
+<li>Documentation - Many improvements, such as a new documentation engine (Mkdoc) and style, and more information given in the user guide. See: <a href="https://docs.3liz.org/qgis-lizsync-plugin/">https://docs.3liz.org/qgis-lizsync-plugin/</a></li>
+<li>Tested with a clone database installed inside Android tablet by using Termux: <a href="https://github.com/mdouchin/termux-postgis-script/">https://github.com/mdouchin/termux-postgis-script/</a></li>
+<li>Other minor improvements and code refactoring</li>
+</ul>
 <h2 id="045-2020-09-18">0.4.5 - 2020-09-18<a class="headerlink" href="#045-2020-09-18" title="Permanent link">#</a></h2>
 <ul>
 <li>Prepare the central database - Allow to not add automatically the audit triggers</li>
