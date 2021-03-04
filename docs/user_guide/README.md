@@ -18,16 +18,40 @@ You can then **run a bidirectional synchronisation** with the [dedicated QGIS pr
 
 ## Technical considerations
 
-TODO: translate in English
+Bidirectional synchronisation in LizSync is tied to some requirements:
 
-Certains choix **méthodologiques et techniques** ont été faits pour assurer la synchronisation bidirectionnelle.
+* the history of synchronisation, data modification changes and other needed information are **stored inside the central database** `lizsync` schema.
+* the data of the schemas `public` and `lizsync` are **never synchronised**.
+* the tables to synchronise must have a **uid** field of type **uuid** with a automatic uuid as its default value. This field is the **pivot of the synchronisation process**, since it **identifies each object**. The same object in reality will share the same **uid** value across databases. Example of a UUID value for this field: `5d3d503c-6d97-f11e-a2a4-5db030060f6d`.
+* the tables to synchronise must have an **auto increment primary key of the type integer**. This id column will contain unique values in each database, but **will not reliably identify the same object across databases**. This means the same object could have a different auto-increment id in the central and the clone(s) databases. This id must still exists, as many applications need it to perform well, such as QGIS.
+* The **foreign key constraints** must be based on the **uid** field of the parent table, not on the auto-increment id field, since the id columns **can differ between databases** for the same object.
+* During the **bidirectional synchronisation**,
+    - insertions and deletions are **first applied from the central server to the clone**, and then **pushed from the clone to the central database**. This method has an impact for some scenarios. For example, if an object has been updated by the central database and deleted in a clone database, the update won't matter because at the end the object will be deleted.
+    - For updates, the modifications are applied **only for the modified columns** in the synchronised tables, which prevents conflicts from happening to often.
+    - When the **same object has been modified for the same column**, conflicts are automatically handled: **the last update wins** (the one with the more recent modification timestamp).
 
-* la base centrale stocke dans le schéma `lizsync` les données nécessaires aux synchronisations.
-* les données du schéma `public` ne sont **jamais synchronisées**
-* les tables doivent avoir une **clé primaire de type entier, autoincrémentée**. Cet identifiant pourrait diverger entre la base centrale et les clones. Il n'est utile que localement pour certaines applications (QGIS préfère qu'il y ait une clé primaire entière)
-* les tables à synchroniser doivent toutes posséder un champ **uid** de type **uuid** (valeur exemple: `5d3d503c-6d97-f11e-a2a4-5db030060f6d`) avec une valeur par défaut automatique. Ce champ est le pivot de la synchronisation. Il permet de reconnaître de manière unique un objet entre toutes les bases de données.
-* les références de **clés étrangères** doivent se baser sur le champ **uid** de la table parente, et non sur la clé primaire, car les clés primaires peuvent diverger entre les bases.
-* lors de la synchronisation bidirectionnelle, les modifications de la base centrale sont récupérées, puis comparées à celles du clone pour gérer les conflits d'édition. Elles sont ensuite rejouées sur le clone et la base centrale.
-* les modifications de données sont rejouées seulement pour les champs modifiés.
+## Prepare the field work in QGIS
 
+LizSync proposes two algorithms which helps to create a portable version of a QGIS project and then send the created files (modified project, LizSync zip archive and the exported Geopackage) to the clone via FTP or SFTP:
 
+Basically, before going to the field, you need to:
+
+* **package the data from your central database** only for the PostgreSQL layers to edit, and then **deploy the ZIP archive** created to the clone database of your portable device (Android smartphone or laptop)
+* create a **mobile version of your QGIS project** which you can use with no internet connection inside you clone (Android device, laptop with QGIS):
+    - change the datasource of the PostgreSQL layers to target the clone database
+    - export the other vector layers to a Geopackage file and adapt their datasource to target this new file
+* **send the project and all related files** to the clone
+
+Two all-in-one algorithms allows to perform all the needed steps:
+
+* [Package project and data from the central server](../processing/#package-project-and-data-from-the-central-server)
+* [Deploy project and data to a clone](../processing/#deploy-project-and-data-to-a-clone)
+
+## Plugin dock menu
+
+A QGIS menu allows to quickly access the Processing algorithms proposed by the LizSync plugin:
+
+* The "Main" tab allows to run the two principal all-in-one algorithms
+    ![Main dock tab](lizsync_dock_main.jpg)
+* The "Advanced" tab allows to run the other algorithms
+    ![Advanced dock tab](lizsync_dock_advanced.jpg)

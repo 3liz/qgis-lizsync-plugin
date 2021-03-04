@@ -18,7 +18,6 @@ nav:
     - Changelog: changelog.md
     - Contributing: contributing.md
     - Database: database/index.html
-    - French doc: old_french_documentation/README.md
 
 markdown_extensions:
   # - git-revision-date:
