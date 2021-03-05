@@ -2,26 +2,19 @@
 name=LizSync
 qgisMinimumVersion=3.4
 description=QGIS plugin with processing algs to configure and use the LizSync PostgreSQL synchronization tools.
-
-version=master
-author=3liz
-email=info@3liz.com
 about=QGIS plugin with processing algs to configure and use the LizSync PostgreSQL synchronization tools.
+changelog=changelog
+version=master
+author=3Liz
+email=info@3liz.com
 
-
+homepage=https://github.com/3liz/qgis-lizsync-plugin
 tracker=https://github.com/3liz/qgis-lizsync-plugin
 repository=https://github.com/3liz/qgis-lizsync-plugin
-# End of mandatory metadata
-
-# Recommended items:
-
-# Uncomment the following line and add your changelog:
-changelog=changelog
 
 # Tags are comma separated with spaces allowed
 tags=PostgreSQL, synchronization, field, clone
 
-homepage=https://github.com/3liz/qgis-lizsync-plugin
 category=Analysis
 icon=resources/icons/icon.png
 # experimental flag
