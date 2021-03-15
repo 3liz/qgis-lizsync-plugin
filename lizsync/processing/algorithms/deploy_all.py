@@ -14,7 +14,7 @@ __date__ = '2018-12-19'
 __copyright__ = '(C) 2018 by 3liz'
 
 import os
-import tempfile
+
 from platform import system as psys
 
 from qgis.core import (
@@ -50,9 +50,7 @@ class DeployAll(BaseProcessingAlgorithm):
     CONNECTION_NAME_CLONE = 'CONNECTION_NAME_CLONE'
 
     POSTGRESQL_BINARY_PATH = 'POSTGRESQL_BINARY_PATH'
-    LOCAL_QGIS_PROJECT_FOLDER = 'LOCAL_QGIS_PROJECT_FOLDER'
     RECREATE_CLONE_SERVER_ID = 'RECREATE_CLONE_SERVER_ID'
-    ZIP_FILE = 'ZIP_FILE'
 
     WINSCP_BINARY_PATH = 'WINSCP_BINARY_PATH'
     CLONE_FTP_PROTOCOL = 'CLONE_FTP_PROTOCOL'
@@ -174,34 +172,6 @@ class DeployAll(BaseProcessingAlgorithm):
         param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
         self.addParameter(param)
 
-        # Local directory containing the files to send to the clone by FTP
-        local_qgis_project_folder = ls.variable('local/qgis_project_folder')
-        param =QgsProcessingParameterFile(
-            self.LOCAL_QGIS_PROJECT_FOLDER,
-            tr('Local desktop QGIS project folder'),
-            defaultValue=local_qgis_project_folder,
-            behavior=QgsProcessingParameterFile.Folder,
-            optional=False
-        )
-        self.addParameter(param)
-
-        # Database ZIP archive file
-        database_archive_file = ls.variable('general/database_archive_file')
-        if not database_archive_file:
-            database_archive_file = os.path.join(
-                tempfile.gettempdir(),
-                'central_database_package.zip'
-            )
-        param = QgsProcessingParameterFile(
-            self.ZIP_FILE,
-            tr('Database ZIP archive path'),
-            defaultValue=database_archive_file,
-            behavior=QgsProcessingParameterFile.File,
-            optional=True,
-            extension='zip'
-        )
-        self.addParameter(param)
-
         # Recreate clone server id
         param = QgsProcessingParameterBoolean(
             self.RECREATE_CLONE_SERVER_ID,
@@ -250,6 +220,8 @@ class DeployAll(BaseProcessingAlgorithm):
 
         # port
         clone_ftp_port = ls.variable('ftp:clone/port')
+        if not clone_ftp_port:
+            clone_ftp_port = '8022'
         param = QgsProcessingParameterNumber(
             self.CLONE_FTP_PORT,
             tr('Clone FTP Server port'),
@@ -278,6 +250,8 @@ class DeployAll(BaseProcessingAlgorithm):
 
         # remote directory
         clone_ftp_remote_dir = ls.variable('ftp:clone/remote_directory')
+        if not clone_ftp_remote_dir:
+            clone_ftp_remote_dir = 'storage/downloads/qgis/'
         param = QgsProcessingParameterString(
             self.CLONE_FTP_REMOTE_DIR,
             tr('Clone FTP Server remote directory'),
@@ -314,6 +288,24 @@ class DeployAll(BaseProcessingAlgorithm):
 
     def checkParameterValues(self, parameters, context):
 
+        # Check current project has a file
+        path = context.project().absoluteFilePath()
+        if not path:
+            msg = tr('You must save the current project before running this algorithm')
+            return False, msg
+
+        # Check the current project has been exported
+        project = context.project()
+        project_directory = project.absolutePath()
+        output_directory = project_directory + '/' + project.baseName() + '_mobile'
+        if not os.path.isdir(output_directory):
+            msg = tr(
+                'The current project has not been exported to a mobile version.'
+                ' You need to use the algorithm "Package project and data from the central server"'
+                ' (Procesing algorithm id: lizync.package_all)'
+            )
+            return False, msg
+
         # Check FTP binary
         status, msg = checkFtpBinary()
         if not status:
@@ -334,16 +326,9 @@ class DeployAll(BaseProcessingAlgorithm):
             return False, tr('The needed PostgreSQL binaries cannot be found in the specified path')
 
         # Check zip archive path
-        database_archive_file = self.parameterAsString(parameters, self.ZIP_FILE, context)
+        database_archive_file = os.path.join(output_directory, 'lizsync.zip')
         if not os.path.exists(database_archive_file):
-            database_archive_file = os.path.join(
-                tempfile.gettempdir(),
-                'central_database_package.zip'
-            )
-        ok = os.path.exists(database_archive_file)
-        if not ok:
             return False, tr("The ZIP archive does not exists in the specified path") + ": {0}".format(database_archive_file)
-        parameters[self.ZIP_FILE] = database_archive_file
 
         # Check connections
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
@@ -368,12 +353,18 @@ class DeployAll(BaseProcessingAlgorithm):
             self.OUTPUT_STRING: msg
         }
 
+        # Get current project needed information
+        project = context.project()
+        project_directory = project.absolutePath()
+        output_directory = project_directory + '/' + project.baseName() + '_mobile'
+
         # Deploy database server package
+        database_archive_file = os.path.join(output_directory, 'lizsync.zip')
         params = {
             'CONNECTION_NAME_CENTRAL': parameters[self.CONNECTION_NAME_CENTRAL],
             'CONNECTION_NAME_CLONE': parameters[self.CONNECTION_NAME_CLONE],
             'POSTGRESQL_BINARY_PATH': parameters[self.POSTGRESQL_BINARY_PATH],
-            'ZIP_FILE': parameters[self.ZIP_FILE],
+            'ZIP_FILE': database_archive_file,
             'RECREATE_CLONE_SERVER_ID': parameters[self.RECREATE_CLONE_SERVER_ID],
         }
         processing.run(
@@ -404,7 +395,8 @@ class DeployAll(BaseProcessingAlgorithm):
 
         # Send projects and files to clone FTP
         params = {
-            'LOCAL_QGIS_PROJECT_FOLDER': parameters[self.LOCAL_QGIS_PROJECT_FOLDER],
+            'LOCAL_QGIS_PROJECT_FOLDER': project_directory,
+            'WINSCP_BINARY_PATH': parameters[self.WINSCP_BINARY_PATH],
             'CLONE_FTP_PROTOCOL': parameters[self.CLONE_FTP_PROTOCOL],
             'CLONE_FTP_HOST': parameters[self.CLONE_FTP_HOST],
             'CLONE_FTP_PORT': parameters[self.CLONE_FTP_PORT],

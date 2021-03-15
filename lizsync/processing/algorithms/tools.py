@@ -343,8 +343,10 @@ def run_command(cmd, myenv, feedback):
             env=myenv,
             universal_newlines=True,
             encoding='utf8',
-            text=True,
+            # not available in old versios of Python 3
+            # text=True,
         )
+
     stdout = []
     while proc.poll() is None:
         for line in proc.stdout:

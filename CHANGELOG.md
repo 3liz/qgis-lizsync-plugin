@@ -2,6 +2,7 @@
 
 ## 0.5.1 - 2021-03-15
 
+* Deploy all - Use the current project instead of asking for the directory & zip paths
 * Fix SFTP sync & PostgreSQL dump algorithms in Windows context
 * Add the Synchronize database button in the main tab of the dock
 

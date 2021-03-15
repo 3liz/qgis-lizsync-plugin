@@ -56,6 +56,7 @@ OUTPUT_STRING|Output message|String||
 | ID | Description | Type | Info | Required | Advanced | Option |
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 LOCAL_QGIS_PROJECT_FOLDER|Local desktop QGIS project folder|File||✓|||
+WINSCP_BINARY_PATH|WinSCP binary path|File|||✓|Default: /root/.local/share/QGIS/QGIS3/profiles/default/python/plugins/lizsync/install/WinSCP <br> |
 CLONE_FTP_PROTOCOL|Clone (S)FTP protocol|Enum||✓||Values: SFTP, FTP <br>|
 CLONE_FTP_HOST|Clone FTP Server host|String||✓|||
 CLONE_FTP_PORT|Clone FTP Server port|Number||✓||Default: 2021 <br> Type: Integer<br> Min: -1.7976931348623157e+308, Max: 1.7976931348623157e+308 <br>|
@@ -189,9 +190,8 @@ OUTPUT_STRING|Output message|String||
 CONNECTION_NAME_CENTRAL|PostgreSQL connection to the central database|String|The PostgreSQL connection to the central database.|✓|||
 CONNECTION_NAME_CLONE|PostgreSQL connection to the clone database|String|The PostgreSQL connection to the clone database.|✓|||
 POSTGRESQL_BINARY_PATH|PostgreSQL binary path|File||✓|✓|Default: /usr/bin/ <br> |
-LOCAL_QGIS_PROJECT_FOLDER|Local desktop QGIS project folder|File||✓|||
-ZIP_FILE|Database ZIP archive path|File||||Default: /tmp/central_database_package.zip <br> |
 RECREATE_CLONE_SERVER_ID|Recreate clone server id. Do it only to fully reset the clone ID !|Boolean||✓|✓||
+WINSCP_BINARY_PATH|WinSCP binary path|File|||✓|Default: /root/.local/share/QGIS/QGIS3/profiles/default/python/plugins/lizsync/install/WinSCP <br> |
 CLONE_FTP_PROTOCOL|Clone (S)FTP protocol|Enum||✓||Values: SFTP, FTP <br>|
 CLONE_FTP_HOST|Clone FTP Server host|String||✓|||
 CLONE_FTP_PORT|Clone FTP Server port|Number||✓||Default: 2021 <br> Type: Integer<br> Min: -1.7976931348623157e+308, Max: 1.7976931348623157e+308 <br>|
