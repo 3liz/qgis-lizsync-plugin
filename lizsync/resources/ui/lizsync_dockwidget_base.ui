@@ -64,6 +64,22 @@
              </widget>
             </item>
             <item>
+             <widget class="QGroupBox" name="groupBox_6">
+              <property name="title">
+               <string>Synchronisation</string>
+              </property>
+              <layout class="QVBoxLayout" name="verticalLayout_9">
+               <item>
+                <widget class="QPushButton" name="button_synchronize_database">
+                 <property name="text">
+                  <string>Synchronize database</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </widget>
+            </item>
+            <item>
              <widget class="QGroupBox" name="groupBox_4">
               <property name="title">
                <string>Help</string>
@@ -168,7 +184,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QPushButton" name="button_synchronize_database">
+                <widget class="QPushButton" name="button_synchronize_database_bis">
                  <property name="toolTip">
                   <string>Two-way database synchronization</string>
                  </property>
@@ -238,13 +254,14 @@
   <tabstop>tabWidget</tabstop>
   <tabstop>button_package_all</tabstop>
   <tabstop>button_deploy_all</tabstop>
+  <tabstop>button_synchronize_database</tabstop>
   <tabstop>button_help_database</tabstop>
   <tabstop>button_create_database_structure</tabstop>
   <tabstop>button_upgrade_database_structure</tabstop>
   <tabstop>button_initialize_central_database</tabstop>
   <tabstop>button_package_central_database</tabstop>
   <tabstop>button_deploy_database_server_package</tabstop>
-  <tabstop>button_synchronize_database</tabstop>
+  <tabstop>button_synchronize_database_bis</tabstop>
   <tabstop>button_build_mobile_project</tabstop>
   <tabstop>button_send_projects_and_files_to_clone_ftp</tabstop>
  </tabstops>

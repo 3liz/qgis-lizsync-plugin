@@ -48,11 +48,20 @@ class LizsyncDockWidget(QtWidgets.QDockWidget, FORM_CLASS):
             'package_all',
             'deploy_all',
         ]
+
+        # Allow to have more than one button per algorithm
+        suffixes = ('', '_bis', 'ter_')
         for alg in self.algorithms:
-            button = self.findChild(QPushButton, 'button_{0}'.format(alg))
-            if not button:
-                continue
-            button.clicked.connect(partial(self.runAlgorithm, alg))
+            for suffix in suffixes:
+                button = self.findChild(
+                    QPushButton, 'button_{0}{1}'.format(
+                        alg,
+                        suffix
+                    )
+                )
+                if not button:
+                    continue
+                button.clicked.connect(partial(self.runAlgorithm, alg))
 
         # Buttons not linked to algs
         #

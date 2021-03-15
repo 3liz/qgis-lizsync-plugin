@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.5.1 - 2021-03-15
+
+* Fix SFTP sync & PostgreSQL dump algorithms in Windows context
+* Add the Synchronize database button in the main tab of the dock
+
 ## 0.5.0 - 2021-03-04
 
 * Audit - All the auditing tables and functions have been move into the lizsync schema. This allows to use the original audit tool independently of lizsync.
