@@ -17,12 +17,13 @@ import os
 
 from qgis.core import (
     QgsProcessingException,
+    QgsProcessingParameterDefinition,
     QgsProcessingParameterEnum,
     QgsProcessingParameterString,
     QgsProcessingParameterNumber,
     QgsProcessingParameterFile,
     QgsProcessingOutputString,
-    QgsProcessingOutputNumber
+    QgsProcessingOutputNumber,
 )
 
 from .tools import (
@@ -34,8 +35,10 @@ from .tools import (
     get_ftp_password,
     lizsyncConfig,
 )
+
 from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
+from ...qgis_plugin_tools.tools.resources import plugin_path
 
 
 class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
@@ -45,6 +48,7 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
     """
     LOCAL_QGIS_PROJECT_FOLDER = 'LOCAL_QGIS_PROJECT_FOLDER'
 
+    WINSCP_BINARY_PATH = 'WINSCP_BINARY_PATH'
     CLONE_FTP_PROTOCOL = 'CLONE_FTP_PROTOCOL'
     CLONE_FTP_HOST = 'CLONE_FTP_HOST'
     CLONE_FTP_PORT = 'CLONE_FTP_PORT'
@@ -110,6 +114,20 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
                 optional=False
             )
         )
+
+        # For Windows, WinSCP binary path
+        winscp_binary_path = ls.variable('binaries/winscp')
+        if not winscp_binary_path.strip():
+            winscp_binary_path = plugin_path('install', 'WinSCP')
+        param = QgsProcessingParameterFile(
+            self.WINSCP_BINARY_PATH,
+            tr('WinSCP binary path'),
+            defaultValue=winscp_binary_path,
+            behavior=QgsProcessingParameterFile.Folder,
+            optional=True
+        )
+        param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+        self.addParameter(param)
 
         # Clone FTP connection parameters
         # method
@@ -219,6 +237,7 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
         }
 
         # Parameters
+        winscp_binary_path = parameters[self.WINSCP_BINARY_PATH]
         ftpprotocol = self.CLONE_FTP_PROTOCOLS[parameters[self.CLONE_FTP_PROTOCOL]]
         ftphost = parameters[self.CLONE_FTP_HOST]
         ftpport = parameters[self.CLONE_FTP_PORT]
@@ -230,6 +249,7 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
 
         # store parameters
         ls = lizsyncConfig()
+        ls.setVariable('binaries/winscp', winscp_binary_path)
         ls.setVariable('ftp:clone/protocol', ftpprotocol)
         ls.setVariable('ftp:clone/host', ftphost)
         ls.setVariable('ftp:clone/port', ftpport)
@@ -259,6 +279,7 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
 
         # Check connection is possible
         timeout = 5
+        ftpdir_exists = False
         if ftpprotocol == 'ftp':
             ok, msg, ftpdir_exists = check_ftp_connection(
                 ftphost, ftpport, ftplogin, password, timeout, ftpdir
@@ -270,10 +291,17 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
                 msg = tr(
                     'The Python module paramiko is not installed. '
                     'The SSH connection will not be tested before running the synchronisation. '
-                    'You can install it by running the following commands in QGIS python console: '
-                    'import pip'
-                    "pip.main(['install', 'paramiko'])"
+                    'You can install it by running the following commands '
+                    'in the Osgeo4w shell, as administrator: '
+                    '\n'
+                    'py3_env'
+                    '\n'
+                    'python -m pip install --upgrade pip'
+                    '\n'
+                    'python -m pip install paramiko'
                 )
+                # Let this error be silent
+                ftpdir_exists = True
                 feedback.reportError(msg)
             else:
                 msg = tr('Check SSH connection is possible...')

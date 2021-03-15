@@ -322,23 +322,37 @@ def run_command(cmd, myenv, feedback):
     Run any command using subprocess
     """
     # print(" ".join(cmd))
-    proc = subprocess.Popen(
-        " ".join(cmd),
-        shell=True,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        env=myenv,
-        universal_newlines=True,
-        encoding='utf8',
-    )
+    if psys().lower().startswith('win'):
+        proc = subprocess.Popen(
+            " ".join(cmd),
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            env=myenv,
+            # Do not use the following for Windows as it seems to create some encoding errors in Windows
+            # universal_newlines=True,
+            # encoding='utf8',
+            # text=True,
+        )
+    else:
+        proc = subprocess.Popen(
+            " ".join(cmd),
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            env=myenv,
+            universal_newlines=True,
+            encoding='utf8',
+            text=True,
+        )
     stdout = []
     while proc.poll() is None:
         for line in proc.stdout:
             if line != "":
                 try:
-                    out = "{}".format(line.strip().decode("utf-8"))
+                    out = "{}".format(str(line).strip().decode("utf-8"))
                 except Exception:
-                    out = "{}".format(line.strip())
+                    out = "{}".format(str(line).strip())
                 stdout.append(out)
                 feedback.pushInfo(out)
     proc.poll()
@@ -487,7 +501,6 @@ def add_database_uid_columns(connection_name, schemas=None, tables=None):
     if ok:
         status = True
         for a in data:
-            print(a)
             if a[2]:
                 tables.append('* "{0}"."{1}"'.format(a[0], a[1]))
         if tables:
@@ -650,6 +663,9 @@ def checkFtpBinary():
     # Windows : search for WinSCP
     if psys().lower().startswith('win'):
         test_path = ls.variable('binaries/winscp')
+        if not test_path.strip():
+            test_path = plugin_path('install', 'WinSCP')
+            ls.setVariable('binaries/winscp', test_path)
         test_bin = 'WinSCP.com'
         error_message = 'WinSCP binary has not been found in specified path'
         test = True
@@ -788,7 +804,7 @@ def ftp_sync(ftpprotocol, ftphost, ftpport, ftpuser, ftppass, localdir, ftpdir, 
                 )
             else:
                 cmd.append(
-                    '"open sftp://{ftpuser}{pass_str}@{ftphost}:{ftpport}"'.format(
+                    '"open -hostkey=* sftp://{ftpuser}{pass_str}@{ftphost}:{ftpport}"'.format(
                         ftpuser=ftpuser,
                         pass_str=pass_str,
                         ftphost=ftphost,
@@ -905,35 +921,47 @@ def pg_dump(feedback, postgresql_binary_path, connection_name, output_file_name,
 
     # Add given schemas
     for s in schemas:
-        cmd.append('-n {0}'.format(s))
+        cmd.append('-n "{0}"'.format(s))
 
     # Add given tables
     if tables:
+        quote = "'"
+        if psys().lower().startswith('win'):
+            quote = ''
         for table in tables:
-            cmd.append("-t '{}'".format(table))
+            cmd.append(
+                "-t {quote}{table}{quote}".format(
+                    quote=quote,
+                    table=table,
+                )
+            )
 
     # Add additional parameters
     if additional_parameters:
         cmd = cmd + additional_parameters
 
     # Run command
-    try:
-        # print('PG_DUMP = %s' % ' '.join(cmd) )
-        # Add password if needed
-        myenv = {**os.environ}
-        if not uri.service():
-            myenv = {**{'PGPASSWORD': uri.password()}, **os.environ}
-        returncode, stdout = run_command(cmd, myenv, feedback)
+    # print('PG_DUMP = %s' % ' '.join(cmd))
+    # Add password if needed
+    myenv = {**os.environ}
+    if not uri.service():
+        myenv = {**{'PGPASSWORD': uri.password()}, **os.environ}
 
-        if returncode == 0:
-            messages.append(tr('Database has been successfull dumped') + ' into {0}'.format(output_file_name))
-        else:
-            messages.append(tr('Error dumping database') + ' into {0}'.format(output_file_name))
-            messages.append(stdout[-1])
-            status = False
-    except Exception:
+    try:
+        returncode, stdout = run_command(cmd, myenv, feedback)
+    except Exception as e:
         status = False
-        messages.append(tr('Error dumping database') + ' into {0}'.format(output_file_name))
+        messages.append(tr('Error dumping database into the file') + ' {0}'.format(output_file_name))
+        messages.append(tr('Command exception message') + ': {0}'.format(str(e)))
+        return status, messages
+
+    if returncode == 0:
+        messages.append(tr('Database has been successfull dumped') + ' into {0}'.format(output_file_name))
+    else:
+        messages.append(tr('Error dumping database into the file') + ' {0}'.format(output_file_name))
+        messages.append(tr('Command return code') + ': {0}'.format(returncode))
+        messages.append(stdout[-1])
+        status = False
 
     return status, messages
 
