@@ -188,14 +188,14 @@ class SynchronizeDatabase(BaseProcessingAlgorithm):
             SELECT *
             FROM lizsync.synchronize()
         '''
-        _, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+        data, ok, error_message = fetchDataFromSqlQuery(
             connection_name_clone,
             sql
         )
         if not ok:
             m = tr('An error occured during the database synchronization') + ' ' + error_message
             raise QgsProcessingException(m)
-        if rowCount == 0:
+        if not data:
             m = tr('An unknown error has been raised during the database synchronization')
             raise QgsProcessingException(m)
 
