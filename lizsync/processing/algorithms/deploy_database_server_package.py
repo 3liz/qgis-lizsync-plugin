@@ -339,7 +339,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         FROM information_schema.tables
         WHERE table_name = 'server_metadata' and table_schema = 'lizsync';
         '''
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+        data, ok, error_message = fetchDataFromSqlQuery(
             connection_name_clone,
             sql
         )
@@ -359,7 +359,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             FROM lizsync.server_metadata
             LIMIT 1;
             '''
-            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            data, ok, error_message = fetchDataFromSqlQuery(
                 connection_name_clone,
                 sql
             )
@@ -406,7 +406,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                 clone_id=clone_id
             )
             last_sync = None
-            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            data, ok, error_message = fetchDataFromSqlQuery(
                 connection_name_central,
                 sql
             )
@@ -548,7 +548,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                 clone_id,
                 clone_name
             )
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+        data, ok, error_message = fetchDataFromSqlQuery(
             connection_name_clone,
             sql
         )
@@ -585,7 +585,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             "', '".join([a.strip() for a in tables.split(',')])
         )
         # feedback.pushInfo(sql)
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+        data, ok, error_message = fetchDataFromSqlQuery(
             connection_name_central,
             sql
         )
@@ -627,7 +627,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             uri.password()
         )
         # feedback.pushInfo(sql)
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+        data, ok, error_message = fetchDataFromSqlQuery(
             connection_name_clone,
             sql
         )
@@ -655,7 +655,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
                 sync_id
             )
             # feedback.pushInfo(sql)
-            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+            data, ok, error_message = fetchDataFromSqlQuery(
                 connection_name_central,
                 sql
             )

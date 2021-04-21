@@ -32,12 +32,13 @@ import re
 import subprocess
 import fileinput
 from platform import system as psys
-from db_manager.db_plugins.plugin import BaseError
-from db_manager.db_plugins.postgis.connector import PostGisDBConnector
+
 from qgis.core import (
     QgsApplication,
+    QgsProviderConnectionException,
+    QgsProviderRegistry,
+    QgsDataSourceUri,
 )
-from processing.tools.postgis import uri_from_name
 
 from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.resources import plugin_path
@@ -256,65 +257,37 @@ def check_postgresql_connection(uri, timeout=5):
 
 def getUriFromConnectionName(connection_name, must_connect=True):
 
-    # Check QGIS QGIS3.ini settings for connection name
-    status = True
-    uri = uri_from_name(connection_name)
+    metadata = QgsProviderRegistry.instance().providerMetadata('postgres')
+    connection = metadata.findConnection(connection_name)
+    if not connection:
+        return False, None, tr('The given connection name does not exists in QGIS')
+
+    # Get uri
+    uri = QgsDataSourceUri(connection.uri())
 
     # Try to connect if asked
     if must_connect:
         ok, msg = check_postgresql_connection(uri)
         return ok, uri, msg
     else:
-        return status, uri, ''
+        return True, uri, ''
 
 
 def fetchDataFromSqlQuery(connection_name, sql):
-    data = []
-    header = []
-    rowCount = 0
+    """
+    Get data from given SQL query executed for the given connection name
+    """
+    metadata = QgsProviderRegistry.instance().providerMetadata('postgres')
+    connection = metadata.findConnection(connection_name)
+    if not connection:
+        return [], False, tr('The given connection name does not exists in QGIS')
 
-    # Get URI
-    status, uri, error_message = getUriFromConnectionName(connection_name, True)
-    if not uri or not status:
-        ok = False
-        return header, data, rowCount, ok, error_message
     try:
-        connector = PostGisDBConnector(uri)
-    except Exception:
-        error_message = tr('Cannot connect to database')
-        ok = False
-        return header, data, rowCount, ok, error_message
+        data = connection.executeSql(sql)
+    except QgsProviderConnectionException as e:
+        return [], False, str(e)
 
-    c = None
-    ok = True
-    # print "run query"
-    try:
-        c = connector._execute(None, str(sql))
-        data = []
-        header = connector._get_cursor_columns(c)
-        if header is None:
-            header = []
-        if len(header) > 0:
-            data = connector._fetchall(c)
-        rowCount = c.rowcount
-        if rowCount == -1:
-            rowCount = len(data)
-
-    except BaseError as e:
-        ok = False
-        error_message = e.msg
-        return header, data, rowCount, ok, error_message
-    finally:
-        if c:
-            c.close()
-            del c
-
-    # Log errors
-    if not ok:
-        error_message = tr('Unknown error occurred while fetching data')
-        return header, data, rowCount, ok, error_message
-
-    return header, data, rowCount, ok, error_message
+    return data, True, ''
 
 
 def run_command(cmd, myenv, feedback):
@@ -367,30 +340,25 @@ def check_database_structure(connection_name):
     """
     Check if database structure contains lizsync tables
     """
-    sql = ''
-    sql += " SELECT t.table_schema, t.table_name"
-    sql += " FROM information_schema.tables AS t"
-    sql += " WHERE t.table_schema = 'lizsync'"
-    sql += " AND t.table_name = 'server_metadata'"
-    header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
+    # Default error message
+    message = tr(
+        'Lizsync has not been installed in the central database.'
+        ' Run the script "Create database structure"'
+    )
 
-    # Default output
-    status = True
-    message = tr('Lizsync structure has been installed')
+    # Get connection
+    metadata = QgsProviderRegistry.instance().providerMetadata('postgres')
+    connection = metadata.findConnection(connection_name)
+    if not connection:
+        return False, tr('The given connection name does not exists in QGIS')
 
-    # Tests
-    if ok:
-        if rowCount != 1:
-            status = False
-            message = tr(
-                'Lizsync has not been installed in the central database.'
-                ' Run the script "Create database structure"'
-            )
-    else:
-        status = False
-        message = error_message
+    if 'lizsync' not in connection.schemas():
+        return False, message
 
-    return status, message
+    if len([t for t in connection.tables('lizsync') if t.tableName() == 'server_metadata']) < 1:
+        return False, message
+
+    return True, tr('Lizsync structure has been installed')
 
 
 def check_database_server_metadata_content(connection_name):
@@ -401,7 +369,7 @@ def check_database_server_metadata_content(connection_name):
     sql += " SELECT server_id "
     sql += " FROM lizsync.server_metadata"
     sql += " LIMIT 1"
-    header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
+    data, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
 
     # Default output
     status = True
@@ -409,7 +377,7 @@ def check_database_server_metadata_content(connection_name):
 
     # Tests
     if ok:
-        if rowCount != 1:
+        if len(data) != 1:
             status = False
             message = tr('The server id in the table lizsync.server_metadata is not set')
     else:
@@ -465,7 +433,7 @@ def check_database_uid_columns(connection_name, schemas=None, tables=None):
     sql += " AND c.column_name IS NULL"
     sql += " ORDER BY t.table_schema, t.table_name"
 
-    header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
+    data, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
     missing = []
     if ok:
         for a in data:
@@ -498,7 +466,7 @@ def add_database_uid_columns(connection_name, schemas=None, tables=None):
     sql += " AND table_type = 'BASE TABLE'"
     sql += " ORDER BY table_schema, table_name"
 
-    header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
+    data, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
     tables = []
     if ok:
         status = True
@@ -547,10 +515,10 @@ def check_database_audit_triggers(connection_name, schemas=None, tables=None):
     sql += "     AND tgname LIKE 'lizsync_audit_trigger_%'"
     sql += " )"
 
-    header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
+    data, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
     missing = []
     if ok:
-        if rowCount > 0:
+        if data:
             for a in data:
                 missing.append('* "{0}"."{1}"'.format(a[0], a[1]))
             message = tr('Some tables are not monitored by the audit trigger tool')
@@ -590,11 +558,11 @@ def get_database_audit_triggers(connection_name, schemas=None, tables=None):
     sql += "     AND tgname LIKE 'lizsync_audit_trigger_%'"
     sql += " )"
 
-    header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
+    data, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
     tables = []
     message = ''
     if ok:
-        if rowCount > 0:
+        if data:
             message = tr('Following tables are monitored by the audit trigger tool')
             for a in data:
                 tables.append((a[0], a[1]))
@@ -635,12 +603,12 @@ def add_database_audit_triggers(connection_name, schemas=None, tables=None):
     sql += "         WHERE tgname LIKE 'lizsync_audit_trigger_%'"
     sql += "     )"
 
-    header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
+    data, ok, error_message = fetchDataFromSqlQuery(connection_name, sql)
     tables = []
     message = ''
     if ok:
         status = True
-        if rowCount > 0:
+        if data:
             for a in data:
                 tables.append('* "{0}"."{1}"'.format(a[0], a[1]))
             message = tr('Audit triggers have been successfully added in the following tables')

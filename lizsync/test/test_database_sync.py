@@ -12,7 +12,7 @@ from qgis.core import (
 )
 from qgis.testing import unittest
 
-from ..qgis_plugin_tools.tools.database import fetch_data_from_sql_query
+from ..processing.algorithms.tools import fetchDataFromSqlQuery
 from ..qgis_plugin_tools.tools.logger_processing import LoggerProcessingFeedBack
 from ..qgis_plugin_tools.tools.resources import plugin_test_data_path, plugin_path
 from ..processing.provider import LizsyncProvider as ProcessingProvider
@@ -65,11 +65,11 @@ class TestSyncDatabase(unittest.TestCase):
 
         # Drop and recreate PostgreSQL test schema
         self.feedback.pushInfo('Recreating schemas…')
-        _, _, _, ok, error_message = fetch_data_from_sql_query(
+        _, ok, error_message = fetchDataFromSqlQuery(
             "test", "DROP SCHEMA IF EXISTS {} CASCADE;".format(SCHEMA_DATA))
         self.assertTrue(ok, error_message)
 
-        _, _, _, ok, error_message = fetch_data_from_sql_query(
+        _, ok, error_message = fetchDataFromSqlQuery(
             "test", "CREATE SCHEMA IF NOT EXISTS {};".format(SCHEMA_DATA))
         self.assertTrue(ok, error_message)
 
@@ -121,7 +121,7 @@ class TestSyncDatabase(unittest.TestCase):
                         "FROM "
                         "{schema}.{table};"
                     ).format(schema=SCHEMA_DATA, table=file.replace('.geojson', ''))
-                    _, _, _, ok, error_message = fetch_data_from_sql_query("test", sql)
+                    _, ok, error_message = fetchDataFromSqlQuery("test", sql)
                     self.assertTrue(ok, error_message)
 
         # Create database structure
@@ -232,7 +232,7 @@ class TestSyncDatabase(unittest.TestCase):
                     self.assertEqual(1, result['OUTPUT_STATUS'])
 
                 elif item['type'] == 'query':
-                    _, _, _, ok, error_message = fetch_data_from_sql_query(item['database'], item['sql'])
+                    _, ok, error_message = fetchDataFromSqlQuery(item['database'], item['sql'])
                     self.assertTrue(ok, error_message)
                     self.feedback.pushInfo('Query "{}" executed on {}'.format(item['sql'], item['database']))
 
@@ -247,12 +247,13 @@ class TestSyncDatabase(unittest.TestCase):
                         item['schema'],
                         item['table']
                     )
-                    _, _, rowCount, ok, error_message = fetch_data_from_sql_query(item['from'], sql)
-                    self.assertEqual(0, rowCount)
+                    data, ok, error_message = fetchDataFromSqlQuery(item['from'], sql)
+
+                    self.assertEqual(0, len(data))
 
                 elif item['type'] == 'verify':
                     self.feedback.pushInfo('Verify data in database {}'.format(item['database']))
-                    _, data, _, ok, error_message = fetch_data_from_sql_query(item['database'], item['sql'])
+                    data, ok, error_message = fetchDataFromSqlQuery(item['database'], item['sql'])
                     self.assertEqual(data[0][0], item['expected'])
 
                 else:

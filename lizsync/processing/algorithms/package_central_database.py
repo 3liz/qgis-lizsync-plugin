@@ -609,7 +609,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             )
             RETURNING sync_id;
         '''
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+        data, ok, error_message = fetchDataFromSqlQuery(
             connection_name_central,
             sql
         )

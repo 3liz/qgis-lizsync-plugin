@@ -38,7 +38,7 @@ from .tools import (
     getUriFromConnectionName,
     fetchDataFromSqlQuery,
 )
-from db_manager.db_plugins import createDbPlugin
+
 from ...qgis_plugin_tools.tools.i18n import tr
 from ...qgis_plugin_tools.tools.algorithm_processing import BaseProcessingAlgorithm
 
@@ -194,12 +194,6 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
         # Check that the connection name has been configured
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
 
-        # Check that it corresponds to an existing connection
-        dbpluginclass = createDbPlugin('postgis')
-        connections = [c.connectionName() for c in dbpluginclass.connections()]
-        if connection_name_central not in connections:
-            return False, tr('The configured connection name does not exists in QGIS')
-
         # Check connection
         ok, uri, msg = getUriFromConnectionName(connection_name_central, True)
         if not ok:
@@ -219,7 +213,7 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
             WHERE schema_name = 'lizsync';
         '''
         connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
-        header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(
+        data, ok, error_message = fetchDataFromSqlQuery(
             connection_name_central,
             sql
         )
@@ -279,10 +273,10 @@ class InitializeCentralDatabase(BaseProcessingAlgorithm):
             '''.format(
                 server_name=server_name
             )
-            header, data, rowCount, ok, error_message = fetchDataFromSqlQuery(connection_name_central, sql)
+            data, ok, error_message = fetchDataFromSqlQuery(connection_name_central, sql)
             server_id = None
             if ok:
-                if rowCount == 1:
+                if len(data) == 1:
                     for a in data:
                         server_id = a[0]
                         feedback.pushInfo(tr('Server id successfully added') + ' {0}'.format(server_id))

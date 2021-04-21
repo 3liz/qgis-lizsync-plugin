@@ -19,7 +19,6 @@ __revision__ = '$Format:%H$'
 
 import os
 
-from db_manager.db_plugins import createDbPlugin
 from qgis.core import (
     Qgis,
     QgsProcessingParameterString,
@@ -158,10 +157,6 @@ class CreateDatabaseStructure(BaseProcessingAlgorithm):
 
         # Check that it corresponds to an existing connection
         connection_name = parameters[self.CONNECTION_NAME]
-        dbpluginclass = createDbPlugin('postgis')
-        connections = [c.connectionName() for c in dbpluginclass.connections()]
-        if connection_name not in connections:
-            return False, tr('The configured connection name does not exists in QGIS')
 
         # Check connection
         ok, uri, msg = getUriFromConnectionName(connection_name, True)
