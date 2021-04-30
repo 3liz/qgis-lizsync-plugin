@@ -8,8 +8,10 @@
         SET nom = concat(nom, ' by central - U1')
         WHERE id = 0;
     - type: sleep
+
     - type: synchro
       from: lizsync_clone_a
+
     - type: compare
       from: lizsync_clone_a
       schema: test
@@ -24,40 +26,55 @@
         SET nom = concat(nom, ' by clone - U2')
         WHERE id = 1;
     - type: sleep
+
     - type: synchro
       from: lizsync_clone_a
+
     - type: compare
       from: lizsync_clone_a
       schema: test
       table: pluviometers
 
-- description: "U3 - UPDATE - central & clone - 1 feature of 2 different tables with 1 column modification"
+- description: "U3 - UPDATE - central & clone a - 1 feature of 2 different tables with 1 column modification"
   sequence:
     - type: query
       database: test
       sql: >-
         UPDATE "test"."montpellier_districts"
         SET "libquart" = concat("libquart", ' by central - U3')
-        WHERE fid = 1;
+        WHERE quartmno = 'HO';
+
     - type: sleep
+
     - type: query
       database: lizsync_clone_a
       sql: >-
         UPDATE "test"."montpellier_sub_districts"
         SET "libsquart" = concat("libsquart", ' by clone a - U3')
         WHERE squartmno = 'HOS';
+
     - type: synchro
       from: lizsync_clone_a
+
     - type: compare
       from: lizsync_clone_a
       schema: test
       table: montpellier_districts
+
     - type: compare
       from: lizsync_clone_a
       schema: test
       table: montpellier_sub_districts
 
-- description: "U4 - UPDATE - central & clone - same column for different features of the same table"
+    - type: verify
+      database: test
+      sql: >-
+        SELECT libquart
+        FROM "test"."montpellier_districts"
+        WHERE quartmno = 'HO';
+      expected: HOPITAUX-FACULTES by central - U3
+
+- description: "U4 - UPDATE - central & clone a - same column for different features of the same table"
   sequence:
     - type: query
       database: test
@@ -65,19 +82,24 @@
         UPDATE "test"."montpellier_districts"
         SET "libquart" = concat("libquart", ' by central - U4')
         WHERE quartmno = 'PA';
+
     - type: sleep
+
     - type: query
       database: lizsync_clone_a
       sql: >-
         UPDATE "test"."montpellier_districts"
         SET "libquart" = concat("libquart", ' by clone a - U4')
         WHERE quartmno = 'CV';
+
     - type: synchro
       from: lizsync_clone_a
+
     - type: compare
       from: lizsync_clone_a
       schema: test
       table: montpellier_districts
+
     - type: verify
       database: lizsync_clone_a
       sql: >-
@@ -85,6 +107,7 @@
         FROM "test"."montpellier_districts"
         WHERE quartmno = 'PA';
       expected: MOSSON by central - U4
+
     - type: verify
       database: test
       sql: >-
@@ -93,7 +116,7 @@
         WHERE quartmno = 'CV';
       expected: LES CEVENNES by clone a - U4
 
-- description: "U5 - UPDATE - central & clone - different column for the same feature of the same table"
+- description: "U5 - UPDATE - central & clone a - different column for the same feature of the same table"
   sequence:
     - type: query
       database: test
@@ -101,19 +124,24 @@
         UPDATE "test"."montpellier_districts"
         SET "libquart" = concat("libquart", ' by central - U5')
         WHERE quartmno = 'MI';
+
     - type: sleep
+
     - type: query
       database: lizsync_clone_a
       sql: >-
         UPDATE "test"."montpellier_districts"
         SET "url" = 'http://3liz.com - by clone a - U5'
         WHERE quartmno = 'MI';
+
     - type: synchro
       from: lizsync_clone_a
+
     - type: compare
       from: lizsync_clone_a
       schema: test
       table: montpellier_districts
+
     - type: verify
       database: lizsync_clone_a
       sql: >-
@@ -121,6 +149,7 @@
         FROM "test"."montpellier_districts"
         WHERE quartmno = 'MI';
       expected: PORT MARIANNE by central - U5
+
     - type: verify
       database: test
       sql: >-
@@ -129,3 +158,143 @@
         WHERE quartmno = 'MI';
       expected: http://3liz.com - by clone a - U5
 
+
+- description: "U6 - UPDATE - central & clone a - same column for the same feature of the same table"
+  sequence:
+    - type: query
+      database: test
+      sql: >-
+        UPDATE "test"."montpellier_districts"
+        SET "libquart" = concat("libquart", ' by central - U6')
+        WHERE quartmno = 'MC';
+
+    - type: sleep
+
+    - type: query
+      database: lizsync_clone_a
+      sql: >-
+        UPDATE "test"."montpellier_districts"
+        SET "libquart" = concat("libquart", ' by clone a - U6')
+        WHERE quartmno = 'MC';
+
+    - type: synchro
+      from: lizsync_clone_a
+
+    - type: compare
+      from: lizsync_clone_a
+      schema: test
+      table: montpellier_districts
+
+    - type: verify
+      database: lizsync_clone_a
+      sql: >-
+        SELECT libquart
+        FROM "test"."montpellier_districts"
+        WHERE quartmno = 'MC';
+      expected: MONTPELLIER CENTRE by clone a - U6
+
+    - type: verify
+      database: test
+      sql: >-
+        SELECT libquart
+        FROM "test"."montpellier_districts"
+        WHERE quartmno = 'MC';
+      expected: MONTPELLIER CENTRE by clone a - U6
+
+
+- description: "U7 - UPDATE - central & clone a & clone B - same column for the same feature of the same table"
+  sequence:
+
+    - type: query
+      database: lizsync_clone_a
+      sql: >-
+        UPDATE "test"."montpellier_districts"
+        SET "libquart" = concat('CROIX D''ARGENT', ' by clone a - U7')
+        WHERE quartmno = 'CX';
+
+    - type: sleep
+
+    - type: query
+      database: lizsync_clone_b
+      sql: >-
+        UPDATE "test"."montpellier_districts"
+        SET "libquart" = concat('CROIX D''ARGENT', ' by clone b - U7')
+        WHERE quartmno = 'CX';
+
+    - type: synchro
+      from: lizsync_clone_b
+
+    - type: sleep
+
+    - type: synchro
+      from: lizsync_clone_a
+
+    - type: sleep
+
+    - type: synchro
+      from: lizsync_clone_b
+
+    - type: sleep
+
+    - type: synchro
+      from: lizsync_clone_a
+
+    - type: sleep
+
+    - type: verify
+      database: lizsync_clone_a
+      sql: >-
+        SELECT libquart
+        FROM "test"."montpellier_districts"
+        WHERE quartmno = 'CX';
+      expected: CROIX D'ARGENT by clone b - U7
+
+    - type: verify
+      database: lizsync_clone_b
+      sql: >-
+        SELECT libquart
+        FROM "test"."montpellier_districts"
+        WHERE quartmno = 'CX';
+      expected: CROIX D'ARGENT by clone b - U7
+
+    - type: verify
+      database: test
+      sql: >-
+        SELECT libquart
+        FROM "test"."montpellier_districts"
+        WHERE quartmno = 'CX';
+      expected: CROIX D'ARGENT by clone b - U7
+
+
+- description: "Z - Compare data for all tables between each clone and central database"
+  sequence:
+
+    - type: compare
+      from: lizsync_clone_a
+      schema: test
+      table: montpellier_districts
+
+    - type: compare
+      from: lizsync_clone_b
+      schema: test
+      table: montpellier_districts
+
+    - type: compare
+      from: lizsync_clone_a
+      schema: test
+      table: montpellier_sub_districts
+
+    - type: compare
+      from: lizsync_clone_b
+      schema: test
+      table: montpellier_sub_districts
+
+    - type: compare
+      from: lizsync_clone_a
+      schema: test
+      table: pluviometers
+
+    - type: compare
+      from: lizsync_clone_b
+      schema: test
+      table: pluviometers

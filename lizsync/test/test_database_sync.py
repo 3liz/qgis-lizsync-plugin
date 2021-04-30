@@ -217,8 +217,9 @@ class TestSyncDatabase(unittest.TestCase):
             self.feedback.pushInfo('Beginning test : {}…'.format(test['description']))
             for item in test['sequence']:
                 if item['type'] == 'sleep':
-                    time.sleep(0.5)
-                    self.feedback.pushInfo('Sleep 0.5')
+                    sleep_time = 0.5
+                    self.feedback.pushInfo('Sleep %s seconds' % sleep_time)
+                    time.sleep(sleep_time)
 
                 elif item['type'] == 'synchro':
                     self.feedback.pushInfo('Run synchro')
