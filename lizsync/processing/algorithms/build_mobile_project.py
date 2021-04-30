@@ -211,7 +211,7 @@ class BuildMobileProject(BaseProcessingAlgorithm):
         if uri_central.service():
             uris['central'] = "service='%s'" % uri_central.service()
         else:
-            uris['central'] = "dbname='{}' host={} port={} user='[A_Za-z_@]+'( password='[^ ]+')?".format(
+            uris['central'] = "dbname='{}' host={} port={} user='[A_Za-z_@0-9]+'( password='[^ ]+')?".format(
                 uri_central.database(),
                 uri_central.host(),
                 uri_central.port()
