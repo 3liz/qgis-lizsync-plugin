@@ -1,6 +1,6 @@
 [general]
 name=LizSync
-qgisMinimumVersion=3.4
+qgisMinimumVersion=3.10
 description=QGIS plugin with processing algs to configure and use the LizSync PostgreSQL synchronization tools.
 about=QGIS plugin with processing algs to configure and use the LizSync PostgreSQL synchronization tools.
 changelog=changelog
