@@ -10,7 +10,7 @@ SET lock_timeout = 0;
 
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
-SELECT pg_catalog.set_config('search_path', '', false);
+
 SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
@@ -66,7 +66,6 @@ CREATE TABLE lizsync.history (
     sync_status text DEFAULT 'pending'::text NOT NULL
 );
 
-
 -- logged_actions
 CREATE TABLE lizsync.logged_actions (
     event_id bigint NOT NULL,
@@ -83,8 +82,8 @@ CREATE TABLE lizsync.logged_actions (
     client_port integer,
     client_query text NOT NULL,
     action text NOT NULL,
-    row_data public.hstore,
-    changed_fields public.hstore,
+    row_data hstore,
+    changed_fields hstore,
     statement_only boolean NOT NULL,
     sync_data jsonb NOT NULL,
     CONSTRAINT logged_actions_action_check CHECK ((action = ANY (ARRAY['I'::text, 'D'::text, 'U'::text, 'T'::text])))
