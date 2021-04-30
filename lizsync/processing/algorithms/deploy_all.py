@@ -391,7 +391,7 @@ class DeployAll(BaseProcessingAlgorithm):
                 '\n'
                 'python -m pip install paramiko'
             )
-            feedback.reportError(msg)
+            feedback.reportError(msg, False)
 
         # Send projects and files to clone FTP
         params = {
