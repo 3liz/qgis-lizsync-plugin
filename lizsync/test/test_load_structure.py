@@ -51,16 +51,12 @@ class TestProcessing(unittest.TestCase):
         feedback = LoggerProcessingFeedBack()
         params = {
             'CONNECTION_NAME': 'test',
-            'OVERRIDE_LIZSYNC': True,  # Must be true, for the first time in the test.
+            'OVERRIDE': True,  # Must be true, for the first time in the test.
         }
-
-        os.environ["TEST_DATABASE_INSTALL_{}".format(SCHEMA.capitalize())] = VERSION
+        os.environ["TEST_DATABASE_INSTALL_{}".format(SCHEMA.upper())] = VERSION
         alg = "{}:create_database_structure".format(provider.id())
-        try:
-            processing_output = processing.run(alg, params, feedback=feedback)
-        except QgsProcessingException as e:
-            self.assertTrue(False, e)
-        del os.environ["TEST_DATABASE_INSTALL_{}".format(SCHEMA.capitalize())]
+        create_output = processing.run(alg, params, feedback=feedback)
+        del os.environ["TEST_DATABASE_INSTALL_{}".format(SCHEMA.upper())]
 
         self.cursor.execute(
             "SELECT table_name FROM information_schema.tables WHERE table_schema = '{}'".format(
@@ -69,6 +65,7 @@ class TestProcessing(unittest.TestCase):
         )
         records = self.cursor.fetchall()
         result = [r[0] for r in records]
+
         # Expected tables in the specific version written above at the beginning of the test.
         # DO NOT CHANGE HERE, change below at the end of the test.
         expected = [
@@ -78,8 +75,7 @@ class TestProcessing(unittest.TestCase):
             "sys_structure_metadonnee",
         ]
         self.assertCountEqual(expected, result)
-        expected = "*** THE STRUCTURE lizsync HAS BEEN CREATED WITH VERSION '{}'***".format(VERSION)
-        self.assertEqual(expected, processing_output["OUTPUT_STRING"])
+        self.assertEqual(VERSION, create_output["DATABASE_VERSION"])
 
         sql = """
             SELECT version
@@ -96,15 +92,10 @@ class TestProcessing(unittest.TestCase):
         feedback.pushDebugInfo("Update the database")
         params = {
             "CONNECTION_NAME": "test",
-            "RUNIT": True,
+            "RUN_MIGRATIONS": True,
         }
         alg = "{}:upgrade_database_structure".format(provider.id())
         results = processing.run(alg, params, feedback=feedback)
-        self.assertEqual(1, results["OUTPUT_STATUS"], 1)
-        self.assertEqual(
-            "*** THE DATABASE STRUCTURE HAS BEEN UPDATED ***",
-            results["OUTPUT_STRING"],
-        )
 
         sql = """
             SELECT version
@@ -123,6 +114,7 @@ class TestProcessing(unittest.TestCase):
             last_migration.replace("upgrade_to_", "").replace(".sql", "").strip()
         )
         self.assertEqual(metadata_version, record[0])
+        self.assertEqual(results["DATABASE_VERSION"], record[0])
 
         self.cursor.execute(
             "SELECT table_name FROM information_schema.tables WHERE table_schema = '{}'".format(
@@ -160,7 +152,7 @@ class TestProcessing(unittest.TestCase):
 
         params = {
             'CONNECTION_NAME': 'test',
-            'OVERRIDE_LIZSYNC': True,  # Must be true, for the first time in the test.
+            'OVERRIDE': True,  # Must be true, for the first time in the test.
         }
         alg = "{}:create_database_structure".format(provider.id())
         processing.run(alg, params, feedback=feedback)
@@ -186,7 +178,7 @@ class TestProcessing(unittest.TestCase):
         feedback.pushDebugInfo("Relaunch the algorithm without override")
         params = {
             "CONNECTION_NAME": "test",
-            'OVERRIDE_LIZSYNC': False,
+            'OVERRIDE': False,
         }
 
         with self.assertRaises(QgsProcessingException):
@@ -194,13 +186,20 @@ class TestProcessing(unittest.TestCase):
 
         self.assertTrue(feedback.last.startswith('Unable to execute algorithm'), feedback.last)
 
+        sql = """
+            SELECT version
+            FROM {}.sys_structure_metadonnee
+            ORDER BY date_ajout DESC
+            LIMIT 1;
+        """.format(
+            SCHEMA
+        )
+        self.cursor.execute(sql)
+        record = self.cursor.fetchone()
+
         feedback.pushDebugInfo("Update the database")
-        params = {"CONNECTION_NAME": "test", "RUNIT": True}
+        params = {"CONNECTION_NAME": "test", "RUN_MIGRATIONS": True}
         results = processing.run(
             "lizsync:upgrade_database_structure", params, feedback=feedback
         )
-        self.assertEqual(1, results["OUTPUT_STATUS"], 1)
-        self.assertEqual(
-            "The database version already matches the plugin version. No upgrade needed.",
-            results["OUTPUT_STRING"],
-        )
+        self.assertEqual(results["DATABASE_VERSION"], record[0])

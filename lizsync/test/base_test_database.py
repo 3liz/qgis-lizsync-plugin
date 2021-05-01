@@ -49,7 +49,7 @@ class DatabaseTestCase(unittest.TestCase):
 
         params = {
             "CONNECTION_NAME": "test",
-            'OVERRIDE_LIZSYNC': True,
+            'OVERRIDE': True,
         }
         processing.run(
             "{}:create_database_structure".format(self.provider.id()), params, feedback=None

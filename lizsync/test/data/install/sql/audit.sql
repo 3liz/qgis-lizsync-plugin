@@ -193,7 +193,7 @@ END;
 $body$
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = pg_catalog, public;
+;
 
 
 COMMENT ON FUNCTION audit.if_modified_func() IS $body$

@@ -9,6 +9,7 @@ import processing
 from qgis.core import (
     QgsApplication,
     QgsVectorLayer,
+    QgsProcessingException
 )
 from qgis.testing import unittest
 
@@ -128,18 +129,19 @@ class TestSyncDatabase(unittest.TestCase):
         self.feedback.pushInfo('Creating database structure…')
         params = {
             "CONNECTION_NAME": "test",
-            "OVERRIDE_LIZSYNC": True,
+            "OVERRIDE": True,
         }
-        result = processing.run(
-            "lizsync:create_database_structure", params, feedback=feedback
-        )
-        self.assertEqual(1, result['OUTPUT_STATUS'])
+        try:
+            result = processing.run(
+                "lizsync:create_database_structure", params, feedback=feedback
+            )
+        except QgsProcessingException as e:
+            self.assertTrue(False, e)
 
         # Initialize central database
         self.feedback.pushInfo('Initializing central database…')
         params = {
             "CONNECTION_NAME_CENTRAL": "test",
-            "ADD_SERVER_ID": True,
             "ADD_UID_COLUMNS": True,
             "ADD_AUDIT_TRIGGERS": True,
             "SCHEMAS": SCHEMA_DATA,
