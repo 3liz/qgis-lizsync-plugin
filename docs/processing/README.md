@@ -82,12 +82,15 @@ OUTPUT_STRING|Output message|String||
 
 ### Install Lizsync tools on the central database
 
- Install the LizSync schema with tables and function on the central database.
+When you are running the plugin for the first time on a new database, you need to install the database schema.
 
- This script will add
- * A lizsync schema with tables and functions
+It will erase and/or create the schema 'lizsync'.
 
-Beware ! If the schema lizsync already exists in the database, not installation will be made. You will need to manually correct the situation (drop or modifiy the schemas, tables and functions) with SQL commands.
+CONNECTION_NAME : The PostgreSQL connection to the central database. You need to have the right to create a new schema in this database, as a schema lizsync will be created and filled with the needed tables and functions
+
+OVERRIDE : ** Be careful ** This will remove data in the schema !
+
+
 
 ![algo_id](./lizsync-create_database_structure.png)
 
@@ -96,15 +99,14 @@ Beware ! If the schema lizsync already exists in the database, not installation 
 | ID | Description | Type | Info | Required | Advanced | Option |
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
 CONNECTION_NAME|PostgreSQL connection to the central database|String|The PostgreSQL connection to the central database. You need to have the right to create a new schema in this database, as a schema lizsync will be created and filled with the needed tables and functions|✓|||
-OVERRIDE_LIZSYNC|Drop lizsync schema and all data ?|Boolean||✓|||
+OVERRIDE|Erase the schema lizsync ?|Boolean|** Be careful ** This will remove data in the schema !|✓|||
 
 
 #### Outputs
 
 | ID | Description | Type | Info |
 |:-:|:-:|:-:|:-:|
-OUTPUT_STATUS|Output status|Number||
-OUTPUT_STRING|Output message|String||
+DATABASE_VERSION|Database version|String||
 
 
 ***
@@ -147,9 +149,13 @@ OUTPUT_STRING|Output message|String||
 
 ### Upgrade LizSync tools in the central database
 
- Upgrade the Lizsync tables and functions in the central database.
+When the plugin is upgraded, a database upgrade may be available as well. The database migration must be applied as well on the existing database.
 
- If you have upgraded your QGIS LizSync plugin, you can run this script to upgrade your central database to the new plugin version.
+CONNECTION_NAME : The database where the schema 'lizsync' is installed.
+
+RUN_MIGRATIONS : For security reason, we ask that you explicitly use this checkbox.
+
+
 
 ![algo_id](./lizsync-upgrade_database_structure.png)
 
@@ -157,16 +163,15 @@ OUTPUT_STRING|Output message|String||
 
 | ID | Description | Type | Info | Required | Advanced | Option |
 |:-:|:-:|:-:|:-:|:-:|:-:|:-:|
-CONNECTION_NAME|PostgreSQL connection to the central database|String|The PostgreSQL connection to the central database. You need to have the right to create a new schema in this database, as a schema lizsync will be created and filled with the needed tables and functions|✓|||
-RUNIT|Check this box to upgrade. No action will be done otherwise|Boolean||✓|||
+CONNECTION_NAME|Connection to the PostgreSQL database|String|The database where the schema 'lizsync' is installed.|✓|||
+RUN_MIGRATIONS|Use this checkbox to upgrade.|Boolean|For security reason, we ask that you explicitly use this checkbox.|✓|||
 
 
 #### Outputs
 
 | ID | Description | Type | Info |
 |:-:|:-:|:-:|:-:|
-OUTPUT_STATUS|Output status|Number||
-OUTPUT_STRING|Output message|String||
+DATABASE_VERSION|Database version|String||
 
 
 ***
