@@ -133,7 +133,7 @@
                                 </tr>
                                 <tr>
                                     <td>action_tstamp_epoch</td>
-                                    <td>integer</td>
+                                    <td>numeric</td>
                                     <td>OUT</td>
                                 </tr>
                                 <tr>
@@ -180,7 +180,7 @@
                             </div>
                         </div>
                         <div class="box-body">
-                            <textarea id="sql-script-codemirror" name="sql-script-codemirror" rows="" style="display: none;">&#10;DECLARE&#10;    sqltemplate text;&#10;BEGIN&#10;    RETURN QUERY&#10;    SELECT&#10;        a.event_id,&#10;        a.action_tstamp_tx AS action_tstamp_tx,&#10;        extract(epoch from a.action_tstamp_tx)::integer AS action_tstamp_epoch,&#10;        concat(a.schema_name, &#39;.&#39;, a.table_name) AS ident,&#10;        a.action AS action_type,&#10;        &#39;clone&#39;::text AS origine,&#10;        Coalesce(&#10;            lizsync.get_event_sql(&#10;                a.event_id,&#10;                p_uid_field::text,&#10;                array_cat(&#10;                    p_excluded_columns,&#10;                    array_remove(akeys(a.changed_fields), s)&#10;                )&#10;            ),&#10;            &#39;&#39;&#10;        ) AS action,&#10;        s AS updated_field,&#10;        (a.row_data-&gt;p_uid_field)::uuid AS uid&#10;    FROM lizsync.logged_actions AS a&#10;    -- Create as many lines as there are changed fields in UPDATE&#10;    LEFT JOIN skeys(a.changed_fields) AS s ON TRUE&#10;    WHERE True&#10;    ORDER BY a.event_id&#10;    ;&#10;END;&#10;</textarea>
+                            <textarea id="sql-script-codemirror" name="sql-script-codemirror" rows="" style="display: none;">&#10;DECLARE&#10;    sqltemplate text;&#10;BEGIN&#10;    RETURN QUERY&#10;    SELECT&#10;        a.event_id,&#10;        a.action_tstamp_tx AS action_tstamp_tx,&#10;        extract(epoch from a.action_tstamp_tx)::numeric AS action_tstamp_epoch,&#10;        concat(a.schema_name, &#39;.&#39;, a.table_name) AS ident,&#10;        a.action AS action_type,&#10;        &#39;clone&#39;::text AS origine,&#10;        Coalesce(&#10;            lizsync.get_event_sql(&#10;                a.event_id,&#10;                p_uid_field::text,&#10;                array_cat(&#10;                    p_excluded_columns,&#10;                    array_remove(akeys(a.changed_fields), s)&#10;                )&#10;            ),&#10;            &#39;&#39;&#10;        ) AS action,&#10;        s AS updated_field,&#10;        (a.row_data-&gt;p_uid_field)::uuid AS uid&#10;    FROM lizsync.logged_actions AS a&#10;    -- Create as many lines as there are changed fields in UPDATE&#10;    LEFT JOIN skeys(a.changed_fields) AS s ON TRUE&#10;    WHERE True&#10;    ORDER BY a.event_id&#10;    ;&#10;END;&#10;</textarea>
                         </div>
                     </div>
                 </section>
