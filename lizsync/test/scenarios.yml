@@ -23,7 +23,7 @@
       database: lizsync_clone_a
       sql: >-
         UPDATE "test"."pluviometers"
-        SET nom = concat(nom, ' by clone - U2')
+        SET nom = concat(nom, ' by clone a - U2')
         WHERE id = 1;
     - type: sleep
 
@@ -201,6 +201,50 @@
         WHERE quartmno = 'MC';
       expected: MONTPELLIER CENTRE by clone a - U6
 
+- description: "S1 - Synchro - clone b - Synchronize the clone b for the first time"
+  sequence:
+    - type: synchro
+      from: lizsync_clone_b
+
+    - type: compare
+      from: lizsync_clone_b
+      schema: test
+      table: montpellier_districts
+
+
+- description: "CO - Compare data for all tables between each clone and central database"
+  sequence:
+
+    - type: compare
+      from: lizsync_clone_a
+      schema: test
+      table: montpellier_districts
+
+    - type: compare
+      from: lizsync_clone_b
+      schema: test
+      table: montpellier_districts
+
+    - type: compare
+      from: lizsync_clone_a
+      schema: test
+      table: montpellier_sub_districts
+
+    - type: compare
+      from: lizsync_clone_b
+      schema: test
+      table: montpellier_sub_districts
+
+    - type: compare
+      from: lizsync_clone_a
+      schema: test
+      table: pluviometers
+
+    - type: compare
+      from: lizsync_clone_b
+      schema: test
+      table: pluviometers
+
 
 - description: "U7 - UPDATE - central & clone a & clone B - same column for the same feature of the same table"
   sequence:
@@ -266,7 +310,7 @@
       expected: CROIX D'ARGENT by clone b - U7
 
 
-- description: "Z - Compare data for all tables between each clone and central database"
+- description: "CO - Compare data for all tables between each clone and central database"
   sequence:
 
     - type: compare

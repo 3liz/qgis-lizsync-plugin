@@ -219,12 +219,12 @@ class TestSyncDatabase(unittest.TestCase):
             self.feedback.pushInfo('Beginning test : {}…'.format(test['description']))
             for item in test['sequence']:
                 if item['type'] == 'sleep':
-                    sleep_time = 0.5
+                    sleep_time = 0.1
                     self.feedback.pushInfo('Sleep %s seconds' % sleep_time)
                     time.sleep(sleep_time)
 
                 elif item['type'] == 'synchro':
-                    self.feedback.pushInfo('Run synchro')
+                    self.feedback.pushInfo('Run synchro from %s' % item['from'])
                     params = {
                         "CONNECTION_NAME_CENTRAL": "test",
                         "CONNECTION_NAME_CLONE": item['from'],
@@ -237,11 +237,12 @@ class TestSyncDatabase(unittest.TestCase):
                 elif item['type'] == 'query':
                     _, ok, error_message = fetchDataFromSqlQuery(item['database'], item['sql'])
                     self.assertTrue(ok, error_message)
-                    self.feedback.pushInfo('Query "{}" executed on {}'.format(item['sql'], item['database']))
+                    self.feedback.pushInfo('Query executed on {}: {}'.format(item['database'], item['sql']))
 
                 elif item['type'] == 'compare':
                     self.feedback.pushInfo(
-                        'Compare table data between databases: "{}"."{}"'.format(
+                        'Compare table data between central & {}: "{}"."{}"'.format(
+                            item['from'],
                             item['schema'],
                             item['table']
                         )

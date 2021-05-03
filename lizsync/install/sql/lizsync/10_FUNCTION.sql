@@ -96,6 +96,7 @@ BEGIN
         INTO central_ids_to_keep
         ;
     END IF;
+
     -- clone
     WITH
     cl AS (
@@ -142,7 +143,7 @@ BEGIN
         ce.action AS ceaction, cl.action AS claction,
         -- last modified wins
         CASE
-            WHEN cl.original_action_tstamp_tx < ce.original_action_tstamp_tx THEN 'clone'
+            WHEN cl.original_action_tstamp_tx <= ce.original_action_tstamp_tx THEN 'clone'
             ELSE 'central'
         END AS rejected,
         'last_modified' AS rule_applied
@@ -472,14 +473,14 @@ BEGIN
             tid                       serial,
             event_id                  bigint,
             action_tstamp_tx          timestamp with time zone,
-            action_tstamp_epoch       integer,
+            action_tstamp_epoch       numeric,
             ident                     text,
             action_type               text,
             origine                   text,
             action                    text,
             updated_field             text,
             uid                       uuid,
-            original_action_tstamp_tx integer
+            original_action_tstamp_tx numeric
         )
         --ON COMMIT DROP
         ';
@@ -513,7 +514,7 @@ COMMENT ON FUNCTION lizsync.create_temporary_table(temporary_table text, table_t
 
 
 -- get_central_audit_logs(text, text[])
-CREATE FUNCTION lizsync.get_central_audit_logs(p_uid_field text, p_excluded_columns text[]) RETURNS TABLE(event_id bigint, action_tstamp_tx timestamp with time zone, action_tstamp_epoch integer, ident text, action_type text, origine text, action text, updated_field text, uid uuid, original_action_tstamp_tx integer)
+CREATE FUNCTION lizsync.get_central_audit_logs(p_uid_field text, p_excluded_columns text[]) RETURNS TABLE(event_id bigint, action_tstamp_tx timestamp with time zone, action_tstamp_epoch numeric, ident text, action_type text, origine text, action text, updated_field text, uid uuid, original_action_tstamp_tx numeric)
     LANGUAGE plpgsql
     AS $_$
 DECLARE
@@ -581,7 +582,7 @@ BEGIN
         SELECT
             a.event_id,
             a.action_tstamp_tx AS action_tstamp_tx,
-            extract(epoch from a.action_tstamp_tx)::integer AS action_tstamp_epoch,
+            extract(epoch from a.action_tstamp_tx)::numeric AS action_tstamp_epoch,
             concat(a.schema_name, ''.'', a.table_name) AS ident,
             a.action AS action_type,
             CASE
@@ -604,8 +605,8 @@ BEGIN
             CASE
                 WHEN a.sync_data->>''action_tstamp_tx'' IS NOT NULL
                 AND a.sync_data->>''origin'' IS NOT NULL
-                    THEN extract(epoch from Cast(a.sync_data->>''action_tstamp_tx'' AS TIMESTAMP WITH TIME ZONE))::integer
-                ELSE extract(epoch from a.action_tstamp_tx)::integer
+                    THEN extract(epoch from Cast(a.sync_data->>''action_tstamp_tx'' AS TIMESTAMP WITH TIME ZONE))::numeric
+                ELSE extract(epoch from a.action_tstamp_tx)::numeric
             END AS original_action_tstamp_tx
         FROM lizsync.logged_actions AS a
         -- Create as many lines as there are changed fields in UPDATE
@@ -648,9 +649,9 @@ BEGIN
         dblink_connection_name,
         sqltext
     ) AS t(
-        event_id bigint, action_tstamp_tx timestamp with time zone, action_tstamp_epoch integer,
+        event_id bigint, action_tstamp_tx timestamp with time zone, action_tstamp_epoch numeric,
         ident text, action_type text, origine text, action text, updated_field text,
-        uid uuid, original_action_tstamp_tx integer
+        uid uuid, original_action_tstamp_tx numeric
     )
     ;
 
@@ -663,7 +664,7 @@ COMMENT ON FUNCTION lizsync.get_central_audit_logs(p_uid_field text, p_excluded_
 
 
 -- get_clone_audit_logs(text, text[])
-CREATE FUNCTION lizsync.get_clone_audit_logs(p_uid_field text, p_excluded_columns text[]) RETURNS TABLE(event_id bigint, action_tstamp_tx timestamp with time zone, action_tstamp_epoch integer, ident text, action_type text, origine text, action text, updated_field text, uid uuid)
+CREATE FUNCTION lizsync.get_clone_audit_logs(p_uid_field text, p_excluded_columns text[]) RETURNS TABLE(event_id bigint, action_tstamp_tx timestamp with time zone, action_tstamp_epoch numeric, ident text, action_type text, origine text, action text, updated_field text, uid uuid)
     LANGUAGE plpgsql
     AS $$
 DECLARE
@@ -673,7 +674,7 @@ BEGIN
     SELECT
         a.event_id,
         a.action_tstamp_tx AS action_tstamp_tx,
-        extract(epoch from a.action_tstamp_tx)::integer AS action_tstamp_epoch,
+        extract(epoch from a.action_tstamp_tx)::numeric AS action_tstamp_epoch,
         concat(a.schema_name, '.', a.table_name) AS ident,
         a.action AS action_type,
         'clone'::text AS origine,
@@ -1481,7 +1482,7 @@ BEGIN
     INTO status_bool;
     SELECT lizsync.create_temporary_table(temp_conflicts_table, 'conflict')
     INTO status_bool;
-    RAISE NOTICE 'Create temporary tables: %', clock_timestamp() - t;
+    -- RAISE NOTICE 'Create temporary tables: %', clock_timestamp() - t;
 
     -- Get audit logs and store them in temporary tables
     -- central
@@ -1498,7 +1499,7 @@ BEGIN
     FROM lizsync.get_central_audit_logs(''uid'', NULL)
     '
     ;
-    RAISE NOTICE 'Get modifications from central audit table: %', clock_timestamp() - t;
+    -- RAISE NOTICE 'Get modifications from central audit table: %', clock_timestamp() - t;
 
     -- clone
     RAISE NOTICE 'Get modifications from clone audit table...';
@@ -1515,7 +1516,7 @@ BEGIN
     FROM lizsync.get_clone_audit_logs(''uid'', NULL)
     '
     ;
-    RAISE NOTICE 'Get modifications from clone audit table: %', clock_timestamp() - t;
+    -- RAISE NOTICE 'Get modifications from clone audit table: %', clock_timestamp() - t;
 
     -- Analyse logs
     -- find conflicts, useless logs, and remove them from temp tables
@@ -1524,7 +1525,7 @@ BEGIN
     FROM lizsync.analyse_audit_logs()
     INTO p_ids, p_min_event_id, p_max_event_id, p_max_action_tstamp_tx
     ;
-    RAISE NOTICE 'Analyse modifications and manage conflicts: %', clock_timestamp() - t;
+    -- RAISE NOTICE 'Analyse modifications and manage conflicts: %', clock_timestamp() - t;
 
     -- Replay logs
     -- central -> clone
@@ -1535,29 +1536,29 @@ BEGIN
         p_max_event_id,
         p_max_action_tstamp_tx
     )
-    INTO p_number_replayed_to_central
+    INTO p_number_replayed_to_clone
     ;
-    RAISE NOTICE 'Replay modification from central server to clone: %', clock_timestamp() - t;
+    -- RAISE NOTICE 'Replay modification from central server to clone: %', clock_timestamp() - t;
 
     -- clone -> central
     RAISE NOTICE 'Replay modification from clone to central server...';
     SELECT lizsync.replay_clone_logs_to_central()
-    INTO p_number_replayed_to_clone
+    INTO p_number_replayed_to_central
     ;
-    RAISE NOTICE 'Replay modification from clone to central server: %', clock_timestamp() - t;
+    -- RAISE NOTICE 'Replay modification from clone to central server: %', clock_timestamp() - t;
 
     -- Store conflicts
-    RAISE NOTICE 'Store conflicts in the central server...';
+    -- RAISE NOTICE 'Store conflicts in the central server...';
     SELECT lizsync.store_conflicts()
     INTO p_number_conflicts;
-    RAISE NOTICE 'Store conflicts in the central server: %', clock_timestamp() - t;
+    -- RAISE NOTICE 'Store conflicts in the central server: %', clock_timestamp() - t;
 
     -- Drop temporary tables
     RAISE NOTICE 'Drop temporary tables...';
     EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(temp_central_audit_table);
     EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(temp_clone_audit_table)  ;
     EXECUTE 'DROP TABLE IF EXISTS ' || quote_ident(temp_conflicts_table)    ;
-    RAISE NOTICE 'Drop temporary tables: %', clock_timestamp() - t;
+    -- RAISE NOTICE 'Drop temporary tables: %', clock_timestamp() - t;
 
     -- Return
     RETURN QUERY
