@@ -1,5 +1,16 @@
 # CHANGELOG
 
+## 0.6.0 - 2021-05-03
+
+* QGIS - Add QGIS 3.16 compatibility: plugin is now only compatible for QGIS >= 3.10
+* Synchronization - Manage conflicts for UPDATE at the same second
+* Create & Upgrade database structure - use QGIS native db functions instead of DbManager functions
+* Build mobile project - Fix datasource change for layers with a username containing integers
+* Logs - Add the second bool parameter to the reportError method
+* Install - Remove search_path from SQL files
+* Tests - Add tests for UPDATE on the same object & the same column
+* Docs - Update SchemaSpy database & processing doc
+
 ## 0.5.1 - 2021-03-15
 
 * Deploy all - Use the current project instead of asking for the directory & zip paths
