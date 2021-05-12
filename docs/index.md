@@ -86,4 +86,4 @@ SELECT lizsync.synchronize()
 
 ## Demo
 
-Read the [reference page](../references.md) for some videos.
+Read the [reference page](./references.md) for some videos.
