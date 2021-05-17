@@ -10,7 +10,7 @@ LizSync has been presented during the QGIS User Group Switzerland user meeting i
 
 * [Slides of the presentation](./presentation-reveal/index.html)
 
-*Some changes has been made since this presentation, see them in the* [Changelog](./changelog/)
+*Some changes has been made since this presentation, see them in the* [Changelog](./changelog.md)
 
 ## Videos
 
