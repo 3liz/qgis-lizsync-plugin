@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 0.6.1 - 2021-05-17
+
+* Build mobile project algorithm - Fix the datasource checking between the project layers & the central connection configuration
+
 ## 0.6.0 - 2021-05-03
 
 * QGIS - Add QGIS 3.16 compatibility: plugin is now only compatible for QGIS >= 3.10
