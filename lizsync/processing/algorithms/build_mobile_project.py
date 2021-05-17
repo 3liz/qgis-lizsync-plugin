@@ -10,6 +10,7 @@ import sys
 
 from qgis.core import (
     Qgis,
+    QgsDataSourceUri,
     QgsProcessing,
     QgsProcessingException,
     QgsProcessingParameterString,
@@ -191,7 +192,7 @@ class BuildMobileProject(BaseProcessingAlgorithm):
 
         return super(BuildMobileProject, self).checkParameterValues(parameters, context)
 
-    def replacePostgresqlDatasource(self, connection_name_central, datasource):
+    def replacePostgresqlDatasource(self, connection_name_central, datasource, layername):
         # Get uri from connection names
         status_central, uri_central, error_message_central = getUriFromConnectionName(
             connection_name_central,
@@ -202,8 +203,22 @@ class BuildMobileProject(BaseProcessingAlgorithm):
             return False, m
 
         # Check if layer datasource and connection datasource have common data
-        if not uri_central.connectionInfo() in datasource:
+        uri_datasource = QgsDataSourceUri(datasource)
+        match_error = []
+        if uri_datasource.service() != uri_central.service():
+            match_error.append('\n service ({} != {})'.format(uri_datasource.service(), uri_central.service()))
+        if uri_datasource.host() != uri_central.host():
+            match_error.append('\n host ({} != {})'.format(uri_datasource.host(), uri_central.host()))
+        if uri_datasource.port() != uri_central.port():
+            match_error.append('\n port ({} != {})'.format(uri_datasource.port(), uri_central.port()))
+        if uri_datasource.database() != uri_central.database():
+            match_error.append('\n database ({} != {})'.format(uri_datasource.database(), uri_central.database()))
+        if uri_datasource.username() != uri_central.username():
+            match_error.append('\n username ({} != {})'.format(uri_datasource.username(), uri_central.username()))
+        if match_error:
             m = tr('Central database and layer connection parameters do not match')
+            m += '.\n' + tr('Layer') + ' "{}":'.format(layername)
+            m += ', '.join(match_error)
             return False, m
 
         # Build central and clone datasource components to search & replace
@@ -311,7 +326,8 @@ class BuildMobileProject(BaseProcessingAlgorithm):
                 # Replace datasource by field localhost datasource
                 new_source, msg = self.replacePostgresqlDatasource(
                     connection_name_central,
-                    datasource
+                    datasource,
+                    layername
                 )
                 if not new_source:
                     raise QgsProcessingException(msg)
