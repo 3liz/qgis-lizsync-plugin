@@ -1010,6 +1010,8 @@ DECLARE
     p_sync_id uuid;
     rec record;
     p_counter integer;
+    dblink_connection_name text;
+    dblink_msg text;
 BEGIN
     -- Do the replay ONLY if there are ids to replay
     -- We do NOT want to insert a new lizsync.history item if p_ids IS NULL
@@ -1029,6 +1031,15 @@ BEGIN
         FROM lizsync.server_metadata
         LIMIT 1;
         -- RAISE NOTICE 'Clone server id = %', p_clone_id;
+
+        -- Create dblink connection
+        dblink_connection_name = (md5(((random())::text || (clock_timestamp())::text)))::text;
+        -- RAISE NOTICE 'dblink_connection_name %', dblink_connection_name;
+        SELECT dblink_connect(
+            dblink_connection_name,
+            'central_server'
+        )
+        INTO dblink_msg;
 
         -- Add item in CENTRAL history table
         INSERT INTO central_lizsync.history (
@@ -1074,15 +1085,30 @@ BEGIN
 
         -- Update central audit logged actions
         -- To tell these actions have been replayed by this clone
-        UPDATE central_lizsync.logged_actions
-        SET sync_data = jsonb_set(
-            sync_data,
-            '{"replayed_by"}',
-            sync_data->'replayed_by' || jsonb_build_object(p_clone_id, p_sync_id),
-            true
-        )
-        WHERE event_id = ANY (p_ids)
-        ;
+        -- run this function with dblink as it must be done by the central server with security definer
+        -- it allows the clone to write data back to the protected table logged_actions
+        sqltemplate = concat(
+            'SELECT lizsync.update_central_logs_add_clone_id(',
+            quote_literal(p_clone_id),
+            ', ',
+            quote_literal(p_sync_id), '::uuid',
+            ', ',
+            '(', quote_literal(p_ids::text), ')::integer[]',
+            ')'
+        );
+        RAISE NOTICE 'UPDATE CLONE ID = %', sqltemplate;
+
+        -- Update central lizsync.logged_actions
+        -- we need to use dblink and not dblink_exec
+        -- else error "statement returning results not allowed"
+        PERFORM * FROM dblink(
+            dblink_connection_name,
+            sqltemplate
+        ) AS foo(update_status boolean);
+
+        -- Disconnect dblink
+        SELECT dblink_disconnect(dblink_connection_name)
+        INTO dblink_msg;
 
         -- Modify central server synchronisation item central->clone
         -- to mark it as 'done'
@@ -1123,6 +1149,7 @@ DECLARE
     p_sync_id uuid;
     rec record;
     p_counter integer;
+    p_temporary_table text;
     dblink_connection_name text;
     dblink_msg text;
 BEGIN
@@ -1175,9 +1202,6 @@ BEGIN
             p_sync_id
         );
 
-        -- Store SQL query to update central logs afterward with original log timestamp
-        sqlupdatelogs = '';
-
         -- Create dblink connection
         dblink_connection_name = (md5(((random())::text || (clock_timestamp())::text)))::text;
         -- RAISE NOTICE 'dblink_connection_name %', dblink_connection_name;
@@ -1187,10 +1211,24 @@ BEGIN
         )
         INTO dblink_msg;
 
+        -- Store SQL query to update central logs afterward with original log timestamp
+        p_temporary_table = 'temp_' || md5(random()::text || clock_timestamp()::text);
+
+        sqlupdatelogs = '
+            CREATE TEMPORARY TABLE ' || p_temporary_table || ' (
+                action_tstamp_tx TIMESTAMP WITH TIME ZONE,
+                sync_id uuid,
+                client_query_hash text,
+                action_type text,
+                ident text
+            ) ON COMMIT DROP;
+        ';
+
         -- Loop through logs and replay action
         -- We need to query one by one to be able
         -- to update the sync_data->action_tstamp_tx afterwards
-        -- by searching action = sqltemplate
+        -- by searching in the central lizsync.logged_actions the action = sqltemplate
+        -- for this sync_id
         FOR rec IN
             SELECT *
             FROM temp_clone_audit
@@ -1205,25 +1243,26 @@ BEGIN
             INTO dblink_msg;
 
             -- Concatenate action in sqlupdatelogs
+            -- We need it to add the clone actions timestamp in the central log table
+            -- since we find the central logs rows to update with a WHERE including action SQL ie sqltemplate
+            -- we use a hash on sqltemplate to avoid too big SQL
             sqltemplate = trim(quote_literal(sqltemplate), '''');
             sqlupdatelogs = concat(
                 sqlupdatelogs,
                 format('
-                    UPDATE lizsync.logged_actions
-                    SET sync_data = sync_data || jsonb_build_object(
-                        ''action_tstamp_tx'',
-                        Cast(''%1$s'' AS TIMESTAMP WITH TIME ZONE)
-                    )
-                    WHERE True
-                    AND sync_data->''replayed_by''->>''%2$s'' = ''%3$s''
-                    AND client_query = ''%4$s''
-                    AND action = ''%5$s''
-                    AND concat(schema_name, ''.'', table_name) = ''%6$s''
-                    ;',
+                    INSERT INTO ' || p_temporary_table || '
+                    (action_tstamp_tx, sync_id, client_query_hash, action_type, ident)
+                    VALUES (
+                        Cast(''%1$s'' AS TIMESTAMP WITH TIME ZONE),
+                        ''%2$s''::uuid,
+                        ''%3$s'',
+                        ''%4$s'',
+                        ''%5$s''
+                    );
+                    ',
                     rec.action_tstamp_tx,
-                    p_central_id,
                     p_sync_id,
-                    sqltemplate,
+                    md5(sqltemplate)::text,
                     rec.action_type,
                     rec.ident
                 )
@@ -1231,12 +1270,19 @@ BEGIN
 
         END LOOP;
 
+        -- Add the necessary call the to security definer function
+        -- making possible from the clone to update the central lizsync.logged_actions
+        -- with the key action_tstamp_tx
+        sqlupdatelogs = concat(
+            sqlupdatelogs,
+            'SELECT lizsync.update_central_logs_add_clone_action_timestamps(' || quote_literal(p_temporary_table) || ');'
+        );
+
         -- Update central lizsync.logged_actions
-        SELECT dblink_exec(
+        PERFORM * FROM dblink(
             dblink_connection_name,
             sqlupdatelogs
-        )
-        INTO dblink_msg;
+        ) AS foo(update_status boolean);
 
         -- Disconnect dblink
         SELECT dblink_disconnect(dblink_connection_name)
@@ -1573,6 +1619,77 @@ $$;
 
 -- FUNCTION synchronize()
 COMMENT ON FUNCTION lizsync.synchronize() IS 'Run the bi-directionnal database synchronization between the clone and the central server';
+
+
+-- update_central_logs_add_clone_action_timestamps(text)
+CREATE FUNCTION lizsync.update_central_logs_add_clone_action_timestamps(temporary_table_name text) RETURNS boolean
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+DECLARE
+    sqltemplate text;
+    p_central_id text;
+BEGIN
+    -- Get central server id
+    SELECT server_id::text INTO p_central_id
+    FROM lizsync.server_metadata
+    LIMIT 1;
+
+    -- Use the data stored in the temporary table given to update the lizsync.logged_actions
+    sqltemplate = '
+    UPDATE lizsync.logged_actions
+    SET sync_data = sync_data || jsonb_build_object(
+        ''action_tstamp_tx'',
+        Cast(t.action_tstamp_tx AS TIMESTAMP WITH TIME ZONE)
+    )
+    FROM ' || quote_ident(temporary_table_name) || ' AS t
+    WHERE True
+    -- same synchronisation id
+    AND sync_data->''replayed_by''->>' || quote_literal(p_central_id) || ' = t.sync_id::text
+    -- same query (we compare hash)
+    AND md5(client_query)::text = t.client_query_hash
+    -- same action type
+    AND action = t.action_type
+    -- same table
+    AND concat(schema_name, ''.'', table_name) = t.ident
+    ';
+    EXECUTE sqltemplate;
+
+    -- Return
+    RETURN True;
+END;
+$$;
+
+
+-- FUNCTION update_central_logs_add_clone_action_timestamps(temporary_table_name text)
+COMMENT ON FUNCTION lizsync.update_central_logs_add_clone_action_timestamps(temporary_table_name text) IS 'Update all logs created by the central database after the clone has replayed its local logs in the central database. It is necessary to update the action_tstamp_tx key of lizsync.logged_actions sync_data column. The SECURITY DEFINER allows the clone to update the protected lizsync.logged_actions table. DO NOT USE MANUALLY.';
+
+
+-- update_central_logs_add_clone_id(text, uuid, bigint[])
+CREATE FUNCTION lizsync.update_central_logs_add_clone_id(p_clone_id text, p_sync_id uuid, p_ids bigint[]) RETURNS boolean
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+BEGIN
+
+    -- We must update the central logged_actions with the clone id
+    -- this allows to know which clone has replayed wich log
+    UPDATE lizsync.logged_actions
+    SET sync_data = jsonb_set(
+        sync_data,
+        '{"replayed_by"}',
+        sync_data->'replayed_by' || jsonb_build_object(p_clone_id, p_sync_id),
+        true
+    )
+    WHERE event_id = ANY (p_ids)
+    ;
+
+    -- Sync done !
+    RETURN True;
+END;
+$$;
+
+
+-- FUNCTION update_central_logs_add_clone_id(p_clone_id text, p_sync_id uuid, p_ids bigint[])
+COMMENT ON FUNCTION lizsync.update_central_logs_add_clone_id(p_clone_id text, p_sync_id uuid, p_ids bigint[]) IS 'Update the central database synchronisation logs (table lizsync.logged_actions) by adding the clone ID in the "replayed_by" property of the field "sync_data". The SECURITY DEFINER allows the clone to update the protected lizsync.logged_actions table. DO NOT USE MANUALLY.';
 
 
 --
