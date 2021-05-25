@@ -646,13 +646,11 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         with open(os.path.join(dir_path, 'sync_id.txt')) as f:
             sync_id = f.readline().strip()
             sql = '''
-                UPDATE lizsync.history
-                SET server_to = array_append(server_to, '{0}')
-                WHERE sync_id = '{1}'
+                SELECT lizsync.update_history_item('{0}'::uuid, NULL, '{1}')
                 ;
             '''.format(
-                clone_id,
-                sync_id
+                sync_id,
+                clone_id
             )
             # feedback.pushInfo(sql)
             data, ok, error_message = fetchDataFromSqlQuery(

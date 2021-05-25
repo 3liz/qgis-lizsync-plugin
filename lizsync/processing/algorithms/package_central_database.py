@@ -595,19 +595,13 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         ####
         feedback.pushInfo(tr('ADD NEW SYNC HISTORY ITEM IN CENTRAL DATABASE'))
         sql = '''
-            INSERT INTO lizsync.history
-            (
-                server_from, min_event_id, max_event_id,
-                max_action_tstamp_tx, sync_type, sync_status
-            ) VALUES (
-                (SELECT server_id FROM lizsync.server_metadata LIMIT 1),
+            SELECT lizsync.insert_history_item(
+                (SELECT server_id FROM lizsync.server_metadata LIMIT 1)::text, NULL,
                 (SELECT Coalesce(min(event_id),-1) FROM lizsync.logged_actions),
                 (SELECT Coalesce(max(event_id),0) FROM lizsync.logged_actions),
                 (SELECT Coalesce(max(action_tstamp_tx), now()) FROM lizsync.logged_actions),
-                'full',
-                'done'
-            )
-            RETURNING sync_id;
+                'full'::text, 'done'::text
+            ) AS sync_id;
         '''
         data, ok, error_message = fetchDataFromSqlQuery(
             connection_name_central,

@@ -142,6 +142,7 @@ class TestSyncDatabase(unittest.TestCase):
         self.feedback.pushInfo('Initializing central database…')
         params = {
             "CONNECTION_NAME_CENTRAL": "test",
+            "ADD_SERVER_ID": False,
             "ADD_UID_COLUMNS": True,
             "ADD_AUDIT_TRIGGERS": True,
             "SCHEMAS": SCHEMA_DATA,

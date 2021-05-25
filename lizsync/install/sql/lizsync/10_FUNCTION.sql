@@ -999,10 +999,43 @@ $$;
 COMMENT ON FUNCTION lizsync.import_central_server_schemas() IS 'Import synchronised schemas from the central database foreign server into central_XXX local schemas to the clone database. This allow to edit data of the central database from the clone.';
 
 
+-- insert_history_item(text, text, bigint, bigint, timestamp with time zone, text, text)
+CREATE FUNCTION lizsync.insert_history_item(p_server_from text, p_server_to text, p_min_event_id bigint, p_max_event_id bigint, p_max_action_tstamp_tx timestamp with time zone, p_sync_type text, p_sync_status text) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+DECLARE p_sync_id uuid;
+BEGIN
+
+    INSERT INTO lizsync.history (
+        sync_id, sync_time,
+        server_from, server_to,
+        min_event_id, max_event_id, max_action_tstamp_tx,
+        sync_type, sync_status
+    )
+    VALUES (
+        md5(random()::text || clock_timestamp()::text)::uuid, now(),
+        p_server_from,
+        CASE WHEN p_server_to IS NOT NULL THEN ARRAY[p_server_to] ELSE NULL END,
+        p_min_event_id, p_max_event_id, p_max_action_tstamp_tx,
+        p_sync_type, p_sync_status
+    )
+    RETURNING sync_id
+    INTO p_sync_id
+    ;
+
+    RETURN p_sync_id;
+END;
+$$;
+
+
+-- FUNCTION insert_history_item(p_server_from text, p_server_to text, p_min_event_id bigint, p_max_event_id bigint, p_max_action_tstamp_tx timestamp with time zone, p_sync_type text, p_sync_status text)
+COMMENT ON FUNCTION lizsync.insert_history_item(p_server_from text, p_server_to text, p_min_event_id bigint, p_max_event_id bigint, p_max_action_tstamp_tx timestamp with time zone, p_sync_type text, p_sync_status text) IS 'Add a new history item in the lizsync.history table as the owner of the table. The SECURITY DEFINER allows the clone to update the protected table. DO NOT USE MANUALLY.';
+
+
 -- replay_central_logs_to_clone(bigint[], bigint, bigint, timestamp with time zone)
 CREATE FUNCTION lizsync.replay_central_logs_to_clone(p_ids bigint[], p_min_event_id bigint, p_max_event_id bigint, p_max_action_tstamp_tx timestamp with time zone) RETURNS TABLE(replay_count integer)
     LANGUAGE plpgsql
-    AS $$
+    AS $_$
 DECLARE
     sqltemplate text;
     p_central_id text;
@@ -1042,21 +1075,21 @@ BEGIN
         INTO dblink_msg;
 
         -- Add item in CENTRAL history table
-        INSERT INTO central_lizsync.history (
-            sync_id, sync_time,
-            server_from, server_to,
-            min_event_id, max_event_id, max_action_tstamp_tx,
-            sync_type, sync_status
-        )
-        VALUES (
-            md5(random()::text || clock_timestamp()::text)::uuid, now(),
-            p_central_id, ARRAY[p_clone_id],
-            p_min_event_id, p_max_event_id, p_max_action_tstamp_tx,
-            'partial', 'pending'
-        )
-        RETURNING sync_id
-        INTO p_sync_id
-        ;
+        sqltemplate = format(
+            'SELECT lizsync.insert_history_item(
+                ''%1$s''::text, ''%2$s''::text,
+                %3$s, %4$s, Cast(''%5$s'' AS TIMESTAMP WITH TIME ZONE),
+                ''partial'', ''pending''
+            ) AS sync_id
+            ',
+            p_central_id, p_clone_id,
+            p_min_event_id, p_max_event_id, p_max_action_tstamp_tx
+        );
+        SELECT sync_id FROM dblink(
+            dblink_connection_name,
+            sqltemplate
+        ) AS foo(sync_id uuid)
+        INTO p_sync_id;
         -- RAISE NOTICE 'SYNC ID = %', p_sync_id;
 
         -- Replay SQL queries in clone db
@@ -1104,19 +1137,26 @@ BEGIN
         PERFORM * FROM dblink(
             dblink_connection_name,
             sqltemplate
-        ) AS foo(update_status boolean);
+        ) AS foo(update_status boolean)
+        ;
+
+        -- Modify central server synchronisation item central->clone
+        -- to mark it as 'done'
+        sqltemplate = format(
+            'SELECT lizsync.update_history_item(''%1$s''::uuid, ''done'', NULL)',
+            p_sync_id
+        )
+        ;
+
+        PERFORM * FROM dblink(
+            dblink_connection_name,
+            sqltemplate
+        ) AS foo(update_status boolean)
+        ;
 
         -- Disconnect dblink
         SELECT dblink_disconnect(dblink_connection_name)
         INTO dblink_msg;
-
-        -- Modify central server synchronisation item central->clone
-        -- to mark it as 'done'
-        UPDATE central_lizsync.history
-        SET sync_status = 'done'
-        WHERE True
-        AND sync_id = p_sync_id
-        ;
 
     ELSE
         p_counter = 0;
@@ -1129,7 +1169,7 @@ BEGIN
     RETURN QUERY
     SELECT p_counter;
 END;
-$$;
+$_$;
 
 
 -- FUNCTION replay_central_logs_to_clone(p_ids bigint[], p_min_event_id bigint, p_max_event_id bigint, p_max_action_tstamp_tx timestamp with time zone)
@@ -1174,22 +1214,33 @@ BEGIN
         LIMIT 1;
         -- RAISE NOTICE 'clone id %', p_clone_id;
 
+        -- Create dblink connection
+        dblink_connection_name = (md5(((random())::text || (clock_timestamp())::text)))::text;
+        -- RAISE NOTICE 'dblink_connection_name %', dblink_connection_name;
+        SELECT dblink_connect(
+            dblink_connection_name,
+            'central_server'
+        )
+        INTO dblink_msg;
+
         -- Add a new item in the central history table
-        INSERT INTO central_lizsync.history (
-            sync_id, sync_time,
-            server_from, server_to,
-            min_event_id, max_event_id, max_action_tstamp_tx,
-            sync_type, sync_status
-        )
-        VALUES (
-            md5(random()::text || clock_timestamp()::text)::uuid, now(),
-            p_clone_id, ARRAY[p_central_id],
-            NULL, NULL, NULL,
-            'partial', 'pending'
-        )
-        RETURNING sync_id
-        INTO p_sync_id
-        ;
+        -- p_server_from = clone
+        -- p_server_to = central
+        sqltemplate = format(
+            'SELECT lizsync.insert_history_item(
+                ''%1$s''::text, ''%2$s''::text,
+                NULL, NULL, NULL,
+                ''partial'', ''pending''
+            ) AS sync_id
+            ',
+            p_clone_id,
+            p_central_id
+        );
+        SELECT sync_id FROM dblink(
+            dblink_connection_name,
+            sqltemplate
+        ) AS foo(sync_id uuid)
+        INTO p_sync_id;
         -- RAISE NOTICE 'sync id %', p_sync_id;
 
         -- Replay SQL queries in central db
@@ -1201,15 +1252,6 @@ BEGIN
             p_central_id,
             p_sync_id
         );
-
-        -- Create dblink connection
-        dblink_connection_name = (md5(((random())::text || (clock_timestamp())::text)))::text;
-        -- RAISE NOTICE 'dblink_connection_name %', dblink_connection_name;
-        SELECT dblink_connect(
-            dblink_connection_name,
-            'central_server'
-        )
-        INTO dblink_msg;
 
         -- Store SQL query to update central logs afterward with original log timestamp
         p_temporary_table = 'temp_' || md5(random()::text || clock_timestamp()::text);
@@ -1282,18 +1324,25 @@ BEGIN
         PERFORM * FROM dblink(
             dblink_connection_name,
             sqlupdatelogs
-        ) AS foo(update_status boolean);
+        ) AS foo(update_status boolean)
+        ;
+
+        -- Update central history table item
+        sqltemplate = format(
+            'SELECT lizsync.update_history_item(''%1$s''::uuid, ''done'', NULL)',
+            p_sync_id
+        )
+        ;
+
+        PERFORM * FROM dblink(
+            dblink_connection_name,
+            sqltemplate
+        ) AS foo(update_status boolean)
+        ;
 
         -- Disconnect dblink
         SELECT dblink_disconnect(dblink_connection_name)
         INTO dblink_msg;
-
-        -- Update central history table item
-        UPDATE central_lizsync.history
-        SET sync_status = 'done'
-        WHERE True
-        AND sync_id = p_sync_id
-        ;
 
     END IF;
 
@@ -1690,6 +1739,40 @@ $$;
 
 -- FUNCTION update_central_logs_add_clone_id(p_clone_id text, p_sync_id uuid, p_ids bigint[])
 COMMENT ON FUNCTION lizsync.update_central_logs_add_clone_id(p_clone_id text, p_sync_id uuid, p_ids bigint[]) IS 'Update the central database synchronisation logs (table lizsync.logged_actions) by adding the clone ID in the "replayed_by" property of the field "sync_data". The SECURITY DEFINER allows the clone to update the protected lizsync.logged_actions table. DO NOT USE MANUALLY.';
+
+
+-- update_history_item(uuid, text, text)
+CREATE FUNCTION lizsync.update_history_item(p_sync_id uuid, p_status text, p_server_to text) RETURNS boolean
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+BEGIN
+
+    UPDATE lizsync.history
+    SET (
+        sync_status,
+        server_to
+    ) = (
+        CASE WHEN p_status IS NOT NULL THEN p_status ELSE sync_status END,
+        CASE
+            WHEN p_server_to IS NOT NULL THEN
+                CASE
+                    WHEN server_to IS NOT NULL THEN array_append(server_to, p_server_to)
+                    ELSE ARRAY[p_server_to]::text[]
+                END
+            ELSE server_to
+        END
+    )
+    WHERE True
+    AND sync_id = p_sync_id
+    ;
+
+    RETURN True;
+END;
+$$;
+
+
+-- FUNCTION update_history_item(p_sync_id uuid, p_status text, p_server_to text)
+COMMENT ON FUNCTION lizsync.update_history_item(p_sync_id uuid, p_status text, p_server_to text) IS 'Update the status of a history item in the lizsync.history table as the owner of the table. The SECURITY DEFINER allows the clone to update the protected table. DO NOT USE MANUALLY.';
 
 
 --
