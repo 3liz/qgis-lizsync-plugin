@@ -18,17 +18,59 @@ You can then **run a bidirectional synchronisation** with the [dedicated QGIS pr
 
 ## Technical considerations
 
+### Requirements
+
 Bidirectional synchronisation in LizSync is tied to some requirements:
 
 * the history of synchronisation, data modification changes and other needed information are **stored inside the central database** `lizsync` schema.
+
 * the data of the schemas `public` and `lizsync` are **never synchronised**.
+
 * the tables to synchronise must have a **uid** field of type **uuid** with a automatic uuid as its default value. This field is the **pivot of the synchronisation process**, since it **identifies each object**. The same object in reality will share the same **uid** value across databases. Example of a UUID value for this field: `5d3d503c-6d97-f11e-a2a4-5db030060f6d`.
+
 * the tables to synchronise must have an **auto increment primary key of the type integer**. This id column will contain unique values in each database, but **will not reliably identify the same object across databases**. This means the same object could have a different auto-increment id in the central and the clone(s) databases. This id must still exists, as many applications need it to perform well, such as QGIS.
+
 * The **foreign key constraints** must be based on the **uid** field of the parent table, not on the auto-increment id field, since the id columns **can differ between databases** for the same object.
+
 * During the **bidirectional synchronisation**,
+
     - insertions and deletions are **first applied from the central server to the clone**, and then **pushed from the clone to the central database**. This method has an impact for some scenarios. For example, if an object has been updated by the central database and deleted in a clone database, the update won't matter because at the end the object will be deleted.
+
     - For updates, the modifications are applied **only for the modified columns** in the synchronised tables, which prevents conflicts from happening to often.
     - When the **same object has been modified for the same column**, conflicts are automatically handled: **the last update wins** (the one with the more recent modification timestamp).
+
+### Protect the lizsync schema and tables in your PostgreSQL database
+
+You can **protect** your lizsync **schema and tables** by setting some rights on them, for example to avoid data inserts or updates by some users. For example, if you have a groupe of PostgreSQL role named `read_only_group`, you can run the following SQL queries to restrict access but keep lizsync working:
+
+```sql
+-- Give the right to access the schema
+GRANT USAGE ON SCHEMA lizsync TO "read_only_group";
+
+-- Remove the rights to insert, update or delete data in all the lizsync schema tables
+REVOKE INSERT, UPDATE, DELETE, TRUNCATE ON ALL TABLES IN SCHEMA lizsync FROM "read_only_group";
+
+-- Add the only right to select data from the tables
+GRANT SELECT ON ALL TABLES IN SCHEMA lizsync TO "read_only_group";
+
+-- Add the right to insert data for the conflicts table
+GRANT INSERT ON TABLE lizsync.conflicts TO "read_only_group";
+```
+
+LizSync uses some functions with `SECURITY DEFINER` () to edit the data inside the tables. You do not need to give `INSERT`, `UPDATE` or `DELETE` rights for:
+
+* logged_actions
+* logged_relations
+* synchronized_tables
+* history
+
+The following tables have been created by your role when installing or upgrading the database structure with the plugin algorithms, so you do not need to give modification rights neither:
+
+* server_metadata
+* sys_structure_metadonnee
+
+The table `conflicts` must be given `INSERT` rights. There is not yet a SECURITY DEFINER function for filling it during the synchronisation process from the clone.
+
 
 ## Prepare the field work in QGIS
 
