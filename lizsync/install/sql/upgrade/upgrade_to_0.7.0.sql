@@ -457,6 +457,27 @@ $$;
 COMMENT ON FUNCTION lizsync.update_history_item(p_sync_id uuid, p_status text, p_server_to text) IS 'Update the status of a history item in the lizsync.history table as the owner of the table. The SECURITY DEFINER allows the clone to update the protected table. DO NOT USE MANUALLY.';
 
 
+CREATE OR REPLACE FUNCTION lizsync.update_synchronized_table(p_server_id uuid, p_tables text[]) RETURNS boolean
+    LANGUAGE plpgsql SECURITY DEFINER
+    AS $$
+BEGIN
+
+    INSERT INTO lizsync.synchronized_tables AS s
+    (server_id, sync_tables)
+    VALUES
+    ( p_server_id, (array_to_json(p_tables))::jsonb )
+    ON CONFLICT ON CONSTRAINT synchronized_tables_pkey
+    DO UPDATE
+    SET sync_tables = EXCLUDED.sync_tables || s.sync_tables
+    ;
+
+    RETURN True;
+END;
+$$;
+
+COMMENT ON FUNCTION lizsync.update_synchronized_table(p_server_id uuid, p_tables text[]) IS 'Insert or Update the table lizsync.synchronized_tables. The SECURITY DEFINER allows the clone to update the protected table. DO NOT USE MANUALLY.';
+
+
 COMMIT;
 
 

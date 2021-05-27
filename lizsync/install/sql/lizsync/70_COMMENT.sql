@@ -163,6 +163,10 @@ COMMENT ON FUNCTION lizsync.update_central_logs_add_clone_id(p_clone_id text, p_
 COMMENT ON FUNCTION lizsync.update_history_item(p_sync_id uuid, p_status text, p_server_to text) IS 'Update the status of a history item in the lizsync.history table as the owner of the table. The SECURITY DEFINER allows the clone to update the protected table. DO NOT USE MANUALLY.';
 
 
+-- FUNCTION update_synchronized_table(p_server_id uuid, p_tables text[])
+COMMENT ON FUNCTION lizsync.update_synchronized_table(p_server_id uuid, p_tables text[]) IS 'Insert or Update the table lizsync.synchronized_tables. The SECURITY DEFINER allows the clone to update the protected table. DO NOT USE MANUALLY.';
+
+
 -- conflicts
 COMMENT ON TABLE lizsync.conflicts IS 'Store conflicts resolution made during bidirectionnal database synchronizations.';
 

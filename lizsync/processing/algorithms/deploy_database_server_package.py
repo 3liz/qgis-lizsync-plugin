@@ -571,13 +571,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         # to know afterward wich schemas to use when performing sync
         feedback.pushInfo(tr('ADDING THE LIST OF SYNCHRONIZED TABLES FOR THIS CLONE IN THE CENTRAL DATABASE '))
         sql = '''
-            INSERT INTO lizsync.synchronized_tables AS s
-            (server_id, sync_tables)
-            VALUES
-            ( '{0}', jsonb_build_array( '{1}' ) )
-            ON CONFLICT ON CONSTRAINT synchronized_tables_pkey
-            DO UPDATE
-            SET sync_tables = EXCLUDED.sync_tables || s.sync_tables
+            SELECT lizsync.update_synchronized_table('{0}'::uuid, array['{1}']::text[])
             ;
 
         '''.format(
