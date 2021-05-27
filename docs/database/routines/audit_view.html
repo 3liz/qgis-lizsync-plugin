@@ -74,26 +74,6 @@
                 <!-- Content Header (Page header) -->
                 <section class="content-header">
                     <h1>audit_view</h1><br />
-                    <div class="box box-primary">
-                        <div class="box-header with-border">
-                            <i class="fa fa-file-text-o"></i>
-                            <h3 id="Description" class="box-title">Description</h3>
-                            <div class="box-tools pull-right">
-                                <button type="button" class="btn btn-box-tool" data-widget="collapse"><i class="fa fa-minus"></i></button>
-                                <button type="button" class="btn btn-box-tool" data-widget="remove"><i class="fa fa-times"></i></button>
-                            </div>
-                        </div>
-                        <!-- /.box-header -->
-                        <div class="box-body clearfix">
-                            <p><p>ADD auditing support TO a VIEW.</p>
-<p>Arguments:<br />
-target_view:      TABLE name, schema qualified IF NOT ON search_path<br />
-audit_query_text: Record the text of the client query that triggered the audit event?<br />
-ignored_cols:     COLUMNS TO exclude FROM UPDATE diffs, IGNORE updates that CHANGE only ignored cols.<br />
-uid_cols:         COLUMNS to use to uniquely identify a row from the view (in order to replay UPDATE and DELETE)</p></p>
-                        </div>
-                        <!-- /.box-body -->
-                    </div>
                 </section>
                 <!-- Main content -->
                 <section class="content">
@@ -175,7 +155,7 @@ uid_cols:         COLUMNS to use to uniquely identify a row from the view (in or
                             </div>
                         </div>
                         <div class="box-body">
-                            <textarea id="sql-script-codemirror" name="sql-script-codemirror" rows="" style="display: none;">&#10;DECLARE&#10;  stm_targets text = &#39;INSERT OR UPDATE OR DELETE&#39;;&#10;  _q_txt text;&#10;  _ignored_cols_snip text = &#39;&#39;;&#10;&#10;BEGIN&#10;    EXECUTE &#39;DROP TRIGGER IF EXISTS lizsync_audit_trigger_row ON &#39; || target_view::text;&#10;    EXECUTE &#39;DROP TRIGGER IF EXISTS lizsync_audit_trigger_stm ON &#39; || target_view::text;&#10;&#10;    IF array_length(ignored_cols,1) &gt; 0 THEN&#10;        _ignored_cols_snip = &#39;, &#39; || quote_literal(ignored_cols);&#10;    END IF;&#10;    _q_txt = &#39;CREATE TRIGGER lizsync_audit_trigger_row INSTEAD OF INSERT OR UPDATE OR DELETE ON &#39; ||&#10;         target_view::TEXT ||&#10;         &#39; FOR EACH ROW EXECUTE PROCEDURE lizsync.if_modified_func(&#39; ||&#10;         quote_literal(audit_query_text) || _ignored_cols_snip || &#39;);&#39;;&#10;    RAISE NOTICE &#39;%&#39;,_q_txt;&#10;    EXECUTE _q_txt;&#10;&#10;    -- store uid columns if not already present&#10;  IF (select count(*) from lizsync.logged_relations where relation_name = (select target_view)::text AND  uid_column= (select unnest(uid_cols))::text) = 0 THEN&#10;      insert into lizsync.logged_relations (relation_name, uid_column)&#10;       select target_view, unnest(uid_cols);&#10;  END IF;&#10;&#10;END;&#10;</textarea>
+                            <textarea id="sql-script-codemirror" name="sql-script-codemirror" rows="" style="display: none;">&#10;SELECT lizsync.audit_view($1, BOOLEAN &#39;t&#39;, uid_cols);&#10;</textarea>
                         </div>
                     </div>
                 </section>
