@@ -1,35 +1,35 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url>
      <loc>https://docs.3liz.org/qgis-lizsync-plugin/</loc>
-     <lastmod>2021-05-17</lastmod>
+     <lastmod>2021-05-27</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.3liz.org/qgis-lizsync-plugin/user_guide/</loc>
-     <lastmod>2021-05-17</lastmod>
+     <lastmod>2021-05-27</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.3liz.org/qgis-lizsync-plugin/user_guide/android/</loc>
-     <lastmod>2021-05-17</lastmod>
+     <lastmod>2021-05-27</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.3liz.org/qgis-lizsync-plugin/processing/</loc>
-     <lastmod>2021-05-17</lastmod>
+     <lastmod>2021-05-27</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.3liz.org/qgis-lizsync-plugin/references/</loc>
-     <lastmod>2021-05-17</lastmod>
+     <lastmod>2021-05-27</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.3liz.org/qgis-lizsync-plugin/changelog/</loc>
-     <lastmod>2021-05-17</lastmod>
+     <lastmod>2021-05-27</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.3liz.org/qgis-lizsync-plugin/contributing/</loc>
-     <lastmod>2021-05-17</lastmod>
+     <lastmod>2021-05-27</lastmod>
      <changefreq>daily</changefreq>
     </url><url>
      <loc>https://docs.3liz.org/qgis-lizsync-plugin/database/</loc>
-     <lastmod>2021-05-17</lastmod>
+     <lastmod>2021-05-27</lastmod>
      <changefreq>daily</changefreq>
     </url>
 </urlset>

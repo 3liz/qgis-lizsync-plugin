@@ -16,7 +16,7 @@
         <link rel="canonical" href="https://docs.3liz.org/qgis-lizsync-plugin/user_guide/">
       
       <link rel="icon" href="../media/icon.png">
-      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.1.4">
+      <meta name="generator" content="mkdocs-1.1.2, mkdocs-material-7.1.5">
     
     
       
@@ -395,6 +395,26 @@
     Technical considerations
   </a>
   
+    <nav class="md-nav" aria-label="Technical considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    Requirements
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#protect-the-lizsync-schema-and-tables-in-your-postgresql-database" class="md-nav__link">
+    Protect the lizsync schema and tables in your PostgreSQL database
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -546,6 +566,26 @@
     Technical considerations
   </a>
   
+    <nav class="md-nav" aria-label="Technical considerations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#requirements" class="md-nav__link">
+    Requirements
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#protect-the-lizsync-schema-and-tables-in-your-postgresql-database" class="md-nav__link">
+    Protect the lizsync schema and tables in your PostgreSQL database
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -589,20 +629,75 @@
 <p>Data of the central and clone(s) database tables can then evolve freely, as soon as the tables structure is not modified (no addition or removal of tables or fields). For example, you can go to the field with QField installed in your tablet (or QGIS in your laptop) and edit data inside the clone database.</p>
 <p>You can then <strong>run a bidirectional synchronisation</strong> with the <a href="#two-way-database-synchronization">dedicated QGIS processing algorithm</a> by choosing the PostgreSQL connections for the central database and the clone database. You can also run a synchronisation by running the SQL query <code>SELECT lizsync.synchronize()</code> from a PostgreSQL connection to the clone database. The synchronisation is <strong>a two-step action</strong>, which first gets the data modification from the central server and then pushes the data modifications the clone to the central database.</p>
 <h2 id="technical-considerations">Technical considerations<a class="headerlink" href="#technical-considerations" title="Permanent link">#</a></h2>
+<h3 id="requirements">Requirements<a class="headerlink" href="#requirements" title="Permanent link">#</a></h3>
 <p>Bidirectional synchronisation in LizSync is tied to some requirements:</p>
 <ul>
-<li>the history of synchronisation, data modification changes and other needed information are <strong>stored inside the central database</strong> <code>lizsync</code> schema.</li>
-<li>the data of the schemas <code>public</code> and <code>lizsync</code> are <strong>never synchronised</strong>.</li>
-<li>the tables to synchronise must have a <strong>uid</strong> field of type <strong>uuid</strong> with a automatic uuid as its default value. This field is the <strong>pivot of the synchronisation process</strong>, since it <strong>identifies each object</strong>. The same object in reality will share the same <strong>uid</strong> value across databases. Example of a UUID value for this field: <code>5d3d503c-6d97-f11e-a2a4-5db030060f6d</code>.</li>
-<li>the tables to synchronise must have an <strong>auto increment primary key of the type integer</strong>. This id column will contain unique values in each database, but <strong>will not reliably identify the same object across databases</strong>. This means the same object could have a different auto-increment id in the central and the clone(s) databases. This id must still exists, as many applications need it to perform well, such as QGIS.</li>
-<li>The <strong>foreign key constraints</strong> must be based on the <strong>uid</strong> field of the parent table, not on the auto-increment id field, since the id columns <strong>can differ between databases</strong> for the same object.</li>
-<li>During the <strong>bidirectional synchronisation</strong>,<ul>
-<li>insertions and deletions are <strong>first applied from the central server to the clone</strong>, and then <strong>pushed from the clone to the central database</strong>. This method has an impact for some scenarios. For example, if an object has been updated by the central database and deleted in a clone database, the update won't matter because at the end the object will be deleted.</li>
-<li>For updates, the modifications are applied <strong>only for the modified columns</strong> in the synchronised tables, which prevents conflicts from happening to often.</li>
+<li>
+<p>the history of synchronisation, data modification changes and other needed information are <strong>stored inside the central database</strong> <code>lizsync</code> schema.</p>
+</li>
+<li>
+<p>the data of the schemas <code>public</code> and <code>lizsync</code> are <strong>never synchronised</strong>.</p>
+</li>
+<li>
+<p>the tables to synchronise must have a <strong>uid</strong> field of type <strong>uuid</strong> with a automatic uuid as its default value. This field is the <strong>pivot of the synchronisation process</strong>, since it <strong>identifies each object</strong>. The same object in reality will share the same <strong>uid</strong> value across databases. Example of a UUID value for this field: <code>5d3d503c-6d97-f11e-a2a4-5db030060f6d</code>.</p>
+</li>
+<li>
+<p>the tables to synchronise must have an <strong>auto increment primary key of the type integer</strong>. This id column will contain unique values in each database, but <strong>will not reliably identify the same object across databases</strong>. This means the same object could have a different auto-increment id in the central and the clone(s) databases. This id must still exists, as many applications need it to perform well, such as QGIS.</p>
+</li>
+<li>
+<p>The <strong>foreign key constraints</strong> must be based on the <strong>uid</strong> field of the parent table, not on the auto-increment id field, since the id columns <strong>can differ between databases</strong> for the same object.</p>
+</li>
+<li>
+<p>During the <strong>bidirectional synchronisation</strong>,</p>
+<ul>
+<li>
+<p>insertions and deletions are <strong>first applied from the central server to the clone</strong>, and then <strong>pushed from the clone to the central database</strong>. This method has an impact for some scenarios. For example, if an object has been updated by the central database and deleted in a clone database, the update won't matter because at the end the object will be deleted.</p>
+</li>
+<li>
+<p>For updates, the modifications are applied <strong>only for the modified columns</strong> in the synchronised tables, which prevents conflicts from happening to often.</p>
+</li>
 <li>When the <strong>same object has been modified for the same column</strong>, conflicts are automatically handled: <strong>the last update wins</strong> (the one with the more recent modification timestamp).</li>
 </ul>
 </li>
 </ul>
+<h3 id="protect-the-lizsync-schema-and-tables-in-your-postgresql-database">Protect the lizsync schema and tables in your PostgreSQL database<a class="headerlink" href="#protect-the-lizsync-schema-and-tables-in-your-postgresql-database" title="Permanent link">#</a></h3>
+<p>You can <strong>protect</strong> your lizsync <strong>schema and tables</strong> by setting some rights on them, for example to avoid data inserts or updates by some users. For example, if you have a groupe of PostgreSQL role named <code>read_only_group</code>, you can run the following SQL queries to restrict access but keep lizsync working:</p>
+<table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre><span></span><span class="normal"> 1</span>
+<span class="normal"> 2</span>
+<span class="normal"> 3</span>
+<span class="normal"> 4</span>
+<span class="normal"> 5</span>
+<span class="normal"> 6</span>
+<span class="normal"> 7</span>
+<span class="normal"> 8</span>
+<span class="normal"> 9</span>
+<span class="normal">10</span>
+<span class="normal">11</span></pre></div></td><td class="code"><div class="highlight"><pre><span></span><code><span class="c1">-- Give the right to access the schema</span>
+<span class="k">GRANT</span> <span class="k">USAGE</span> <span class="k">ON</span> <span class="k">SCHEMA</span> <span class="n">lizsync</span> <span class="k">TO</span> <span class="ss">&quot;read_only_group&quot;</span><span class="p">;</span>
+
+<span class="c1">-- Remove the rights to insert, update or delete data in all the lizsync schema tables</span>
+<span class="k">REVOKE</span> <span class="k">INSERT</span><span class="p">,</span> <span class="k">UPDATE</span><span class="p">,</span> <span class="k">DELETE</span><span class="p">,</span> <span class="k">TRUNCATE</span> <span class="k">ON</span> <span class="k">ALL</span> <span class="n">TABLES</span> <span class="k">IN</span> <span class="k">SCHEMA</span> <span class="n">lizsync</span> <span class="k">FROM</span> <span class="ss">&quot;read_only_group&quot;</span><span class="p">;</span>
+
+<span class="c1">-- Add the only right to select data from the tables</span>
+<span class="k">GRANT</span> <span class="k">SELECT</span> <span class="k">ON</span> <span class="k">ALL</span> <span class="n">TABLES</span> <span class="k">IN</span> <span class="k">SCHEMA</span> <span class="n">lizsync</span> <span class="k">TO</span> <span class="ss">&quot;read_only_group&quot;</span><span class="p">;</span>
+
+<span class="c1">-- Add the right to insert data for the conflicts table</span>
+<span class="k">GRANT</span> <span class="k">INSERT</span> <span class="k">ON</span> <span class="k">TABLE</span> <span class="n">lizsync</span><span class="p">.</span><span class="n">conflicts</span> <span class="k">TO</span> <span class="ss">&quot;read_only_group&quot;</span><span class="p">;</span>
+</code></pre></div>
+</td></tr></table>
+<p>LizSync uses some functions with <code>SECURITY DEFINER</code> () to edit the data inside the tables. You do not need to give <code>INSERT</code>, <code>UPDATE</code> or <code>DELETE</code> rights for:</p>
+<ul>
+<li>logged_actions</li>
+<li>logged_relations</li>
+<li>synchronized_tables</li>
+<li>history</li>
+</ul>
+<p>The following tables have been created by your role when installing or upgrading the database structure with the plugin algorithms, so you do not need to give modification rights neither:</p>
+<ul>
+<li>server_metadata</li>
+<li>sys_structure_metadonnee</li>
+</ul>
+<p>The table <code>conflicts</code> must be given <code>INSERT</code> rights. There is not yet a SECURITY DEFINER function for filling it during the synchronisation process from the clone.</p>
 <h2 id="prepare-the-field-work-in-qgis">Prepare the field work in QGIS<a class="headerlink" href="#prepare-the-field-work-in-qgis" title="Permanent link">#</a></h2>
 <p>LizSync proposes two algorithms which helps to create a portable version of a QGIS project and then send the created files (modified project, LizSync zip archive and the exported Geopackage) to the clone via FTP or SFTP:</p>
 <p>Basically, before going to the field, you need to:</p>
@@ -740,10 +835,10 @@
     <div class="md-dialog" data-md-component="dialog">
       <div class="md-dialog__inner md-typeset"></div>
     </div>
-    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../assets/javascripts/workers/search.4fa0e4ee.min.js", "version": null}</script>
+    <script id="__config" type="application/json">{"base": "..", "features": ["navigation.tabs", "navigation.tabs.sticky"], "translations": {"clipboard.copy": "Copy to clipboard", "clipboard.copied": "Copied to clipboard", "search.config.lang": "en", "search.config.pipeline": "trimmer, stopWordFilter", "search.config.separator": "[\\s\\-]+", "search.placeholder": "Search", "search.result.placeholder": "Type to start searching", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.term.missing": "Missing"}, "search": "../assets/javascripts/workers/search.d351de03.min.js", "version": null}</script>
     
     
-      <script src="../assets/javascripts/bundle.1d3bfcf1.min.js"></script>
+      <script src="../assets/javascripts/bundle.a1609d9a.min.js"></script>
       
         <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/10.1.1/highlight.min.js"></script>
       
