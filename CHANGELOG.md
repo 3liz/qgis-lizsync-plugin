@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.7.0 - 2021-05-28
+
+* Add SQL functions to edit the lizsync tables for roles which do not own the tables
+* Update documentation: https://docs.3liz.org/qgis-lizsync-plugin/user_guide/#protect-the-lizsync-schema-and-tables-in-your-postgresql-database
+
 ## 0.6.1 - 2021-05-17
 
 * Build mobile project algorithm - Fix the datasource checking between the project layers & the central connection configuration
