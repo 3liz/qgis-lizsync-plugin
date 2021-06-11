@@ -55,6 +55,9 @@ GRANT SELECT ON ALL TABLES IN SCHEMA lizsync TO "read_only_group";
 
 -- Add the right to insert data for the conflicts table
 GRANT INSERT ON TABLE lizsync.conflicts TO "read_only_group";
+GRANT USAGE ON SEQUENCE lizsync.conflicts_id_seq TO "read_only_group";
+
+--Beware: the user must have the right to create a table in the public schema
 ```
 
 LizSync uses some functions with `SECURITY DEFINER` () to edit the data inside the tables. You do not need to give `INSERT`, `UPDATE` or `DELETE` rights for:
