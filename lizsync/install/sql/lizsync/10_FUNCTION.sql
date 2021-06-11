@@ -1257,13 +1257,15 @@ BEGIN
         p_temporary_table = 'temp_' || md5(random()::text || clock_timestamp()::text);
 
         sqlupdatelogs = '
-            CREATE TEMPORARY TABLE ' || p_temporary_table || ' (
+            BEGIN;
+            CREATE TABLE public.' || p_temporary_table || ' (
                 action_tstamp_tx TIMESTAMP WITH TIME ZONE,
                 sync_id uuid,
                 client_query_hash text,
                 action_type text,
                 ident text
-            ) ON COMMIT DROP;
+            );
+            GRANT SELECT ON TABLE public.' || p_temporary_table || ' TO "public";
         ';
 
         -- Loop through logs and replay action
@@ -1320,11 +1322,19 @@ BEGIN
             'SELECT lizsync.update_central_logs_add_clone_action_timestamps(' || quote_literal(p_temporary_table) || ');'
         );
 
+        -- Drop the fake temporary table afterwards
+        sqlupdatelogs = concat(
+            sqlupdatelogs,
+            'DROP TABLE IF EXISTS public.' || p_temporary_table || ';',
+            'COMMIT;'
+        );
+
         -- Update central lizsync.logged_actions
-        PERFORM * FROM dblink(
+        -- PERFORM * FROM
+        PERFORM dblink_exec(
             dblink_connection_name,
             sqlupdatelogs
-        ) AS foo(update_status boolean)
+        )
         ;
 
         -- Update central history table item
@@ -1690,7 +1700,7 @@ BEGIN
         ''action_tstamp_tx'',
         Cast(t.action_tstamp_tx AS TIMESTAMP WITH TIME ZONE)
     )
-    FROM ' || quote_ident(temporary_table_name) || ' AS t
+    FROM public.' || quote_ident(temporary_table_name) || ' AS t
     WHERE True
     -- same synchronisation id
     AND sync_data->''replayed_by''->>' || quote_literal(p_central_id) || ' = t.sync_id::text
