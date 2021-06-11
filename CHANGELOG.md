@@ -1,5 +1,11 @@
 # CHANGELOG
 
+## 0.7.1 - 2021-06-11
+
+* Synchronisation - Fix a bug when using a PostgreSQL role without the right to create temporary tables
+* Feedback - Add database or FTP server information when connection fails or times out
+* Doc - Update doc on PostgreSQL users rights
+
 ## 0.7.0 - 2021-05-28
 
 * Add SQL functions to edit the lizsync tables for roles which do not own the tables
