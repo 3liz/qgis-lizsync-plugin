@@ -50,6 +50,8 @@ def get_ftp_password(host, port, login):
     # First check if it is given in ini file
     ls = lizsyncConfig()
     password = ls.variable('ftp:central/password')
+    ftp_details = tr('FTP connection') + ': host={}, port={}, login={}'.format(host, port, login)
+
     # If not given, search for it in ~/.netrc
     if not password:
         try:
@@ -58,9 +60,11 @@ def get_ftp_password(host, port, login):
                 ftpuser, _, password = auth
         except (netrc.NetrcParseError, IOError):
             m = tr('Could not retrieve password from ~/.netrc file')
+            m += ' \n' + ftp_details + ' \n'
             return False, None, m
         if not password:
             m = tr('Could not retrieve password from ~/.netrc file or is empty')
+            m += ' \n' + ftp_details + ' \n'
             return False, None, m
         else:
             # Use None to force to use netrc file
@@ -76,6 +80,7 @@ def check_ftp_connection(host, port, login, password=None, timeout=5, ftpdir=Non
     Check FTP connection with timeout
     """
     ftpdir_exists = False
+    ftp_details = tr('FTP connection') + ': host={}, port={}, login={}'.format(host, port, login)
     if not password:
         ok, password, msg = get_ftp_password(host, port, login)
         if not ok:
@@ -89,10 +94,12 @@ def check_ftp_connection(host, port, login, password=None, timeout=5, ftpdir=Non
             ftp.login(login, password)
         except ftplib.all_errors as error:
             msg = tr('Error while connecting to FTP server')
+            msg += ftp_details + ' \n'
             msg += ' ' + str(error)
             return False, msg, ftpdir_exists
     except ftplib.all_errors as error:
         msg = tr('Error while connecting to FTP server')
+        msg += ftp_details + ' \n'
         msg += ' ' + str(error)
         return False, msg, ftpdir_exists
     finally:
@@ -268,6 +275,13 @@ def getUriFromConnectionName(connection_name, must_connect=True):
     # Try to connect if asked
     if must_connect:
         ok, msg = check_postgresql_connection(uri)
+        if uri:
+            connection_info = tr('Connection') + ': {} ({}{})'.format(
+                connection_name,
+                uri.host(),
+                uri.service()
+            )
+            msg = connection_info + ' \n' + msg
         return ok, uri, msg
     else:
         return True, uri, ''
