@@ -302,7 +302,7 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
                 )
                 # Let this error be silent
                 ftpdir_exists = True
-                feedback.pushInfo(msg, False)
+                feedback.pushInfo(msg)
             else:
                 msg = tr('Check SSH connection is possible...')
                 feedback.pushInfo(msg)
