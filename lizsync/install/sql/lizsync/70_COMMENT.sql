@@ -106,6 +106,8 @@ want to log row values.
 Note that the user name logged is the login role for the session. The audit trigger
 cannot obtain the active role because it is reset by the SECURITY DEFINER invocation
 of the audit trigger its self.
+
+LizSync has added its own sync_data column to store the needed information for synchronisation purpose.
 ';
 
 
@@ -149,10 +151,6 @@ COMMENT ON FUNCTION lizsync.store_conflicts() IS 'Store resolved conflicts in th
 
 -- FUNCTION synchronize()
 COMMENT ON FUNCTION lizsync.synchronize() IS 'Run the bi-directionnal database synchronization between the clone and the central server';
-
-
--- FUNCTION update_central_logs_add_clone_action_timestamps(temporary_table_name text)
-COMMENT ON FUNCTION lizsync.update_central_logs_add_clone_action_timestamps(temporary_table_name text) IS 'Update all logs created by the central database after the clone has replayed its local logs in the central database. It is necessary to update the action_tstamp_tx key of lizsync.logged_actions sync_data column. The SECURITY DEFINER allows the clone to update the protected lizsync.logged_actions table. DO NOT USE MANUALLY.';
 
 
 -- FUNCTION update_central_logs_add_clone_id(p_clone_id text, p_sync_id uuid, p_ids bigint[])

@@ -246,14 +246,76 @@
       table: pluviometers
 
 
-- description: "U7 - UPDATE - central & clone a & clone B - same column for the same feature of the same table"
+- description: "U7 - UPDATE - central & clone A & clone B - same column for the same feature of the same table"
+  sequence:
+
+    - type: query
+      database: lizsync_clone_a
+      sql: >-
+        UPDATE test.pluviometers SET photo = 'photo from A'
+        WHERE nom = 'pluvio2';
+
+    - type: sleep
+
+    - type: query
+      database: lizsync_clone_b
+      sql: >-
+        UPDATE test.pluviometers SET photo = 'photo from B'
+        WHERE nom = 'pluvio2';
+
+    - type: synchro
+      from: lizsync_clone_a
+
+    - type: sleep
+
+    - type: synchro
+      from: lizsync_clone_b
+
+    - type: sleep
+
+    - type: synchro
+      from: lizsync_clone_a
+
+    - type: sleep
+
+    - type: synchro
+      from: lizsync_clone_b
+
+    - type: sleep
+
+    - type: verify
+      database: lizsync_clone_a
+      sql: >-
+        SELECT photo
+        FROM "test"."pluviometers"
+        WHERE nom = 'pluvio2';
+      expected: photo from B
+
+    - type: verify
+      database: lizsync_clone_b
+      sql: >-
+        SELECT photo
+        FROM "test"."pluviometers"
+        WHERE nom = 'pluvio2';
+      expected: photo from B
+
+    - type: verify
+      database: test
+      sql: >-
+        SELECT photo
+        FROM "test"."pluviometers"
+        WHERE nom = 'pluvio2';
+      expected: photo from B
+
+
+- description: "U8 - UPDATE - central & clone A & clone B - same column for the same feature of the same table (B sync first)"
   sequence:
 
     - type: query
       database: lizsync_clone_a
       sql: >-
         UPDATE "test"."montpellier_districts"
-        SET "libquart" = concat('CROIX D''ARGENT', ' by clone a - U7')
+        SET "libquart" = concat('CROIX D''ARGENT', ' by clone a - U8')
         WHERE quartmno = 'CX';
 
     - type: sleep
@@ -262,7 +324,7 @@
       database: lizsync_clone_b
       sql: >-
         UPDATE "test"."montpellier_districts"
-        SET "libquart" = concat('CROIX D''ARGENT', ' by clone b - U7')
+        SET "libquart" = concat('CROIX D''ARGENT', ' by clone b - U8')
         WHERE quartmno = 'CX';
 
     - type: synchro
@@ -291,7 +353,7 @@
         SELECT libquart
         FROM "test"."montpellier_districts"
         WHERE quartmno = 'CX';
-      expected: CROIX D'ARGENT by clone b - U7
+      expected: CROIX D'ARGENT by clone b - U8
 
     - type: verify
       database: lizsync_clone_b
@@ -299,7 +361,7 @@
         SELECT libquart
         FROM "test"."montpellier_districts"
         WHERE quartmno = 'CX';
-      expected: CROIX D'ARGENT by clone b - U7
+      expected: CROIX D'ARGENT by clone b - U8
 
     - type: verify
       database: test
@@ -307,8 +369,7 @@
         SELECT libquart
         FROM "test"."montpellier_districts"
         WHERE quartmno = 'CX';
-      expected: CROIX D'ARGENT by clone b - U7
-
+      expected: CROIX D'ARGENT by clone b - U8
 
 - description: "CO - Compare data for all tables between each clone and central database"
   sequence:
