@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.7.2 - 2021-06-13
+
+* Synchronisation - Fix a bug when the same object was updated for the same column between clones
+* Deploy algs - Fix a recent regression in the deploy algs (after replacing reportError by pushInfo)
+
 ## 0.7.1 - 2021-06-11
 
 * Synchronisation - Fix a bug when using a PostgreSQL role without the right to create temporary tables
