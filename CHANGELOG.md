@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 0.7.3 - 2021-06-15
+
+* Database package & deploy - Check if the version of LizSync in the central database and in the ZIP package match
+* Send project and data - Fix a bug in Windows when checking if WinSCP is installed
+
 ## 0.7.2 - 2021-06-13
 
 * Synchronisation - Fix a bug when the same object was updated for the same column between clones
