@@ -191,6 +191,7 @@ want to log row values.</p>
 <p>Note that the user name logged is the login role for the session. The audit trigger<br />
 cannot obtain the active role because it is reset by the SECURITY DEFINER invocation<br />
 of the audit trigger its self.</p>
+<p>LizSync has added its own sync_data column to store the needed information for synchronisation purpose.</p>
 <p>[]: ./null<br />
 []: ./null</p></td>
                                     </tr>
@@ -306,15 +307,6 @@ pevent_id:  The event_id of the event in lizsync.logged_actions to replay</p></t
                                         <td>SETOF integer</td>
                                         <td>INVOKER</td>
                                         <td><p>Replay the central logs in the clone database, then modifiy the corresponding audit logs in the central server to update the sync_data column. A new item is also created in the central server lizsync.history table. When running the log queries, we disable triggers in the clone to avoid adding more rows to the local audit logged_actions table</p></td>
-                                    </tr>
-                                    <tr>
-                                        <td><a href="routines/update_central_logs_add_clone_action_timestamps.html">update_central_logs_add_clone_action_timestamps</a></td>
-                                        <td>FUNCTION</td>
-                                        <td>PLPGSQL</td>
-                                        <td>false</td>
-                                        <td>boolean</td>
-                                        <td>DEFINER</td>
-                                        <td><p>Update all logs created by the central database after the clone has replayed its local logs in the central database. It is necessary to update the action_tstamp_tx key of lizsync.logged_actions sync_data column. The SECURITY DEFINER allows the clone to update the protected lizsync.logged_actions table. DO NOT USE MANUALLY.</p></td>
                                     </tr>
                                     <tr>
                                         <td><a href="routines/import_central_server_schemas.html">import_central_server_schemas</a></td>
