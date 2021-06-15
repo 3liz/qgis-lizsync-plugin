@@ -216,26 +216,10 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
             )
         )
 
-    def checkParameterValues(self, parameters, context):
-
-        # Check FTP binary
-        status, msg = checkFtpBinary()
-        if not status:
-            return status, msg
-
-        return super(SendProjectsAndFilesToCloneFtp, self).checkParameterValues(parameters, context)
-
-    def processAlgorithm(self, parameters, context, feedback):
+    def saveParameterValues(self, parameters):
         """
-        Here is where the processing itself takes place.
+        Save the values of the alg parameters
         """
-        status = 0
-        msg = ''
-        output = {
-            self.OUTPUT_STATUS: status,
-            self.OUTPUT_STRING: msg
-        }
-
         # Parameters
         winscp_binary_path = parameters[self.WINSCP_BINARY_PATH]
         ftpprotocol = self.CLONE_FTP_PROTOCOLS[parameters[self.CLONE_FTP_PROTOCOL]]
@@ -259,6 +243,40 @@ class SendProjectsAndFilesToCloneFtp(BaseProcessingAlgorithm):
         ls.setVariable('local/qgis_project_folder', localdir)
         ls.setVariable('local/excluded_directories', excluded_directories)
         ls.save()
+
+        # return values
+        values = [
+            winscp_binary_path, ftpprotocol, ftphost, ftpport, ftplogin, ftppassword,
+            ftpdir, localdir, excluded_directories
+        ]
+
+        return values
+
+    def checkParameterValues(self, parameters, context):
+        # First save the given parameters
+        self.saveParameterValues(parameters)
+
+        # Check FTP binary
+        status, msg = checkFtpBinary()
+        if not status:
+            return status, msg
+
+        return super(SendProjectsAndFilesToCloneFtp, self).checkParameterValues(parameters, context)
+
+    def processAlgorithm(self, parameters, context, feedback):
+        """
+        Here is where the processing itself takes place.
+        """
+        status = 0
+        msg = ''
+        output = {
+            self.OUTPUT_STATUS: status,
+            self.OUTPUT_STRING: msg
+        }
+
+        # First save the given parameters
+        winscp_binary_path, ftpprotocol, ftphost, ftpport, ftplogin, ftppassword, \
+        ftpdir, localdir, excluded_directories = self.saveParameterValues(parameters)
 
         # Check localdir
         feedback.pushInfo(tr('CHECK LOCAL PROJECT DIRECTORY'))

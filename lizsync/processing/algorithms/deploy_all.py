@@ -286,7 +286,39 @@ class DeployAll(BaseProcessingAlgorithm):
             )
         )
 
+    def saveParameterValues(self, parameters):
+        """
+        Save the values of the alg parameters
+        """
+        # Parameters
+        postgresql_binary_path = parameters[self.POSTGRESQL_BINARY_PATH]
+        connection_name_central = parameters[self.CONNECTION_NAME_CENTRAL]
+        connection_name_clone = parameters[self.CONNECTION_NAME_CLONE]
+        winscp_binary_path = parameters[self.WINSCP_BINARY_PATH]
+        ftpprotocol = self.CLONE_FTP_PROTOCOLS[parameters[self.CLONE_FTP_PROTOCOL]]
+        ftphost = parameters[self.CLONE_FTP_HOST]
+        ftpport = parameters[self.CLONE_FTP_PORT]
+        ftplogin = parameters[self.CLONE_FTP_LOGIN]
+        ftpdir = parameters[self.CLONE_FTP_REMOTE_DIR]
+        excluded_directories = parameters[self.FTP_EXCLUDE_REMOTE_SUBDIRS].strip()
+
+        # store parameters
+        ls = lizsyncConfig()
+        ls.setVariable('binaries/postgresql', postgresql_binary_path)
+        ls.setVariable('postgresql:central/name', connection_name_central)
+        ls.setVariable('postgresql:clone/name', connection_name_clone)
+        ls.setVariable('binaries/winscp', winscp_binary_path)
+        ls.setVariable('ftp:clone/protocol', ftpprotocol)
+        ls.setVariable('ftp:clone/host', ftphost)
+        ls.setVariable('ftp:clone/port', ftpport)
+        ls.setVariable('ftp:clone/user', ftplogin)
+        ls.setVariable('ftp:clone/remote_directory', ftpdir)
+        ls.setVariable('local/excluded_directories', excluded_directories)
+        ls.save()
+
     def checkParameterValues(self, parameters, context):
+        # First save the given parameters
+        self.saveParameterValues(parameters)
 
         # Check current project has a file
         path = context.project().absoluteFilePath()
