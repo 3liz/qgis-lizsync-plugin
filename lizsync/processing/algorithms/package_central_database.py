@@ -401,7 +401,8 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
             '04_data.sql',
             '05_after.sql',
             'sync_id.txt',
-            'sync_tables.txt'
+            'sync_tables.txt',
+            'lizsync_server_version.txt',
         ]
         sql_files = {}
         tmpdir = tempfile.mkdtemp()
@@ -531,6 +532,24 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         feedback.pushInfo('')
 
         ####
+        # lizsync_server_version.txt
+        ###
+        feedback.pushInfo(tr('ADD VERSION to lizsync_server_version.txt'))
+        data, ok, error_message = fetchDataFromSqlQuery(
+            connection_name_central,
+            'SELECT version FROM lizsync.sys_structure_metadonnee LIMIT 1'
+        )
+        lizsync_server_version = ''
+        if ok:
+            for a in data:
+                lizsync_server_version = a[0]
+        with open(sql_files['lizsync_server_version.txt'], 'w') as f:
+            f.write(lizsync_server_version)
+            feedback.pushInfo(tr('File lizsync_server_version.txt created'))
+
+        feedback.pushInfo('')
+
+        ####
         # 04_data.sql
         ####
         # Then we get the actual data for the needed tables of these schemas
@@ -559,6 +578,7 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         sql = ''
 
         # Add audit trigger for these tables in given schemas
+        # Add also the version of lizsync
         # only for needed tables
         sql += '''
             SELECT lizsync.audit_table((quote_ident(table_schema) || '.' || quote_ident(table_name))::text)
@@ -568,7 +588,10 @@ class PackageCentralDatabase(BaseProcessingAlgorithm):
         '''
         sql += " AND concat('\"', t.table_schema, '\".\"', t.table_name, '\"') IN ( "
         sql += ', '.join(["'{}'".format(table) for table in tables])
-        sql += ")"
+        sql += ");"
+        sql += "INSERT INTO lizsync.sys_structure_metadonnee (version) VALUES ('{}'::text);".format(
+            lizsync_server_version
+        )
         # feedback.pushInfo(sql)
 
         # write content into temp file

@@ -318,7 +318,7 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
             '04_data.sql',
             '05_after.sql',
             'sync_id.txt',
-            'sync_tables.txt'
+            'sync_tables.txt',
         ]
         for f in archive_files:
             if not os.path.exists(os.path.join(dir_path, f)):
@@ -327,6 +327,32 @@ class DeployDatabaseServerPackage(BaseProcessingAlgorithm):
         feedback.pushInfo(tr('All the mandatory files have been sucessfully found'))
 
         feedback.pushInfo('')
+
+        # CHECK VERSION COMPATIBILITY
+        # Version stored in file (during the packaging)
+        lizsync_server_version_in_file = ''
+        if os.path.exists(os.path.join(dir_path, 'lizsync_server_version.txt')):
+            with open(os.path.join(dir_path, 'lizsync_server_version.txt')) as f:
+                lizsync_server_version_in_file = f.readline().strip()
+
+        # Current version in central database
+        lizsync_server_version_in_central = ''
+        data, ok, error_message = fetchDataFromSqlQuery(
+            connection_name_central,
+            'SELECT version FROM lizsync.sys_structure_metadonnee LIMIT 1'
+        )
+        if ok:
+            for a in data:
+                lizsync_server_version_in_central = a[0]
+        # Check only if the archive contained a file with a version
+        if lizsync_server_version_in_central and lizsync_server_version_in_file:
+            if lizsync_server_version_in_central != lizsync_server_version_in_file:
+                error_message = tr(
+                    'The version of LizSync installed in the central database ({})'
+                    ' does not match the version stored in the ZIP archive ({}).'
+                    ' You need to create a new package from the central database.'
+                ).format(lizsync_server_version_in_central, lizsync_server_version_in_file)
+                raise QgsProcessingException(error_message)
 
         # CLONE DATABASE
         # Check if clone database already has a lizsync structure installed
